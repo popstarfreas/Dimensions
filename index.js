@@ -134,7 +134,7 @@ function LogClientPacket(clientData) {
   return;
   var hex = clientData.toString("hex");
   var packetType = parseInt(hex.substr(4, 2), 16);
-  console.log("Client Packet [" + packetType + "]: " + (packetTypes[packetType]));
+  //console.log("Client Packet [" + packetType + "]: " + (packetTypes[packetType]));
   //console.log(hex);
 }
 
@@ -204,16 +204,19 @@ var server = net.createServer(function(clientSock) {
           break;
           // Chat
         case 25:
-          console.log(hex);
+          //console.log(hex);
           var chatMessage = hex2a(hex.substr(16));
           if (chatMessage.split(' ')[0].toString() === "/connect") {
             var ip = chatMessage.split(' ')[1];
             var port = chatMessage.split(' ')[2];
-            sendChatMessage("Connecting to "+ip+":"+port, "0000AA", clientSock);
             console.log("Told to connect to " + ip + ":" + port);
+            sendChatMessage("Told to connect to " + ip + ":" + port, "FF0000", clientSock);
             handled = true;
+              changeServer(ip, port);
 
-            changeServer(ip, port);
+            setTimeout(function() {
+                sendChatMessage("Connecting to " + ip + ":" + port, "0000AA", clientSock);
+            }, 1000);
           }
           break;
 
@@ -261,107 +264,108 @@ var server = net.createServer(function(clientSock) {
   });
 
   function handleServerData(serverData) {
-      var handled = false;
-      var hex = serverData.toString("hex");
-      var packetType = parseInt(hex.substr(4, 2), 16);
-      if (packetTypes[packetType]) {
-        //console.log("Server Packet [" + packetType + "]: " + (packetTypes[packetType]));
+    var handled = false;
+    var hex = serverData.toString("hex");
+    var packetType = parseInt(hex.substr(4, 2), 16);
+    if (packetTypes[packetType]) {
+      //console.log("Server Packet [" + packetType + "]: " + (packetTypes[packetType]));
+      //console.log(hex);
 
-        if (packetType == 2) {
-          handled = true;
-          var dcReason = hex2a(hex.substr(6));
-          var color = "FF0000"; // Red
-          var message = "The server disconnected you. Reason Given: " + dcReason;
-          sendChatMessage(message, color, clientSock);
-
-
-          color = "00FF00"; // Red
-          message = "Returning you to the Portal Server.";
-          sendChatMessage(message, color, clientSock);
-
-          changeServer('localhost', '7777');
-          //console.log(hex2a(hex.substr(6)));
-          // console.log(hex);
-        }
-      }
-
-      var pT;
-
-      if (state === 2) {
-        if (packetType === 7) {
-          clientData = new Buffer("0b0008ffffffffffffffff", 'hex');
-          serverSock.write(clientData);
-          LogClientPacket(clientData);
-
-
-          clientData = new Buffer("08000c00ffffffff", 'hex');
-          serverSock.write(clientData);
-          LogClientPacket(clientData);
-          state = 0;
-        }
-      }
-      // We handle these packets for states >= 2
-      /*if (state >= 2) {
+      if (packetType == 2) {
         handled = true;
-      }
+        var dcReason = hex2a(hex.substr(6));
+        var color = "FF0000"; // Red
+        var message = "The server disconnected you. Reason Given: " + dcReason;
+        sendChatMessage(message, color, clientSock);
 
-      // Self-Handle initial packets to join (state 2)
-      if (state === 2) {
-        if (packetType === 3) {
-          // Send Player Info
-          serverSock.write(playerInfo);
-          LogClientPacket(playerInfo);
 
-          // Send UUID
-          serverSock.write(clientUUID);
-          LogClientPacket(clientUUID);
+        color = "00FF00"; // Red
+        message = "Returning you to the Portal Server.";
+        sendChatMessage(message, color, clientSock);
 
-          //Send Inventory
-          for (var i = 0; i < playerInventorySlot.length; i++) {
-            serverSock.write(playerInventorySlot[i]);
-            LogClientPacket(playerInventorySlot[i]);
-          }
-          console.log("Inventory Packets Sent: " + playerInventorySlot.length);
-
-          // Send continue connecting 2
-          //clientData = new Buffer("030006", 'hex');
-          //serverSock.write(clientData);
-          //LogClientPacket(clientData);
-
-          state = 3;
-        }
-      } else
-      // Pre-info sent. Waiting response (state 3)
-      if (state === 3) {
-        if (packetType === 7) {
-          // Send get section/request sync   
-          clientData = new Buffer("0b0008ffffffffffffffff", 'hex');
-          serverSock.write(clientData);
-          LogClientPacket(clientData);
-
-          state = 4;
-        }
-      } else
-      // Waiting for Complete Connection and Spawn packet (state 4)
-      if (state === 4) {
-        if (packetType === 49) {
-          // Send Spawn Player
-          clientData = new Buffer("08000c00ffffffff", 'hex');
-          serverSock.write(clientData);
-          LogClientPacket(clientData);
-
-          state = 1;
-        }
-      }*/
-
-      if (!handled) {
-        clientSock.write(serverData);
+        changeServer('localhost', '7777');
+        //console.log(hex2a(hex.substr(6)));
+        // console.log(hex);
       }
     }
 
-    function handleServerError() {
-      console.log("SERVER ERROR");
+    var pT;
+
+    if (state === 2) {
+      if (packetType === 7) {
+        clientData = new Buffer("0b0008ffffffffffffffff", 'hex');
+        serverSock.write(clientData);
+        LogClientPacket(clientData);
+
+
+        clientData = new Buffer("08000c00ffffffff", 'hex');
+        serverSock.write(clientData);
+        LogClientPacket(clientData);
+        state = 0;
+      }
     }
+    // We handle these packets for states >= 2
+    /*if (state >= 2) {
+      handled = true;
+    }
+
+    // Self-Handle initial packets to join (state 2)
+    if (state === 2) {
+      if (packetType === 3) {
+        // Send Player Info
+        serverSock.write(playerInfo);
+        LogClientPacket(playerInfo);
+
+        // Send UUID
+        serverSock.write(clientUUID);
+        LogClientPacket(clientUUID);
+
+        //Send Inventory
+        for (var i = 0; i < playerInventorySlot.length; i++) {
+          serverSock.write(playerInventorySlot[i]);
+          LogClientPacket(playerInventorySlot[i]);
+        }
+        console.log("Inventory Packets Sent: " + playerInventorySlot.length);
+
+        // Send continue connecting 2
+        //clientData = new Buffer("030006", 'hex');
+        //serverSock.write(clientData);
+        //LogClientPacket(clientData);
+
+        state = 3;
+      }
+    } else
+    // Pre-info sent. Waiting response (state 3)
+    if (state === 3) {
+      if (packetType === 7) {
+        // Send get section/request sync   
+        clientData = new Buffer("0b0008ffffffffffffffff", 'hex');
+        serverSock.write(clientData);
+        LogClientPacket(clientData);
+
+        state = 4;
+      }
+    } else
+    // Waiting for Complete Connection and Spawn packet (state 4)
+    if (state === 4) {
+      if (packetType === 49) {
+        // Send Spawn Player
+        clientData = new Buffer("08000c00ffffffff", 'hex');
+        serverSock.write(clientData);
+        LogClientPacket(clientData);
+
+        state = 1;
+      }
+    }*/
+
+    if (!handled) {
+      clientSock.write(serverData);
+    }
+  }
+
+  function handleServerError() {
+    console.log("SERVER ERROR");
+  }
 });
 
 server.on('error', function(e) {
@@ -374,8 +378,23 @@ server.listen(3000, function() {
 
 // color such as FF0000
 function sendChatMessage(message, color, clientSock) {
-  var messageLength = (message.length).toString(16); // In HEX
-  packetLength = ((14 + messageLength.length + message.length)*2).toString(16);
-  var msg = new Buffer(packetLength + "0019FF" + color + messageLength + a2hex(message), 'hex');
-  clientSock.write(msg);
+  if (message.length > 0) {
+    color = color.toLowerCase();
+    try {
+      var messageLength = (message.length).toString(16); // In HEX
+      if (messageLength.length % 2 !== 0) {
+        messageLength = "0"+messageLength;
+      }
+      packetLength = (("00" + "0019ff" + color + messageLength + a2hex(message)).toString(16).length/2).toString(16);
+      if (packetLength.length % 2 !== 0) {
+        packetLength = "0"+packetLength;
+      }
+      //console.log(message+":"+color+":"+messageLength+":"+message.length+":"+messageLength.length+":"+packetLength);
+      console.log((packetLength + "0019ff" + color + messageLength + a2hex(message)).toString(16));
+      var msg = new Buffer(packetLength + "0019ff" + color + messageLength + a2hex(message), 'hex');
+      clientSock.write(msg);
+    } catch (e) {
+      console.log(e);
+    }
+  }
 }
