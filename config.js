@@ -1,6 +1,6 @@
 define(function() {
 	var Config = {
-		IP: "localhost",
+		IP: "t.dark-gaming.com",
 		PORT: "7777"
 	};
 

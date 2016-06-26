@@ -57,7 +57,7 @@ requirejs(['config', 'client'], function(Config, Client) {
       var i;
       for (i = 0; i < clients.length; i++) {
         if (clients[i].ID !== client.ID) {
-          sendChatMessage(name + " has left us.", "00ffd0", clients[i].socket);
+          clients[i].sendChatMessage(name + " has left us.", "00ffd0", clients[i].socket);
         }
       }
 
