@@ -1,7 +1,9 @@
 var net = require('net');
 require('./lib/class');
 var requirejs = require('requirejs');
-
+String.prototype.replaceAt=function(index, character) {
+    return this.substr(0, index) + character + this.substr(index+character.length);
+};
 requirejs.config({
   baseUrl: __dirname,
   //Pass the top-level main.js/index.js require
@@ -19,9 +21,16 @@ function LogClientPacket(clientData) {
 }
 
 
-requirejs(['config', 'client'], function(Config, Client) {
+requirejs(['config', 'client', 'utils'], function(Config, Client, Utils) {
   var id = 0;
   var clients = [];
+  var serverCounts = {
+    main: 0,
+    mirror: 0,
+    zombies: 0,
+    pvp: 0
+  };
+
   var interface = {
     broadcastToClients: function(message, color) {
         for (var i = 0; i < clients.length; i++) {
@@ -38,43 +47,100 @@ requirejs(['config', 'client'], function(Config, Client) {
       }
   };
 
-  var server = net.createServer(function(socket) {
-    console.log("New client");
-    var server = { ip: Config.IP, port: Config.PORT };
-    var client = new Client(id++, socket, server, interface);
+  function HandleSocket(socket, server) {
+    if (socket && socket.remoteAddress)
+     console.log("Client: " + Utils.getProperIP(socket.remoteAddress) + " connected ["+server.name+"]; ["+serverCounts.main+", "+serverCounts.mirror+", "+serverCounts.zombies+", "+serverCounts.pvp+"]");
+    var client = new Client(id++, socket, server, serverCounts);
     clients.push(client);
 
     socket.on('data', function(data) {
-      client.handleDataSend(data);
+      try {
+        client.handleDataSend(data);
+      } catch (e) {
+        console.log("HandleDataSend ERROR: " + e);
+      }
     });
 
     socket.on('error', function(e) {
-      client.handleError(e);
+      try {
+        client.handleError(e);
+      } catch (error) {
+        console.log("HandleError ERROR: " + e);
+      }
     });
 
     socket.on('close', function() {
-      client.handleClose();
-      var i;
-      for (i = 0; i < clients.length; i++) {
-        if (clients[i].ID !== client.ID) {
-          clients[i].sendChatMessage(name + " has left us.", "00ffd0", clients[i].socket);
+      try {
+        if (socket && socket.remoteAddress)
+          console.log("Client: " + Utils.getProperIP(socket.remoteAddress) + " disconnected; ["+serverCounts.main+", "+serverCounts.mirror+", "+serverCounts.zombies+", "+serverCounts.pvp+"]");
+        client.handleClose();
+        for (var i = 0; i < clients.length; i++) {
+          if (clients[i].ID === client.ID) {
+            clients.splice(i, 1);
+            break;
+          }
         }
-      }
-
-      for (i = 0; i < clients.length; i++) {
-        if (clients[i].ID === client.ID) {
-          clients.splice(i, 1);
-          break;
-        }
+      } catch (e) {
+        console.log("SocketCloseEvent ERROR: " + e);
       }
     });
+  }
+
+  var main = net.createServer(function(socket) {
+    var server;
+    if (serverCounts.main > serverCounts.mirror) {
+      server = Config.mirror;
+    } else {
+      server = Config.main;
+    }
+    HandleSocket(socket, server);
   });
 
-  server.on('error', function(e) {
-    console.log(e);
-  });
-  server.listen(3002, function() {
-    console.log('server bound');
+
+  var mirror = net.createServer(function(socket) {
+    var server;
+    if (serverCounts.main > serverCounts.mirror) {
+      server = Config.mirror;
+    } else {
+      server = Config.main;
+    }
+    HandleSocket(socket, server);
   });
 
+  var zombies = net.createServer(function(socket) {
+    HandleSocket(socket, Config.zombies);
+  });
+
+  var pvp = net.createServer(function(socket) {
+    HandleSocket(socket, Config.pvp);
+  });
+
+
+  main.on('error', function(e) {
+    console.log("Main Server Error: " + e);
+  });
+
+  main.listen(7777, function() {
+    console.log('Main Routing Server Bound');
+  });
+
+  mirror.listen(7778, function() {
+    console.log('Main (alt) Routing Server Bound');
+  });
+
+  zombies.on('error', function(e) {
+    console.log("Zombies Server Error: " + e);
+  });
+
+  zombies.listen(7779, function() {
+    console.log('Zombies Routing Server Bound');
+  });
+
+  pvp.on('error', function(e) {
+    console.log("PvP Server Error: " + e);
+  });
+
+  pvp.listen(7776, function() {
+    console.log('PvP Routing Server Bound');
+  });
 });

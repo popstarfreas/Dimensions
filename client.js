@@ -1,17 +1,25 @@
 define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'underscore'], function(Player, Utils, TerrariaServer, net, Config, PacketTypes, _) {
   var Client = Class.extend({
-    init: function(id, socket, server, interface) {
+    init: function(id, socket, server, serverCounts) {
       this.ID = id;
       this.socket = socket;
       this.ip = socket.remoteAddress;
       this.player = new Player();
       this.server = new TerrariaServer(null, this);
+      this.server.ip = server.IP;
+      this.server.port = server.PORT;
+      this.server.name = server.name;
       this.connected = false;
       this.auth = false;
       this.state = 0;
-      this.interface = interface;
       this.bufferPacket = "";
       this.initialConnectionAlreadyCreated = false;
+      this.ingame = false;
+      this.serverCounts = serverCounts;
+
+      this.ServerHandleError = this.server.handleError.bind(this.server);
+      this.ServerHandleData = this.server.handleData.bind(this.server);
+      this.ServerHandleClose = this.server.handleClose.bind(this.server);
     },
 
     setName: function(name) {
@@ -23,207 +31,135 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
     },
 
     handleDataSend: function(encodedData) {
-      var self = this;
+      try {
+        var self = this;
 
-      var incompleteData = Utils.hex2str(encodedData);
-      //console.log(entireData);
+        var incompleteData = Utils.hex2str(encodedData);
+        //console.log(entireData);
 
-      if (this.bufferPacket.length > 0) {
-        console.log("Used bufferPacket");
-      }
-
-      // This is the incomplete packet carried over from last time
-      var bufferPacket = this.bufferPacket;
-      var entireData = bufferPacket + incompleteData;
-      var entireDataInfo = Utils.getPacketsFromHexString(entireData);
-      this.bufferPacket = entireDataInfo.bufferPacket;
-      var packets = entireDataInfo.packets;
-      var count = 0;
-      if (this.initialConnectionAlreadyCreated) {
-        var allowedData = null;
-        _.each(packets, function(packet) {
-          var packetType = packet.packetType;
-          var data = packet.data;
-          if (count++ > 0) {
-            //console.log("Client Packet [" + packetType + "]: " + (PacketTypes[packetType])+" was previously hidden");
-          } else {
-            //console.log("Client Packet [" + packetType + "]: " + (PacketTypes[packetType]));
-          }
-          var handled = false;
-          switch (packetType) {
-            case 4:
-              var nameLength = parseInt(data.substr(12, 2), 16);
-              if (self.name === null) {
-                // Take the appropriate hex chars out of the packet
-                // then convert them to ascii
-                name = Utils.hex2a(data.substr(14, nameLength * 2));
-                self.setName(name);
-                self.interface.broadcastToOthers(name + " has joined the 5th Dimension.");
-              }
-              break;
-            case 5:
-              break;
-            case 6:
-            case 9:
-              if (self.state === 0) {
-                // Finished sending inventory
-                self.state = 1;
-              }
-              break;
-              // Chat
-            case 25:
-              var chatMessage = Utils.hex2a(data.substr(16));
-              var ip, port;
-              if (chatMessage.split(' ')[0].toString() === "/connect") {
-                handled = true;
-                ip = chatMessage.split(' ')[1];
-                port = chatMessage.split(' ')[2];
-                self.sendChatMessage("Shifting Dimension to  " + ip + ":" + port, "FF0000");
-                self.changeServer(ip, port);
-              }
-
-
-              if (chatMessage.split(' ')[0].toString() === "/main") {
-                handled = true;
-                ip = "t.dark-gaming.com";
-                port = "7777";
-                self.sendChatMessage("Shifting Dimension to Main", "FF0000");
-                self.changeServer(ip, port);
-                handled = true;
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/mirror") {
-                handled = true;
-                ip = "t.dark-gaming.com";
-                port = "7778";
-                self.sendChatMessage("Shifting Dimension to Mirror", "FF0000");
-                handled = true;
-                self.changeServer(ip, port);
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/gm") {
-                handled = true;
-                ip = "gm.dark-gaming.com";
-                port = "7777";
-                self.sendChatMessage("Shifting Dimension to GameModes", "FF0000");
-                self.changeServer(ip, port);
-                handled = true;
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/portal") {
-                handled = true;
-                ip = Config.IP;
-                port = Config.PORT;
-                self.sendChatMessage("Shifting Dimension to DimensionX", "FF0000");
-                self.changeServer(ip, port);
-                handled = true;
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/sr") {
-                handled = true;
-                ip = "t.shadowrain.net";
-                port = "7777";
-                self.sendChatMessage("Shifting Dimension to ShadowRain", "FF0000");
-                self.changeServer(ip, port);
-                handled = true;
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/pt") {
-                handled = true;
-                ip = "gm.dark-gaming.com";
-                port = "3000";
-                self.sendChatMessage("Shifting Dimension to ProjectT", "FF0000");
-                self.changeServer(ip, port);
-                handled = true;
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/c") {
-                handled = true;
-                var message = chatMessage.substr(chatMessage.split(' ')[0].length + 1);
-                self.interface.broadcastToClients(name + ": " + message, "00ffd0");
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/cw") {
-                handled = true;
-                var usersList = "Players: ";
-                /*for (var i = 0; i < clients.length; i++) {
-                  usersList += (clients[i].name + (i != clients.length - 1 ? ", " : ""));
-                }*/
-
-                self.sendChatMessage(usersList, "00ffd0", clientSock);
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/cs") {
-                var message = chatMessage.substr(chatMessage.split(' ')[0].length + 1);
-                var hexMessage = Utils.a2hex(message);
-                if (hexMessage.length % 2 !== 0) {
-                  hexMessage = "0" + hexMessage;
+        // This is the incomplete packet carried over from last time
+        var bufferPacket = this.bufferPacket;
+        var entireData = bufferPacket + incompleteData;
+        var entireDataInfo = Utils.getPacketsFromHexString(entireData);
+        this.bufferPacket = entireDataInfo.bufferPacket;
+        var packets = entireDataInfo.packets;
+        var count = 0;
+        if (this.initialConnectionAlreadyCreated) {
+          var allowedData = null;
+          _.each(packets, function(packet) {
+            var packetType = packet.packetType;
+            var data = packet.data;
+            if (count++ > 0) {
+              //console.log("Client Packet [" + packetType + "]: " + (PacketTypes[packetType])+" was previously hidden");
+            } else {
+              //console.log("Client Packet [" + packetType + "]: " + (PacketTypes[packetType]));
+            }
+            var handled = false;
+            switch (packetType) {
+              case 4:
+                var nameLength = parseInt(data.substr(12, 2), 16);
+                if (self.name === null) {
+                  // Take the appropriate hex chars out of the packet
+                  // then convert them to ascii
+                  name = Utils.hex2a(data.substr(14, nameLength * 2));
+                  self.setName(name);
+                }
+                break;
+              case 5:
+                break;
+              case 6:
+              case 9:
+                if (self.state === 0) {
+                  // Finished sending inventory
+                  self.state = 1;
+                }
+                break;
+                // Chat
+              case 25:
+                var chatMessage = Utils.hex2a(data.substr(16));
+                var ip, port, serverName;
+                if (chatMessage.split(' ')[0].toString() === "/main") {
+                  handled = true;
+                  ip = Config.main.IP;
+                  port = Config.main.PORT;
+                  serverName = Config.main.name;
+                  self.sendChatMessage("Shifting to the Main Dimension", "FF0000");
+                  self.changeServer(ip, port, serverName);
+                  handled = true;
                 }
 
-                //encodedData = new Buffer(data.substr(0, 16) + hexMessage, 'hex');
+                if (chatMessage.split(' ')[0].toString() === "/mirror") {
+                  handled = true;
+                  ip = Config.mirror.IP;
+                  port = Config.mirror.PORT;
+                  serverName = Config.mirror.name;
+                  self.sendChatMessage("Shifting to the Mirror Dimension", "FF0000");
+                  handled = true;
+                  self.changeServer(ip, port, serverName);
+                }
+
+                if (chatMessage.split(' ')[0].toString() === "/zombies") {
+                  handled = true;
+                  ip = Config.zombies.IP;
+                  port = Config.zombies.PORT;
+                  serverName = Config.zombies.name;
+                  self.sendChatMessage("Shifting to the Zombies Dimension", "FF0000");
+                  self.changeServer(ip, port, serverName);
+                  handled = true;
+                }
+
+                if (chatMessage.split(' ')[0].toString() === "/pvp") {
+                  handled = true;
+                  ip = Config.pvp.IP;
+                  port = Config.pvp.PORT;
+                  serverName = Config.pvp.name;
+                  self.sendChatMessage("Shifting to the PvP Dimension", "FF0000");
+                  self.changeServer(ip, port, serverName);
+                  handled = true;
+                }
+                break;
+
+              case 68:
+                clientUUID = encodedData;
+                break;
+            }
+            // Send future messages if is connected
+            if (!handled) {
+              // Hax
+              //clientData = new Buffer( String("00"+clientData.toString('hex').substr(2)), 'hex' );
+              if (allowedData === null) {
+                allowedData = packet.data;
+              } else {
+                allowedData += packet.data;
               }
+            }
+          });
 
-
-              if (chatMessage.split(' ')[0].toString() === "/crash") {
-                //encodedData = new Buffer("0000010000", 'hex');
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/crash2") {
-                //encodedData = new Buffer("0000020000", 'hex');
-              }
-
-              if (chatMessage.split(' ')[0].toString() === "/join") {
-                var username = chatMessage.substr(chatMessage.split(' ')[0].length + 1);
-                /*for (var i = 0; i < clients.length; i++) {
-                  if (clients[i].ID !== clientID) {
-                    if (clients[i].name.toLowerCase() === username.toLowerCase()) {
-                      sendChatMessage("Joining " + clients[i].name);
-                      changeServer(clients[i].server.ip, clients[i].server.port);
-                      break;
-                    }
-                  }
-                }*/
-              }
-              break;
-
-            case 68:
-              clientUUID = encodedData;
-              break;
-          }
-          // Send future messages if is connected
-          if (!handled) {
-            // Hax
-            //clientData = new Buffer( String("00"+clientData.toString('hex').substr(2)), 'hex' );
-            if (allowedData === null) {
-              allowedData = packet.data;
+          if (allowedData !== null && this.connected) {
+            if (this.server.socket) {
+              this.server.socket.write(new Buffer(allowedData, 'hex'));
             } else {
-              allowedData += packet.data;
+              this.sendChatMessage("Are you even connected?", "ff0000");
             }
           }
-        });
+        } else {
+          this.initialConnectionAlreadyCreated = true;
+          this.server.socket = new net.Socket();
 
-        if (allowedData !== null && this.connected) {
-          if (this.server.socket) {
-            this.server.socket.write(new Buffer(allowedData, 'hex'));
-          } else {
-            this.sendChatMessage("Are you even connected?", "ff0000");
-          }
+          self.serverCounts[self.server.name]++;
+          this.server.socket.connect(self.server.port, self.server.ip, function() {
+            self.connected = true;
+
+            // Write the data the client sent us to the now connected server
+            self.server.socket.write(encodedData);
+          });
+
+          this.server.socket.on('data', this.ServerHandleData);
+          this.server.socket.on('close', this.ServerHandleClose);
+          this.server.socket.on('error', this.ServerHandleError);
         }
-      } else {
-        this.initialConnectionAlreadyCreated = true;
-        this.server.socket = new net.Socket();
-
-        this.server.socket.connect(Config.PORT, Config.IP, function() {
-          self.server.ip = Config.IP;
-          self.server.port = Config.PORT;
-          self.connected = true;
-
-          // Write the data the client sent us to the now connected server
-          self.server.socket.write(encodedData);
-        });
-
-        this.server.socket.on('data', this.server.handleData.bind(this.server));
-        this.server.socket.on('error', this.server.handleError.bind(this.server));
+      } catch (e) {
+        console.log("Client Handle Send Data Error: " + e);
       }
     },
 
@@ -254,42 +190,40 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       }
     },
 
-    changeServer: function(ip, port) {
+    changeServer: function(ip, port, name) {
       var self = this;
 
       ip = ip || "localhost";
       port = port || 7777;
 
       this.connected = false;
-      this.server.socket.removeListener('data', this.server.handleData);
-      this.server.socket.removeListener('error', this.server.handleError);
+      this.server.socket.removeListener('data', this.ServerHandleData);
+      this.server.socket.removeListener('error', this.ServerHandleError);
       this.server.socket.destroy();
+      this.server.socket.removeListener('close', this.ServerHandleClose);
       self.server.socket = new net.Socket();
 
-      console.log("Connecting to " + ip + ":" + port);
+      //console.log("Connecting to " + ip + ":" + port);
       self.server.ip = ip;
       self.server.port = port;
+      self.server.name = name;
+      self.serverCounts[self.server.name]++;
       self.server.socket.connect(parseInt(port), ip, function() {
         // Send Packet 1
         self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
         self.state = 2;
-
         self.connected = true;
-        console.log("Connected to " + ip + ":" + port);
-
-        //clientSock.write('HTTP/1.1 200 OK\r\n');
       });
 
-      self.server.socket.on('data', self.server.handleData.bind(self.server));
-      self.server.socket.on('error', self.server.handleError.bind(self.server));
+      self.server.socket.on('data', self.ServerHandleData);
+      self.server.socket.on('close', self.ServerHandleClose);
+      self.server.socket.on('error', self.ServerHandleError);
     },
 
     tellSelfToClearPlayers: function() {
-      console.log("Telling self to clear players");
       var packet;
       var playerID, firstByte, secondByte, packetLength, prePacketLength;
       for (var i = 0; i < 255; i++) {
-        console.log(i);
         if (i === this.player.id)
           continue;
 
@@ -298,7 +232,6 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           playerID = "0" + playerID;
         }
 
-        console.log(playerID);
         prePacketLength = ((playerID.length + 4) / 2).toString(16);
         if (prePacketLength.length !== 4) {
           for (var j = prePacketLength.length; j < 4; j++) {
@@ -327,7 +260,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
     },
 
     handleError: function(err) {
-      console.log("Client Socket Error: " + err);
+      //console.log("Client Socket Error: " + err);
     },
 
     handleClose: function() {

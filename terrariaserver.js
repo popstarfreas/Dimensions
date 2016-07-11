@@ -5,75 +5,80 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
       this.client = client;
       this.ip = null;
       this.port = null;
+      this.name = "";
       this.spawn = {
         x: 0,
         y: 0
       };
-      this.playerID = "00";
       this.bufferPacket = "";
     },
 
     handleData: function(encodedData) {
-      var self = this;
-      var handled = false;
-      var incompleteData = Utils.hex2str(encodedData);
-      //console.log(entireData);
+      try {
+        var self = this;
+        var handled = false;
+        var incompleteData = Utils.hex2str(encodedData);
+        //console.log(entireData);
 
-      if (this.bufferPacket.length > 0) {
-        console.log("Used bufferPacket");
-      }
-      var skip = false;
+        if (this.bufferPacket.length > 0) {
+          //console.log("Used bufferPacket");
+        }
+        var skip = false;
 
-      // This is the incomplete packet carried over from last time
-      var bufferPacket = this.bufferPacket;
-      var entireData = bufferPacket + incompleteData;
-      var entireDataInfo = Utils.getPacketsFromHexString(entireData);
-      this.bufferPacket = entireDataInfo.bufferPacket;
-      var packets = entireDataInfo.packets;
-      _.each(packets, function(packet) {
-        var data = packet.data;
-        var packetType = packet.packetType;
-        console.log(self.ip + ":" + self.port + " Server Packet [" + packetType + "]: " + (PacketTypes[packetType]));
-        if (!skip) {
-          if (typeof PacketTypes[packetType] === 'undefined') {
-            self.client.sendChatMessage("We received an unknown packet. To prevent client issues we have closed the routing service.", "ff0000");
-            console.log(entireData);
-            console.log(self.ip + ":" + self.port + " Server Packet [" + packetType + "]: " + (PacketTypes[packetType]));
-            process.exit();
-          }
-
-          if (packetType === 10) {
-            skip = true;
-          } else {
+        // This is the incomplete packet carried over from last time
+        var bufferPacket = this.bufferPacket;
+        var entireData = bufferPacket + incompleteData;
+        var entireDataInfo = Utils.getPacketsFromHexString(entireData);
+        this.bufferPacket = entireDataInfo.bufferPacket;
+        var packets = entireDataInfo.packets;
+        _.each(packets, function(packet) {
+          var data = packet.data;
+          var packetType = packet.packetType;
+          //console.log(self.ip + ":" + self.port + " Server Packet [" + packetType + "]: " + (PacketTypes[packetType]));
+          if (!skip) {
             if (PacketTypes[packetType]) {
               //console.log(hex);
               if (packetType == 2) {
                 handled = true;
-                var dcReason = Utils.hex2a(data.substr(6));
-                var message = "The server disconnected you. Reason Given: " + dcReason;
-                if (dcReason.length < 50) {
-                  //self.socket.destroy();
-                  //console.log(this);
-                  var color = "ff0000"; // Red
+                if (!self.client.ingame) {
+                  self.client.socket.write(new Buffer(packet.data, 'hex'));
+                  self.client.socket.destroy();
+                } else {
+                  var dcReason = Utils.hex2a(data.substr(8));
                   var message = "The server disconnected you. Reason Given: " + dcReason;
-                  console.log("The server disconnected you. Reason Given: " + dcReason);
-                  //console.log(entireData)
-                  self.client.sendChatMessage(message, color);
+                  if (dcReason.length < 50) {
+                    //self.socket.destroy();
+                    //console.log(this);
+                    var color = "ff0000"; // Red
+                    var message = "The server disconnected you. Reason Given: " + dcReason;
+                    //console.log(entireData)
+                    self.client.sendChatMessage(message, color);
 
 
-                  color = "00ff00"; // Red
-                  message = "Returning you to the Portal Server.";
-                  self.client.sendChatMessage(message, color);
+                    color = "00ff00"; // Red
+                    message = "Returning you to the Portal Server.";
+                    self.client.sendChatMessage(message, color);
+                  }
                 }
-                //changeServer('localhost', '7777');
-                //console.log(hex2a(hex.substr(6)));
-                // console.log(hex);
               }
             }
 
             if (packetType === 3) {
               self.client.player.id = parseInt(data.substr(6, 2), 16);
-              console.log("Set playerID to " + self.client.player.id);
+              self.client.player.idHex = data.substr(6, 2);
+
+              // Send IP Address
+              var ip = Utils.getProperIP(self.client.socket.remoteAddress);
+              var ipHex = Utils.a2hex(ip);
+              var ipLength = (ipHex.length / 2).toString(16); // byte length
+
+              // Length must be even
+              if (ipLength.length % 2 !== 0) {
+                ipLength = "0" + ipLength;
+              }
+              var packetData = "43" + ipLength + ipHex;
+              data = new Buffer(Utils.getPacketLengthFromData(packetData) + packetData, 'hex');
+              self.socket.write(data);
             }
 
             var pT;
@@ -96,36 +101,61 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
                 //clientData = new Buffer("00002cFF0000000100", 'hex');
                 //self.socket.write(clientData);
                 self.client.state = 3;
+                self.client.tellSelfToClearPlayers();
               }
             }
 
             if (packetType === 101 && self.client.state === 3) {
               self.client.state = 0;
-              clientData = new Buffer("08000c" + self.playerID + self.spawn.x + self.spawn.y, 'hex');
+              clientData = new Buffer("08000c" + self.client.player.idHex + self.spawn.x + self.spawn.y, 'hex');
               self.socket.write(clientData);
               //console.log("Client Packet [12]: Spawn Player [By Relay]");
-              self.client.socket.write(clientData);
-              console.log(self.ip + ":" + self.port + " Server Packet [12]: Spawn Player [By Relay]");
+              //console.log(self.ip + ":" + self.port + " Server Packet [12]: Spawn Player [By Relay]");
 
-              self.client.tellSelfToClearPlayers();
               //self.client.tellSelfToClearNPCs();
-            }
-          }
-        }
-      });
+              setTimeout(function() {
+                if (self.client && self.client.socket) {
+                  self.socket.write(clientData);
+                  self.client.socket.write(clientData);
+                }
+              }, 1000);
 
-      if (!handled) {
-        this.client.socket.write(encodedData);
+              setTimeout(function() {
+
+              }, 2000);
+            }
+
+            if (packetType === 101) {
+              self.client.ingame = true;
+            }
+
+          }
+        });
+
+        if (!handled) {
+          this.client.socket.write(encodedData);
+        }
+      } catch (e) {
+        console.log("Handled Data Error: " + e);
       }
     },
 
+    handleClose: function() {
+      try {
+        this.client.serverCounts[this.name]--;
+      } catch(e) {
+        console.log("handleClose Err: "+e);
+      }
+      this.client.sendChatMessage("The Dimension you were in has encountered a paradox and is being destroyed.", "F00000");
+      this.client.sendChatMessage("Specify a Dimension to travel to: /main, /mirror, /zombies, /pvp", "F00000");
+    },
+
     handleError: function(error) {
+      //console.log(this.ip + ":" + this.port + " " + this.name);
       //this.client.changeServer(Config.IP, Config.PORT);
-      console.log("Err: " + error);
+      console.log("TerrariaServer Socket: " + error);
       this.socket.destroy();
       this.client.connected = false;
-      this.client.sendChatMessage("The Dimension you were in has encountered a paradox and is being destroyed.", "F00000");
-      this.client.sendChatMessage("Specify a Dimension to travel to: /main, /mirror, /zombies, /pvp", "F00000")
     }
   });
 

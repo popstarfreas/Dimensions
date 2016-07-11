@@ -14,7 +14,14 @@ define(function() {
         var hex = Number(str.charCodeAt(i)).toString(16);
         arr.push(hex);
       }
-      return arr.join('');
+
+      var builtString = arr.join('');
+
+      // Must have even number of hex digits
+      if (builtString.length % 2 !== 0) {
+        builtString = "0"+builtString;
+      }
+      return builtString;
     },
 
     str2Hex: function(str) {
@@ -23,6 +30,39 @@ define(function() {
 
     hex2str: function(hex) {
       return hex.toString("hex");
+    },
+
+    getProperIP: function(ip) {
+      var IPFromRequest = ip;
+      var indexOfColon = IPFromRequest.lastIndexOf(':');
+      var IP = IPFromRequest.substring(indexOfColon+1,IPFromRequest.length);
+      return IP;
+    },
+
+    getPacketLengthFromData: function(hexStr) {
+      prePacketLength = (hexStr.length / 2).toString(16);
+      if (prePacketLength.length !== 4) {
+        for (var j = prePacketLength.length; j < 4; j++) {
+          prePacketLength = "0" + prePacketLength;
+        }
+      }
+
+      // Assign hex packet length
+      packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
+
+      // Ensure it takes up 4 hex digits
+      if (packetLength.length !== 4) {
+        for (var j = packetLength.length; j < 4; j++) {
+          packetLength = "0" + packetLength;
+        }
+      }
+
+      // Reverse byte order
+      firstByte = packetLength.substr(0, 2);
+      secondByte = packetLength.substr(2, 2);
+      packetLength = secondByte + firstByte + packetLength.substr(4);
+
+      return packetLength;
     },
 
     getPacketTypeFromHexString: function(str) {
@@ -51,7 +91,7 @@ define(function() {
             data = str.substr(index, length);
             index += length;
             if (index > str.length) {
-              console.log("Index [" + index + "] exceeds data length [" + str.length + "]");
+              //console.log("Index [" + index + "] exceeds data length [" + str.length + "]");
               bufferPacket = data;
             } else {
               packetType = Utils.getPacketTypeFromHexString(data);
