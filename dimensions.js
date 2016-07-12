@@ -19,6 +19,10 @@ define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore'],
       switch (cmd) {
         case "reload":
           Config = require('./config.js');
+          var listenServers = _.keys(Config.servers);
+          for (var i = 0; i < listenServers.length; i++) {
+            servers[i].updateInfo(Config.servers[listenServers[i]]);
+          }
           break;
       }
     }

@@ -34,6 +34,12 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
     	return chosenServer;
     },
 
+    updateInfo: function(info) {
+      var self = this;
+      self.port = info.listenPort;
+      self.routingServers = info.routingServers;
+    },
+
     handleStart: function() {
       var self = this;
       console.log("\033[32m Server on " + self.port + " started.\033[37m");
