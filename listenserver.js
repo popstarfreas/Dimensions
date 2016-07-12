@@ -1,7 +1,8 @@
-define(['net', 'underscore'], function(net, _) {
+define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client) {
   var ListenServer = Class.extend({
-    init: function(info, serverCounts) {
+    init: function(info, serverCounts, clients) {
       var self = this;
+      self.clients = clients;
       self.serverCounts = serverCounts;
       self.port = info.listenPort;
       self.routingServers = info.routingServers;

@@ -11,7 +11,7 @@ define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore'],
 
       var listenServers = _.keys(Config.servers);
       for (var i = 0; i < listenServers.length; i++) {
-        self.servers.push(new ListenServer(Config.servers[listenServers[i]], self.serverCounts));
+        self.servers.push(new ListenServer(Config.servers[listenServers[i]], self.serverCounts, self.clients));
       }
     },
 
