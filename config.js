@@ -1,29 +1,37 @@
 define(function() {
-	var Config = {
-		main: {
-			IP: "t.dark-gaming.com",
-			PORT: "7000",
-			name: "main"
-		},
+  var Config = {
+    servers: [{
+        listenPort: "7777",
+        routingServers: [{
+          mame: "main",
+          serverIP: "t.dark-gaming.com",
+          serverPort: "7000",
+        }, {
+          name: "mirror",
+          serverIP: "gm.dark-gaming.com",
+          serverPort: "3000",
+        }]
+      },
 
-		mirror: {
-			IP: "gm.dark-gaming.com",
-			PORT: "3000",
-			name: "mirror"
-		},
+      {
+        listenPort: "7779",
+        routingServers: [{
+          name: "zombies",
+          serverIP: "gm.dark-gaming.com",
+          serverPort: "7777"
+        }]
+      },
 
-		zombies: {
-			IP: "gm.dark-gaming.com",
-			PORT: "7777",
-			name: "zombies"
-		},
+      {
+        listenPort: "7776",
+        routingServers: [{
+          name: "pvp",
+          serverIP: "t.dark-gaming.com",
+          serverPort: "7001"
+        }]
+      }
+    ]
+  };
 
-		pvp: {
-			IP: "t.dark-gaming.com",
-			PORT: "7001",
-			name: "pvp"
-		}
-	};
-
-	return Config;
+  return Config;
 });

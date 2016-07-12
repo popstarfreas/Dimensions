@@ -5,9 +5,10 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       this.socket = socket;
       this.ip = socket.remoteAddress;
       this.player = new Player();
+      this.currentServer = server;
       this.server = new TerrariaServer(null, this);
-      this.server.ip = server.IP;
-      this.server.port = server.PORT;
+      this.server.ip = server.serverIP;
+      this.server.port = server.serverPort;
       this.server.name = server.name;
       this.connected = false;
       this.auth = false;
@@ -190,17 +191,18 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       }
     },
 
-    changeServer: function(ip, port, name) {
+    changeServer: function(server) {
       var self = this;
 
-      ip = ip || "localhost";
-      port = port || 7777;
+      var ip = server.serverIP;
+      var port = server.serverPort;
+      var name = server.name;
 
       this.connected = false;
-      this.server.socket.removeListener('data', this.ServerHandleData);
-      this.server.socket.removeListener('error', this.ServerHandleError);
-      this.server.socket.destroy();
-      this.server.socket.removeListener('close', this.ServerHandleClose);
+      self.server.socket.removeListener('data', self.ServerHandleData);
+      self.server.socket.removeListener('error', self.ServerHandleError);
+      self.server.socket.destroy();
+      self.server.socket.removeListener('close', self.ServerHandleClose);
       self.server.socket = new net.Socket();
 
       //console.log("Connecting to " + ip + ":" + port);
