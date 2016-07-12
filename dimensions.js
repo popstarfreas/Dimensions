@@ -5,6 +5,7 @@ define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore'],
       self.id = 0;
       self.clients = [];
       self.servers = [];
+      self.serverCounts = [];
 
       self.interface = new Interface(self.handleCommand.bind(self));
 

@@ -3,7 +3,7 @@ define(function() {
     servers: [{
         listenPort: "7777",
         routingServers: [{
-          mame: "main",
+          name: "main",
           serverIP: "t.dark-gaming.com",
           serverPort: "7000",
         }, {
