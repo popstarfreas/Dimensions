@@ -1,4 +1,4 @@
-define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore'], function(ListenServer, Config, Client, Utils, Interface, _) {
+define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore', 'clientcommandhandler'], function(ListenServer, Config, Client, Utils, Interface, _, ClientCommandHandler) {
   var Dimensions = Class.extend({
     init: function() {
       var self = this;
