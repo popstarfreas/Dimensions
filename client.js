@@ -1,21 +1,54 @@
 define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'underscore'], function(Player, Utils, TerrariaServer, net, Config, PacketTypes, _) {
   var Client = Class.extend({
-    init: function(id, socket, server, serverCounts) {
+    init: function(id, socket, server, serverCounts, globalHandlers, servers) {
       this.ID = id;
+
+      // TerrariaServer information available for connecting to
+      this.servers = servers;
+
+      // The socket connection to the net server associated with this client
       this.socket = socket;
+
+      // The unformatted ip address for the current socket connection to the net server
       this.ip = socket.remoteAddress;
+
+      // This clients player object which can be used
+      // for storing inventory and other player information
       this.player = new Player();
+
+      // Current Server object from config
       this.currentServer = server;
+
+      // Global Handlers object whose contents may be updated (reloaded/refreshed)
+      this.globalHandlers = globalHandlers;
+
+      // TerrariaServer socket connection and packet handler
       this.server = new TerrariaServer(null, this);
       this.server.ip = server.serverIP;
       this.server.port = server.serverPort;
       this.server.name = server.name;
+
+      // Current connection state to TerrariaServer
       this.connected = false;
-      this.auth = false;
+
+      // Connection State
+      // 0 => Fresh Connection (Either at start of new socket or after 3)
+      // 1 => Finished Sending Inventory
+      // 2 => Connection to new server established (extra packet help required because of the actual clients state
+      //      being incapable of sending certain packets)
+      // 3 => Packet Help sent  Get Section/Request Sync [8] packet in response to world info [7], now waiting on Update Shield Strengths [101]
       this.state = 0;
+
+      // Incomplete packet from last data received. This is used because all packets are inspected
       this.bufferPacket = "";
+
+      // This is used to make the first connection to a TerrariaServer after receiving data
       this.initialConnectionAlreadyCreated = false;
+
+      // A boolean of whether the current client has made it in-game (they can see minimap, world, tiles, their inventory)
       this.ingame = false;
+
+      // The counts of all TerrariaServers available
       this.serverCounts = serverCounts;
 
       this.ServerHandleError = this.server.handleError.bind(this.server);
@@ -79,44 +112,11 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
               case 25:
                 var chatMessage = Utils.hex2a(data.substr(16));
                 var ip, port, serverName;
-                if (chatMessage.split(' ')[0].toString() === "/main") {
-                  handled = true;
-                  ip = Config.main.IP;
-                  port = Config.main.PORT;
-                  serverName = Config.main.name;
-                  self.sendChatMessage("Shifting to the Main Dimension", "FF0000");
-                  self.changeServer(ip, port, serverName);
-                  handled = true;
-                }
 
-                if (chatMessage.split(' ')[0].toString() === "/mirror") {
-                  handled = true;
-                  ip = Config.mirror.IP;
-                  port = Config.mirror.PORT;
-                  serverName = Config.mirror.name;
-                  self.sendChatMessage("Shifting to the Mirror Dimension", "FF0000");
-                  handled = true;
-                  self.changeServer(ip, port, serverName);
-                }
-
-                if (chatMessage.split(' ')[0].toString() === "/zombies") {
-                  handled = true;
-                  ip = Config.zombies.IP;
-                  port = Config.zombies.PORT;
-                  serverName = Config.zombies.name;
-                  self.sendChatMessage("Shifting to the Zombies Dimension", "FF0000");
-                  self.changeServer(ip, port, serverName);
-                  handled = true;
-                }
-
-                if (chatMessage.split(' ')[0].toString() === "/pvp") {
-                  handled = true;
-                  ip = Config.pvp.IP;
-                  port = Config.pvp.PORT;
-                  serverName = Config.pvp.name;
-                  self.sendChatMessage("Shifting to the PvP Dimension", "FF0000");
-                  self.changeServer(ip, port, serverName);
-                  handled = true;
+                // If command
+                if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
+                  var command = self.globalHandlers.parseCommand(chatMessage);
+                  handled = self.globalHandlers.command.handle(command.name.toLowerCase(), command.args, self);
                 }
                 break;
 
@@ -166,6 +166,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
     sendChatMessage: function(message, color) {
       if (message.length > 0) {
+        // Set default color to green if no color specified
         if (typeof color === "undefined") {
           color = "00ff00";
         }
@@ -173,11 +174,18 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
         var messageLength;
         try {
+          // Get HEX of the length of the message for use in the packet
           messageLength = (message.length).toString(16); // In HEX
+
+          // Ensure that the HEX string contains an even number of HEX digits
           if (messageLength.length % 2 !== 0) {
             messageLength = "0" + messageLength;
           }
+
+          // Determine packet length
           packetLength = (("00" + "0019ff" + color + messageLength + Utils.a2hex(message)).toString(16).length / 2).toString(16);
+
+          // Ensure packet length HEX contains an even number of HEX digits
           if (packetLength.length % 2 !== 0) {
             packetLength = "0" + packetLength;
           }
@@ -198,18 +206,33 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       var port = server.serverPort;
       var name = server.name;
 
+      // Client is now not connected to a server
       this.connected = false;
+
+      // Remove data and error listeners on TerrariaServer socket
       self.server.socket.removeListener('data', self.ServerHandleData);
       self.server.socket.removeListener('error', self.ServerHandleError);
+
+      // Close the TerrariaServer socket completely
       self.server.socket.destroy();
+
+      // Remove close listener now that socket has been closed and event was called
       self.server.socket.removeListener('close', self.ServerHandleClose);
+
+      // Start new socket
       self.server.socket = new net.Socket();
 
       //console.log("Connecting to " + ip + ":" + port);
+
+      // Update server information
       self.server.ip = ip;
       self.server.port = port;
       self.server.name = name;
+
+      // Increment server count
       self.serverCounts[self.server.name]++;
+
+      // Create connection
       self.server.socket.connect(parseInt(port), ip, function() {
         // Send Packet 1
         self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));

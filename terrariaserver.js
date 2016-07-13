@@ -27,9 +27,17 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
 
         // This is the incomplete packet carried over from last time
         var bufferPacket = this.bufferPacket;
+
+        // The combined packet info using buffer
         var entireData = bufferPacket + incompleteData;
+
+        // Get an array of packets from the entireData
         var entireDataInfo = Utils.getPacketsFromHexString(entireData);
+
+        // Update buffer packet to the new incomplete packet (if any)
         this.bufferPacket = entireDataInfo.bufferPacket;
+
+        // Inspect and handle each packet
         var packets = entireDataInfo.packets;
         _.each(packets, function(packet) {
           var data = packet.data;
@@ -45,18 +53,12 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
                   self.client.socket.destroy();
                 } else {
                   var dcReason = Utils.hex2a(data.substr(8));
-                  var message = "The server disconnected you. Reason Given: " + dcReason;
                   if (dcReason.length < 50) {
                     //self.socket.destroy();
                     //console.log(this);
                     var color = "ff0000"; // Red
-                    var message = "The server disconnected you. Reason Given: " + dcReason;
+                    var message = "[IMPORTANT] You were kicked from the Timeline: " + dcReason;
                     //console.log(entireData)
-                    self.client.sendChatMessage(message, color);
-
-
-                    color = "00ff00"; // Red
-                    message = "Returning you to the Portal Server.";
                     self.client.sendChatMessage(message, color);
                   }
                 }
@@ -119,10 +121,6 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
                   self.client.socket.write(clientData);
                 }
               }, 1000);
-
-              setTimeout(function() {
-
-              }, 2000);
             }
 
             if (packetType === 101) {
@@ -146,7 +144,7 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
       } catch(e) {
         console.log("handleClose Err: "+e);
       }
-      this.client.sendChatMessage("The Dimension you were in has encountered a paradox and is being destroyed.", "F00000");
+      this.client.sendChatMessage("The timeline you were in has collapsed.", "F00000");
       this.client.sendChatMessage("Specify a Dimension to travel to: /main, /mirror, /zombies, /pvp", "F00000");
     },
 
