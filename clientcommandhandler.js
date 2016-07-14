@@ -35,12 +35,11 @@
         case "ctg":
         case "ffa":
         case "tdm":
-        case "lms":
           if (client.currentServer.name !== "pvp") {
             if (client.servers.pvp) {
               routingInformation = {
-                type: "gametype",
-                gametype: args[0].toLowerCase()
+                type: 1,
+                info: args[0].toUpperCase()
               };
               client.sendChatMessage("Joining a " + args[0].toUpperCase() + " game.", "FF0000");
               client.changeServer(client.servers.pvp, routingInformation);
@@ -54,8 +53,8 @@
           if (client.currentServer.name !== "zombies") {
             if (client.servers.zombies) {
               routingInformation = {
-                type: "gametype",
-                gametype: "zombies"
+                type: 1,
+                info: "ZombieSurvival"
               };
               client.sendChatMessage("Joining the survivors in the Zombies Dimension.", "FF0000");
               client.changeServer(client.servers.pvp, routingInformation);

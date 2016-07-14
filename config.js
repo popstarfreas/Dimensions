@@ -1,6 +1,6 @@
 var Config = {
   servers: [{
-      listenPort: "7577",
+      listenPort: "3000",
       routingServers: [{
         name: "main",
         serverIP: "127.0.0.1",
@@ -21,8 +21,8 @@ var Config = {
       listenPort: "7776",
       routingServers: [{
         name: "pvp",
-        serverIP: "t.dark-gaming.com",
-        serverPort: "7001"
+        serverIP: "localhost",
+        serverPort: "7777"
       }]
     }
   ]

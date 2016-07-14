@@ -42,6 +42,10 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
         _.each(packets, function(packet) {
           var data = packet.data;
           var packetType = packet.packetType;
+
+          // Used for any sending we do manually
+          var packetData;
+
           //console.log(self.ip + ":" + self.port + " Server Packet [" + packetType + "]: " + (PacketTypes[packetType]));
           if (!skip) {
             if (PacketTypes[packetType]) {
@@ -75,15 +79,12 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
 
               // Send IP Address
               var ip = Utils.getProperIP(self.client.socket.remoteAddress);
-              var ipHex = Utils.a2hex(ip);
-              var ipLength = (ipHex.length / 2).toString(16); // byte length
-
-              // Length must be even
-              if (ipLength.length % 2 !== 0) {
-                ipLength = "0" + ipLength;
-              }
-              var packetData = "43" + ipLength + ipHex;
-              data = new Buffer(Utils.getPacketLengthFromData(packetData) + packetData, 'hex');
+              packetData = Utils.PacketFactory()
+                                .setType(67)
+                                .packInt16(0)
+                                .packString(ip)
+                                .data();
+              data = new Buffer(packetData, 'hex');
               self.socket.write(data);
             }
 
@@ -108,6 +109,16 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
                 //self.socket.write(clientData);
                 self.client.state = 3;
                 self.client.tellSelfToClearPlayers();
+                if (self.client.routingInformation !== null) {
+                  packetData = Utils.PacketFactory()
+                                        .setType(67)
+                                        .packInt16(self.client.routingInformation.type)
+                                        .packString(self.client.routingInformation.info)
+                                        .data();
+                  data = new Buffer(packetData, 'hex');
+                  self.socket.write(data);
+                  self.client.routingInformation = null;
+                }
               }
             }
 
@@ -143,9 +154,14 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
     },
 
     handleClose: function() {
-      console.log("TerrariaServer socket closed. ["+this.name+"]");
+      console.log("TerrariaServer socket closed. [" + this.name + "]");
       try {
-        this.client.serverCounts[this.name]--;
+        console.log("[" + this.name + ": " + this.client.serverCounts[this.name] + "]");
+        if (this.client.countIncremented) {
+          this.client.serverCounts[this.name]--;
+          this.client.countIncremented = false;
+        }
+        console.log("[" + this.name + ": " + this.client.serverCounts[this.name] + "]");
       } catch (e) {
         console.log("handleClose Err: " + e);
       }
@@ -158,9 +174,9 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
 
       if (!this.client.wasKicked) {
         this.client.sendChatMessage("The timeline you were in has collapsed.", "00BFFF");
-        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: "+dimensionsList, "00BFFF");
-      } else {        
-        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: "+dimensionsList, "00BFFF");
+        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
+      } else {
+        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
         this.client.wasKicked = false;
       }
     },

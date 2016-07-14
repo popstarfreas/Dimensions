@@ -52,6 +52,13 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // This is set to false again after the close handler has been run
       this.wasKicked = false;
 
+      // Information to the server about a type of join (gamemode)
+      this.routingInformation = null;
+
+      // Whether or not count was incremented
+      // this will be turned off when we minus from count
+      this.countIncremented = false;
+
       // The counts of all TerrariaServers available
       this.serverCounts = serverCounts;
 
@@ -124,6 +131,11 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
                 }
                 break;
 
+              case 67:
+                // Client cannot send 67 (It's used by Dimensions to communicate special info)
+                handled = true;
+                break;
+
               case 68:
                 clientUUID = encodedData;
                 break;
@@ -152,6 +164,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           this.server.socket = new net.Socket();
 
           this.server.socket.connect(self.server.port, self.server.ip, function() {
+            self.countIncremented = true;
             self.serverCounts[self.server.name]++;
             self.connected = true;
 
@@ -174,36 +187,24 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         if (typeof color === "undefined") {
           color = "00ff00";
         }
-        color = color.toLowerCase();
 
         var messageLength;
         try {
-          // Get HEX of the length of the message for use in the packet
-          messageLength = (message.length).toString(16); // In HEX
-
-          // Ensure that the HEX string contains an even number of HEX digits
-          if (messageLength.length % 2 !== 0) {
-            messageLength = "0" + messageLength;
-          }
-
-          // Determine packet length
-          packetLength = (("00" + "0019ff" + color + messageLength + Utils.a2hex(message)).toString(16).length / 2).toString(16);
-
-          // Ensure packet length HEX contains an even number of HEX digits
-          if (packetLength.length % 2 !== 0) {
-            packetLength = "0" + packetLength;
-          }
-
-          var msg = new Buffer(packetLength + "0019ff" + color + messageLength + Utils.a2hex(message), 'hex');
+          var packetData = Utils.PacketFactory()
+                                .setType(25)
+                                .packByte(255)
+                                .packHex(color)
+                                .packString(message)
+                                .data();
+          var msg = new Buffer(packetData, 'hex');
           this.socket.write(msg);
         } catch (e) {
           console.log(e);
-          console.log(packetLength + "0019ff" + color + messageLength + Utils.a2hex(message));
         }
       }
     },
 
-    changeServer: function(server) {
+    changeServer: function(server, routingInformation) {
       var self = this;
 
       var ip = server.serverIP;
@@ -217,11 +218,13 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       self.server.socket.removeListener('data', self.ServerHandleData);
       self.server.socket.removeListener('error', self.ServerHandleError);
 
+      console.log(self.server.name + " socket is being closed");
       // Close the TerrariaServer socket completely
       self.server.socket.destroy();
 
       // Remove close listener now that socket has been closed and event was called
       self.server.socket.removeListener('close', self.ServerHandleClose);
+      console.log(self.server.name + " socket was closed");
 
       // Start new socket
       self.server.socket = new net.Socket();
@@ -236,10 +239,14 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // Create connection
       self.server.socket.connect(parseInt(port), ip, function() {
         // Increment server count
+        self.countIncremented = true;
         self.serverCounts[self.server.name]++;
 
         // Send Packet 1
         self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
+        if (typeof routingInformation !== 'undefined') {
+          self.routingInformation = routingInformation;
+        }
         self.state = 2;
         self.connected = true;
       });

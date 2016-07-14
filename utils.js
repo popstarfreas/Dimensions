@@ -109,6 +109,84 @@ define(['path', 'util'], function(path, util) {
       return { bufferPacket: bufferPacket, packets: packets };
     },
 
+    PacketFactory: function() {
+      this.packetData = "0000";
+
+      this.setType = function(type) {
+        var typeHex = (type).toString(16);
+        // Length must be even
+        if (typeHex.length % 2 !== 0) {
+          typeHex = "0" + typeHex;
+        }
+
+        this.packetData = this.packetData.substr(0, 4) + typeHex + this.packetData.substr(6);
+        this.updateLength();
+        return this;
+      };
+
+      this.packString = function(str) {
+        var strHex = Utils.a2hex(str);
+        var strHexLength = (strHex.length / 2).toString(16);
+        // Length must be even
+        if (strHexLength.length % 2 !== 0) {
+          strHexLength = "0" + strHexLength;
+        }
+
+        this.packetData += strHexLength + strHex;
+        this.updateLength();
+        return this;
+      };
+
+      this.packHex = function(hex) {
+        this.packetData += hex;
+        this.updateLength();
+        return this;
+      };
+
+      this.packByte = function(int) {
+        // 2 hex digits
+        var intHex = (int).toString(16);
+        if (intHex.length !== 2) {
+          for (var j = intHex.length; j < 2; j++) {
+            intHex = "0" + intHex;
+          }
+        }
+
+        this.packetData += intHex;
+        this.updateLength();
+        return this;
+      };
+
+      this.packInt16 = function(int) {
+        // 4 hex digits
+        var intHex = (int).toString(16);
+        if (intHex.length !== 4) {
+          for (var j = intHex.length; j < 4; j++) {
+            intHex = "0" + intHex;
+          }
+        }
+
+
+        // Reverse byte order
+        firstByte = intHex.substr(0, 2);
+        secondByte = intHex.substr(2, 2);
+        intHex = secondByte + firstByte;
+        this.packetData += intHex;
+        this.updateLength();
+        return this;
+      };
+
+      this.updateLength = function() {
+        this.packetData = Utils.getPacketLengthFromData(this.packetData.substr(4)) + this.packetData.substr(4);
+      };
+
+      this.data = function() {
+        return this.packetData;
+      };
+
+      return this;
+    },
+
     _invalidateRequireCacheForFile: function(filePath, require) {
       var realPath = path.resolve(filePath);
       delete require.cache[realPath];
