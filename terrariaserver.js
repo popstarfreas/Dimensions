@@ -11,6 +11,7 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
         y: 0
       };
       this.bufferPacket = "";
+      this.afterClosed = null;
     },
 
     handleData: function(encodedData) {
@@ -80,10 +81,10 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
               // Send IP Address
               var ip = Utils.getProperIP(self.client.socket.remoteAddress);
               packetData = Utils.PacketFactory()
-                                .setType(67)
-                                .packInt16(0)
-                                .packString(ip)
-                                .data();
+                .setType(67)
+                .packInt16(0)
+                .packString(ip)
+                .data();
               data = new Buffer(packetData, 'hex');
               self.socket.write(data);
             }
@@ -111,10 +112,10 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
                 self.client.tellSelfToClearPlayers();
                 if (self.client.routingInformation !== null) {
                   packetData = Utils.PacketFactory()
-                                        .setType(67)
-                                        .packInt16(self.client.routingInformation.type)
-                                        .packString(self.client.routingInformation.info)
-                                        .data();
+                    .setType(67)
+                    .packInt16(self.client.routingInformation.type)
+                    .packString(self.client.routingInformation.info)
+                    .data();
                   data = new Buffer(packetData, 'hex');
                   self.socket.write(data);
                   self.client.routingInformation = null;
@@ -154,30 +155,33 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
     },
 
     handleClose: function() {
-      console.log("TerrariaServer socket closed. [" + this.name + "]");
+      //console.log("TerrariaServer socket closed. [" + this.name + "]");
       try {
-        console.log("[" + this.name + ": " + this.client.serverCounts[this.name] + "]");
         if (this.client.countIncremented) {
           this.client.serverCounts[this.name]--;
           this.client.countIncremented = false;
         }
-        console.log("[" + this.name + ": " + this.client.serverCounts[this.name] + "]");
       } catch (e) {
         console.log("handleClose Err: " + e);
       }
 
-      var dimensionsList = "";
-      var dimensionNames = _.keys(this.client.servers);
-      for (var i = 0; i < dimensionNames.length; i++) {
-        dimensionsList += (i > 0 ? ", " : " ") + "/" + dimensionNames[i];
-      }
-
-      if (!this.client.wasKicked) {
-        this.client.sendChatMessage("The timeline you were in has collapsed.", "00BFFF");
-        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
+      if (this.afterClosed !== null) {
+        this.afterClosed(this.client);
+        this.afterClosed = null;
       } else {
-        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
-        this.client.wasKicked = false;
+        var dimensionsList = "";
+        var dimensionNames = _.keys(this.client.servers);
+        for (var i = 0; i < dimensionNames.length; i++) {
+          dimensionsList += (i > 0 ? ", " : " ") + "/" + dimensionNames[i];
+        }
+
+        if (!this.client.wasKicked) {
+          this.client.sendChatMessage("The timeline you were in has collapsed.", "00BFFF");
+          this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
+        } else {
+          this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
+          this.client.wasKicked = false;
+        }
       }
     },
 

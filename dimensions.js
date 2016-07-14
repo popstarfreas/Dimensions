@@ -24,19 +24,27 @@ define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore', 
           }
         }
 
-        setInterval(function() {
-          var serverKeys = _.keys(self.servers);
-          var info = "";
-          for (var i = 0; i < serverKeys.length; i++) {
-            info += "[" + serverKeys[i] + ": " + self.serverCounts[serverKeys[i]] + "] ";
-          }
-          console.log(info);
-        }, 5000);
+        /*setInterval(function() {
+          self.printServerCounts();
+        }, 5000);*/
+      },
+
+      printServerCounts: function() {
+        var self = this;
+        var serverKeys = _.keys(self.servers);
+        var info = "";
+        for (var i = 0; i < serverKeys.length; i++) {
+          info += "[" + serverKeys[i] + ": " + self.serverCounts[serverKeys[i]] + "] ";
+        }
+        console.log(info);
       },
 
       handleCommand: function(cmd) {
         var self = this;
         switch (cmd) {
+          case "players":
+            self.printServerCounts();
+            break;
           case "reload":
             try {
               Config = Utils.requireNoCache('./config.js', self.nativeRequire);
@@ -79,7 +87,7 @@ define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore', 
                 self.servers[Config.servers[serversIndex].routingServers[j].name] = Config.servers[serversIndex].routingServers[j];
               }
             }
-            console.log("\033[33mReloaded Config.\033[37m");    
+            console.log("\033[33mReloaded Config.\033[37m");
             break;
           case "reloadcmds":
             try {
@@ -88,7 +96,7 @@ define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore', 
             } catch (e) {
               console.log("Error loading Command Handler: " + e);
             }
-            console.log("\033[33mReloaded Command Handler.\033[37m");    
+            console.log("\033[33mReloaded Command Handler.\033[37m");
             break;
         }
       }

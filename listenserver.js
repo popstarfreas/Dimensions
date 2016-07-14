@@ -103,7 +103,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       socket.on('close', function() {
         try {
           if (socket && socket.remoteAddress) {
-            console.log("Client: " + Utils.getProperIP(socket.remoteAddress) + " disconnected [" + client.currentServer.name + ": " + (self.serversClientCounts[client.currentServer.name]) + "]");
+            console.log("Client: " + Utils.getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (self.serversClientCounts[client.server.name]) + "]");
           } else {
             console.log("Client [" + client.ID + "] with unknown IP closed.");
           }

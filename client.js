@@ -16,9 +16,6 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // for storing inventory and other player information
       this.player = new Player();
 
-      // Current Server object from config
-      this.currentServer = server;
-
       // Global Handlers object whose contents may be updated (reloaded/refreshed)
       this.globalHandlers = globalHandlers;
 
@@ -191,11 +188,11 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         var messageLength;
         try {
           var packetData = Utils.PacketFactory()
-                                .setType(25)
-                                .packByte(255)
-                                .packHex(color)
-                                .packString(message)
-                                .data();
+            .setType(25)
+            .packByte(255)
+            .packHex(color)
+            .packString(message)
+            .data();
           var msg = new Buffer(packetData, 'hex');
           this.socket.write(msg);
         } catch (e) {
@@ -218,42 +215,42 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       self.server.socket.removeListener('data', self.ServerHandleData);
       self.server.socket.removeListener('error', self.ServerHandleError);
 
-      console.log(self.server.name + " socket is being closed");
       // Close the TerrariaServer socket completely
       self.server.socket.destroy();
 
-      // Remove close listener now that socket has been closed and event was called
-      self.server.socket.removeListener('close', self.ServerHandleClose);
-      console.log(self.server.name + " socket was closed");
+      self.server.afterClosed = function(self) {
+        // Remove close listener now that socket has been closed and event was called
+        self.server.socket.removeListener('close', self.ServerHandleClose);
 
-      // Start new socket
-      self.server.socket = new net.Socket();
+        // Start new socket
+        self.server.socket = new net.Socket();
 
-      //console.log("Connecting to " + ip + ":" + port);
+        //console.log("Connecting to " + ip + ":" + port);
 
-      // Update server information
-      self.server.ip = ip;
-      self.server.port = port;
-      self.server.name = name;
+        // Update server information
+        self.server.ip = ip;
+        self.server.port = port;
+        self.server.name = name;
 
-      // Create connection
-      self.server.socket.connect(parseInt(port), ip, function() {
-        // Increment server count
-        self.countIncremented = true;
-        self.serverCounts[self.server.name]++;
+        // Create connection
+        self.server.socket.connect(parseInt(port), ip, function() {
+          // Increment server count
+          self.countIncremented = true;
+          self.serverCounts[self.server.name]++;
 
-        // Send Packet 1
-        self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
-        if (typeof routingInformation !== 'undefined') {
-          self.routingInformation = routingInformation;
-        }
-        self.state = 2;
-        self.connected = true;
-      });
+          // Send Packet 1
+          self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
+          if (typeof routingInformation !== 'undefined') {
+            self.routingInformation = routingInformation;
+          }
+          self.state = 2;
+          self.connected = true;
+        });
 
-      self.server.socket.on('data', self.ServerHandleData);
-      self.server.socket.on('close', self.ServerHandleClose);
-      self.server.socket.on('error', self.ServerHandleError);
+        self.server.socket.on('data', self.ServerHandleData);
+        self.server.socket.on('close', self.ServerHandleClose);
+        self.server.socket.on('error', self.ServerHandleError);
+      };
     },
 
     tellSelfToClearPlayers: function() {
@@ -300,9 +297,10 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
     },
 
     handleClose: function() {
-      console.log("Client Socket Closed.");
+      //console.log("Client Socket Closed.");
       if (this.server.socket && typeof this.server.socket.destroy === 'function') {
         this.server.socket.destroy();
+        this.server.socket.handleClose = function() {};
       }
     },
   });
