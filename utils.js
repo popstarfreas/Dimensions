@@ -1,4 +1,4 @@
-define(function() {
+define(['path', 'util'], function(path, util) {
   var Utils = {
     hex2a: function(hexx) {
       var hex = hexx.toString(); //force conversion
@@ -19,7 +19,7 @@ define(function() {
 
       // Must have even number of hex digits
       if (builtString.length % 2 !== 0) {
-        builtString = "0"+builtString;
+        builtString = "0" + builtString;
       }
       return builtString;
     },
@@ -35,7 +35,7 @@ define(function() {
     getProperIP: function(ip) {
       var IPFromRequest = ip;
       var indexOfColon = IPFromRequest.lastIndexOf(':');
-      var IP = IPFromRequest.substring(indexOfColon+1,IPFromRequest.length);
+      var IP = IPFromRequest.substring(indexOfColon + 1, IPFromRequest.length);
       return IP;
     },
 
@@ -108,6 +108,16 @@ define(function() {
 
       return { bufferPacket: bufferPacket, packets: packets };
     },
+
+    _invalidateRequireCacheForFile: function(filePath, require) {
+      var realPath = path.resolve(filePath);
+      delete require.cache[realPath];
+    },
+
+    requireNoCache: function(filePath, require) {
+      Utils._invalidateRequireCacheForFile(filePath, require);
+      return require(filePath);
+    }
   };
 
   return Utils;

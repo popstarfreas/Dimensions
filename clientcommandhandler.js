@@ -1,5 +1,4 @@
-define([], function() {
-  var ClientCommandHandler = Class.extend({
+  var ClientCommandHandler = {
     init: function() {
 
     },
@@ -9,7 +8,7 @@ define([], function() {
       preargs.shift();
       var args = preargs;
       var name = message.substr(1, message.split(' ')[0].length - 1);
-      return { name: command, args: args };
+      return { name: name, args: args };
     },
 
     handle: function(command, args, client) {
@@ -75,7 +74,13 @@ define([], function() {
 
       return handled;
     }
-  });
+  };
 
-  return ClientCommandHandler;
-});
+  if (typeof define !== 'undefined') {
+    define(['lib/class'], function(Class) {
+      return Class.extend(ClientCommandHandler);
+    });
+  } else {
+  	var Class = require('./lib/class.js');
+    module.exports = (Class.extend(ClientCommandHandler));
+  }

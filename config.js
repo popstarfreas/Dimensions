@@ -1,41 +1,37 @@
-define(function() {
-  var Config = {
-    servers: [{
-        listenPort: "7777",
-        routingServers: [{
-          id: 0,
-          name: "main",
-          serverIP: "t.dark-gaming.com",
-          serverPort: "7000",
-        }, {
-          id: 1,
-          name: "mirror",
-          serverIP: "gm.dark-gaming.com",
-          serverPort: "3000",
-        }]
-      },
+var Config = {
+  servers: [{
+      listenPort: "7577",
+      routingServers: [{
+        name: "main",
+        serverIP: "127.0.0.1",
+        serverPort: "7777",
+      }]
+    },
 
-      {
-        listenPort: "7779",
-        routingServers: [{
-          id: 2,
-          name: "zombies",
-          serverIP: "gm.dark-gaming.com",
-          serverPort: "7777"
-        }]
-      },
+    {
+      listenPort: "7779",
+      routingServers: [{
+        name: "zombies",
+        serverIP: "gm.dark-gaming.com",
+        serverPort: "7777"
+      }]
+    },
 
-      {
-        listenPort: "7776",
-        routingServers: [{
-          id: 3,
-          name: "pvp",
-          serverIP: "t.dark-gaming.com",
-          serverPort: "7001"
-        }]
-      }
-    ]
-  };
+    {
+      listenPort: "7776",
+      routingServers: [{
+        name: "pvp",
+        serverIP: "t.dark-gaming.com",
+        serverPort: "7001"
+      }]
+    }
+  ]
+};
 
-  return Config;
-});
+if (typeof define !== 'undefined') {
+  define(function() {
+    return Config;
+  });
+} else {
+  module.exports = Config;
+}

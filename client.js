@@ -48,6 +48,10 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // A boolean of whether the current client has made it in-game (they can see minimap, world, tiles, their inventory)
       this.ingame = false;
 
+      // A boolean indicating that the socket was closed because the client was booted from the TerrariaServers
+      // This is set to false again after the close handler has been run
+      this.wasKicked = false;
+
       // The counts of all TerrariaServers available
       this.serverCounts = serverCounts;
 
@@ -115,7 +119,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
                 // If command
                 if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
-                  var command = self.globalHandlers.parseCommand(chatMessage);
+                  var command = self.globalHandlers.command.parseCommand(chatMessage);
                   handled = self.globalHandlers.command.handle(command.name.toLowerCase(), command.args, self);
                 }
                 break;
@@ -147,8 +151,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           this.initialConnectionAlreadyCreated = true;
           this.server.socket = new net.Socket();
 
-          self.serverCounts[self.server.name]++;
           this.server.socket.connect(self.server.port, self.server.ip, function() {
+            self.serverCounts[self.server.name]++;
             self.connected = true;
 
             // Write the data the client sent us to the now connected server
@@ -229,11 +233,11 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       self.server.port = port;
       self.server.name = name;
 
-      // Increment server count
-      self.serverCounts[self.server.name]++;
-
       // Create connection
       self.server.socket.connect(parseInt(port), ip, function() {
+        // Increment server count
+        self.serverCounts[self.server.name]++;
+
         // Send Packet 1
         self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
         self.state = 2;

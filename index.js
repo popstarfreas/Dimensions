@@ -12,5 +12,5 @@ requirejs.config({
 });
 
 requirejs(['dimensions'], function(Dimensions) {
-  var dimensions = new Dimensions();
+  var dimensions = new Dimensions(require);
 });

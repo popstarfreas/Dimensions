@@ -56,10 +56,14 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
                   if (dcReason.length < 50) {
                     //self.socket.destroy();
                     //console.log(this);
-                    var color = "ff0000"; // Red
-                    var message = "[IMPORTANT] You were kicked from the Timeline: " + dcReason;
+                    var color = "C8FF00"; // shitty green
+                    var message = "[Dimensional Alert]";
                     //console.log(entireData)
                     self.client.sendChatMessage(message, color);
+                    self.client.sendChatMessage(dcReason, color);
+                    self.client.wasKicked = true;
+                    self.socket.destroy();
+                    self.client.connected = false;
                   }
                 }
               }
@@ -139,19 +143,32 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
     },
 
     handleClose: function() {
+      console.log("TerrariaServer socket closed. ["+this.name+"]");
       try {
         this.client.serverCounts[this.name]--;
-      } catch(e) {
-        console.log("handleClose Err: "+e);
+      } catch (e) {
+        console.log("handleClose Err: " + e);
       }
-      this.client.sendChatMessage("The timeline you were in has collapsed.", "F00000");
-      this.client.sendChatMessage("Specify a Dimension to travel to: /main, /mirror, /zombies, /pvp", "F00000");
+
+      var dimensionsList = "";
+      var dimensionNames = _.keys(this.client.servers);
+      for (var i = 0; i < dimensionNames.length; i++) {
+        dimensionsList += (i > 0 ? ", " : " ") + "/" + dimensionNames[i];
+      }
+
+      if (!this.client.wasKicked) {
+        this.client.sendChatMessage("The timeline you were in has collapsed.", "00BFFF");
+        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: "+dimensionsList, "00BFFF");
+      } else {        
+        this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: "+dimensionsList, "00BFFF");
+        this.client.wasKicked = false;
+      }
     },
 
     handleError: function(error) {
       //console.log(this.ip + ":" + this.port + " " + this.name);
       //this.client.changeServer(Config.IP, Config.PORT);
-      console.log("TerrariaServer Socket: " + error);
+      console.log("TerrariaServer Socket Error: " + error);
       this.socket.destroy();
       this.client.connected = false;
     }
