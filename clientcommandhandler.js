@@ -42,7 +42,7 @@
                 info: args[0].toUpperCase()
               };
               client.sendChatMessage("Joining a " + args[0].toUpperCase() + " game.", "FF0000");
-              client.changeServer(client.servers.pvp, routingInformation);
+              client.changeServer(client.servers.pvp, {routingInformation: routingInformation});
             } else {
               client.sendChatMessage(args[0].toUpperCase() + " is currently in an inaccessible Dimension. Maybe try later.", "FF0000");
             }
@@ -57,7 +57,7 @@
                 info: "ZombieSurvival"
               };
               client.sendChatMessage("Joining the survivors in the Zombies Dimension.", "FF0000");
-              client.changeServer(client.servers.pvp, routingInformation);
+              client.changeServer(client.servers.pvp, {routingInformation: routingInformation});
             } else {
               client.sendChatMessage("Zombies is currently in an inaccessible Dimension. Maybe try later.", "FF0000");
             }

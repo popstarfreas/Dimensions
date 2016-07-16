@@ -17,7 +17,6 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
     handleData: function(encodedData) {
       try {
         var self = this;
-        var handled = false;
         var incompleteData = Utils.hex2str(encodedData);
         //console.log(entireData);
 
@@ -38,9 +37,13 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
         // Update buffer packet to the new incomplete packet (if any)
         this.bufferPacket = entireDataInfo.bufferPacket;
 
+        // The hex string of the allowed packets to send to the client
+        var allowedPackets = "";
+
         // Inspect and handle each packet
         var packets = entireDataInfo.packets;
         _.each(packets, function(packet) {
+          var handled = false;
           var data = packet.data;
           var packetType = packet.packetType;
 
@@ -134,7 +137,10 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
               setTimeout(function() {
                 if (self.client && self.client.socket) {
                   self.socket.write(clientData);
-                  self.client.socket.write(clientData);
+
+                  if (!self.client.preventSpawnOnJoin) {
+                    self.client.socket.write(clientData);
+                  }
                 }
               }, 1000);
             }
@@ -143,14 +149,37 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
               self.client.ingame = true;
             }
 
+            if (packetType === 67) {
+              // The server sent information for Dimensions, not the client
+              self.handleDirectInformation(packet.data);
+              handled = true;
+            }
+          }
+
+          if (!handled) {
+            allowedPackets += packet.data;
           }
         });
 
-        if (!handled) {
-          this.client.socket.write(encodedData);
+        if (allowedPackets.length > 0) {
+          this.client.socket.write(new Buffer(allowedPackets, "hex"));
         }
       } catch (e) {
-        console.log("Handled Data Error: " + e);
+        console.log("TS Handle Data Error: " + e);
+      }
+    },
+
+    handleDirectInformation: function(data) {
+      var reader = Utils.ReadPacketFactory(data);
+      var messageType = reader.readInt16();
+      var messageContent = reader.readString();
+
+      // Switch server
+      if (messageType == 2) {
+        if (this.client.servers[messageContent.toLowerCase()]) {
+          this.client.sendChatMessage("Shifting to the " + messageContent + " Dimension", "FF0000");
+          this.client.changeServer(this.client.servers[messageContent.toLowerCase()], {preventSpawnOnJoin: true});
+        }
       }
     },
 
@@ -167,7 +196,6 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
 
       if (this.afterClosed !== null) {
         this.afterClosed(this.client);
-        this.afterClosed = null;
       } else {
         var dimensionsList = "";
         var dimensionNames = _.keys(this.client.servers);

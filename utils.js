@@ -187,6 +187,41 @@ define(['path', 'util'], function(path, util) {
       return this;
     },
 
+    ReadPacketFactory: function(data) {
+      // Store data after length and type
+      this.packetData = data.substr(6);
+      this.type = parseInt(data.substr(4, 2), 16);
+
+      this.readInt16 = function() {
+        // Read bytes
+        var firstByte = this.packetData.substr(2, 2);
+        var secondByte = this.packetData.substr(0, 2);
+
+        // Convert to int
+        var number = parseInt(firstByte+secondByte, 16);
+
+        // Chop of read data
+        this.packetData = this.packetData.substr(4);
+
+        return number;
+      };
+
+      this.readString = function() {
+        // Read string length
+        var strLength = parseInt(this.packetData.substr(0, 2), 16)*2;
+
+        // Read string content using length
+        var strContent = Utils.hex2a(this.packetData.substr(2, strLength));
+
+        // Chop  read data
+        this.packetData = this.packetData.substr(2+strLength);
+
+        return strContent;
+      };
+
+      return this;
+    },
+
     _invalidateRequireCacheForFile: function(filePath, require) {
       var realPath = path.resolve(filePath);
       delete require.cache[realPath];

@@ -201,12 +201,18 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       }
     },
 
-    changeServer: function(server, routingInformation) {
+    changeServer: function(server, options) {
       var self = this;
 
       var ip = server.serverIP;
       var port = server.serverPort;
       var name = server.name;
+
+      if (typeof options.preventSpawnOnJoin !== 'undefined') {
+        self.preventSpawnOnJoin = options.preventSpawnOnJoin;
+      } else {
+        self.preventSpawnOnJoin = false;
+      }
 
       // Client is now not connected to a server
       this.connected = false;
@@ -215,10 +221,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       self.server.socket.removeListener('data', self.ServerHandleData);
       self.server.socket.removeListener('error', self.ServerHandleError);
 
-      // Close the TerrariaServer socket completely
-      self.server.socket.destroy();
-
       self.server.afterClosed = function(self) {
+        self.server.afterClosed = null;
         // Remove close listener now that socket has been closed and event was called
         self.server.socket.removeListener('close', self.ServerHandleClose);
 
@@ -240,8 +244,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
           // Send Packet 1
           self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
-          if (typeof routingInformation !== 'undefined') {
-            self.routingInformation = routingInformation;
+          if (typeof options.routingInformation !== 'undefined') {
+            self.routingInformation = options.routingInformation;
           }
           self.state = 2;
           self.connected = true;
@@ -251,6 +255,14 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         self.server.socket.on('close', self.ServerHandleClose);
         self.server.socket.on('error', self.ServerHandleError);
       };
+
+      // Close the TerrariaServer socket completely
+      if (!self.server.socket.destroyed) {
+          self.server.socket.destroy();
+          self.server.afterClosed(self);
+      } else {
+        self.server.afterClosed(self);
+      }
     },
 
     tellSelfToClearPlayers: function() {
