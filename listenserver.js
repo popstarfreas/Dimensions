@@ -32,7 +32,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       var chosenServer = null;
       var currentServerCount = null;
       for (var i = 0; i < self.routingServers.length; i++) {
-        if (currentServerCount === null || currentServerCount < self.serversClientCounts[self.routingServers[i].name]) {
+        if (currentServerCount === null || self.serversClientCounts[self.routingServers[i].name] < currentServerCount) {
           chosenServer = self.routingServers[i];
           currentServerCount = self.serversClientCounts[self.routingServers[i].name];
         }
@@ -54,7 +54,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
 
     shutdown: function() {
       var self = this;
-      console.log("\033[33mServer on " + self.port + " is now shutting down.\033[37m");
+      console.log("\033[33m["+process.pid+"] Server on " + self.port + " is now shutting down.\033[37m");
       for (var i = 0; i < self.clients.length; i++) {
         self.clients[i].server.socket.removeListener('data', self.clients[i].ServerHandleData);
         self.clients[i].server.socket.removeListener('error', self.clients[i].ServerHandleError);
@@ -69,14 +69,14 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
 
     handleStart: function() {
       var self = this;
-      console.log("\033[32mServer on " + self.port + " started.\033[37m");
+      console.log("\033[32m["+process.pid+"] Server on " + self.port + " started.\033[37m");
     },
 
     handleSocket: function(socket) {
       var self = this;
       var chosenServer = self.chooseServer();
       if (socket && socket.remoteAddress) {
-        console.log("Client: " + Utils.getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (self.serversClientCounts[chosenServer.name] + 1) + "]");
+        console.log("["+process.pid+"] Client: " + Utils.getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (self.serversClientCounts[chosenServer.name] + 1) + "]");
       } else {
         console.log("Unknown client");
       }
@@ -103,7 +103,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       socket.on('close', function() {
         try {
           if (socket && socket.remoteAddress) {
-            console.log("Client: " + Utils.getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (self.serversClientCounts[client.server.name]) + "]");
+            console.log("["+process.pid+"] Client: " + Utils.getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (self.serversClientCounts[client.server.name]) + "]");
           } else {
             console.log("Client [" + client.ID + "] with unknown IP closed.");
           }

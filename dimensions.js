@@ -1,5 +1,5 @@
-define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore', 'clientcommandhandler'],
-  function(ListenServer, Config, Client, Utils, Interface, _, ClientCommandHandler) {
+define(['redis', 'listenserver', 'config', 'client', 'utils', 'interface', 'underscore', 'clientcommandhandler'],
+  function(redis, ListenServer, Config, Client, Utils, Interface, _, ClientCommandHandler) {
     var Dimensions = Class.extend({
       init: function(nativeRequire) {
         var self = this;
@@ -12,7 +12,19 @@ define(['listenserver', 'config', 'client', 'utils', 'interface', 'underscore', 
           command: new ClientCommandHandler()
         };
 
-        self.interface = new Interface(self.handleCommand.bind(self));
+        self.redisClient = redis.createClient();
+        self.redisClient.subscribe('dimensions_cli');
+        self.redisClient.on('message', function(channel, message) {
+          if (channel === "dimensions_cli") {
+            self.handleCommand(message);
+          }
+        });
+        self.redisClient.on('error', function(err) {
+          console.log("RedisError: "+err);
+        });
+
+
+        //self.interface = new Interface(self.handleCommand.bind(self));
 
         var listenKey;
         for (var i = 0; i < Config.servers.length; i++) {
