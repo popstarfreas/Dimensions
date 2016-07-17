@@ -127,7 +127,7 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
             }
 
             if (packetType === 101 && self.client.state === 3) {
-              self.client.state = 0;
+              self.client.state = 1;
               clientData = new Buffer("08000c" + self.client.player.idHex + self.spawn.x + self.spawn.y, 'hex');
               self.socket.write(clientData);
               //console.log("Client Packet [12]: Spawn Player [By Relay]");

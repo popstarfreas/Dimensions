@@ -29,8 +29,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       this.connected = false;
 
       // Connection State
-      // 0 => Fresh Connection (Either at start of new socket or after 3)
-      // 1 => Finished Sending Inventory
+      // 0 => Fresh Connection
+      // 1 => Finished Sending Inventory / Completed Server switch
       // 2 => Connection to new server established (extra packet help required because of the actual clients state
       //      being incapable of sending certain packets)
       // 3 => Packet Help sent  Get Section/Request Sync [8] packet in response to world info [7], now waiting on Update Shield Strengths [101]
@@ -58,6 +58,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
       // The counts of all TerrariaServers available
       this.serverCounts = serverCounts;
+
+      this.preventSpawnOnJoin = false;
 
       this.ServerHandleError = this.server.handleError.bind(this.server);
       this.ServerHandleData = this.server.handleData.bind(this.server);
@@ -116,6 +118,15 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
                   self.state = 1;
                 }
                 break;
+
+              // Update Item Owner
+              case 22:
+                  // Prevent this being sent unless state is 1
+                  // this prevents issues with joining
+                  if (self.client.state !== 1) {
+                    handled = true;
+                  }
+                  break;
                 // Chat
               case 25:
                 var chatMessage = Utils.hex2a(data.substr(16));
@@ -208,7 +219,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       var port = server.serverPort;
       var name = server.name;
 
-      if (typeof options.preventSpawnOnJoin !== 'undefined') {
+      if (typeof options !== 'undefined' && options.preventSpawnOnJoin !== 'undefined') {
         self.preventSpawnOnJoin = options.preventSpawnOnJoin;
       } else {
         self.preventSpawnOnJoin = false;
@@ -244,7 +255,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
           // Send Packet 1
           self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
-          if (typeof options.routingInformation !== 'undefined') {
+          if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
             self.routingInformation = options.routingInformation;
           }
           self.state = 2;
@@ -259,7 +270,6 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // Close the TerrariaServer socket completely
       if (!self.server.socket.destroyed) {
           self.server.socket.destroy();
-          self.server.afterClosed(self);
       } else {
         self.server.afterClosed(self);
       }
@@ -275,6 +285,81 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         playerID = (i).toString(16);
         if (playerID.length % 2 !== 0) {
           playerID = "0" + playerID;
+        }
+
+        prePacketLength = ((playerID.length + 4) / 2).toString(16);
+        if (prePacketLength.length !== 4) {
+          for (var j = prePacketLength.length; j < 4; j++) {
+            prePacketLength = "0" + prePacketLength;
+          }
+        }
+
+        // Assign hex packet length
+        packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
+
+        // Ensure it takes up 4 hex digits
+        if (packetLength.length !== 4) {
+          for (var j = packetLength.length; j < 4; j++) {
+            packetLength = "0" + packetLength;
+          }
+        }
+
+        // Reverse byte order
+        firstByte = packetLength.substr(0, 2);
+        secondByte = packetLength.substr(2, 2);
+        packetLength = secondByte + firstByte + packetLength.substr(4);
+
+        packet = packetLength + "0e" + playerID + "00";
+        this.socket.write(new Buffer(packet, 'hex'));
+      }
+    },
+
+    tellSelfToClearNPCs: function() {
+      var packet;
+      var playerID, firstByte, secondByte, packetLength, prePacketLength;
+      for (var i = 0; i < 255; i++) {
+        if (i === this.player.id)
+          continue;
+
+        playerID = (i).toString(16);
+        if (playerID.length % 2 !== 0) {
+          playerID = "0" + playerID;
+        }
+
+        prePacketLength = ((playerID.length + 4) / 2).toString(16);
+        if (prePacketLength.length !== 4) {
+          for (var j = prePacketLength.length; j < 4; j++) {
+            prePacketLength = "0" + prePacketLength;
+          }
+        }
+
+        // Assign hex packet length
+        packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
+
+        // Ensure it takes up 4 hex digits
+        if (packetLength.length !== 4) {
+          for (var j = packetLength.length; j < 4; j++) {
+            packetLength = "0" + packetLength;
+          }
+        }
+
+        // Reverse byte order
+        firstByte = packetLength.substr(0, 2);
+        secondByte = packetLength.substr(2, 2);
+        packetLength = secondByte + firstByte + packetLength.substr(4);
+
+        packet = packetLength + "0e" + playerID + "00";
+        this.socket.write(new Buffer(packet, 'hex'));
+      }
+    },
+
+    tellSelfToClearItems: function() {
+      var packet;
+      var playerID, firstByte, secondByte, packetLength, prePacketLength;
+      for (var i = 0; i < 400; i++) {
+        itemID = (i).toString(16);
+        if (itemID.length % 2 !== 0) {
+          itemID = "0" + itemID;
         }
 
         prePacketLength = ((playerID.length + 4) / 2).toString(16);
