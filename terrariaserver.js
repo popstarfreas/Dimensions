@@ -146,7 +146,12 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
         self.socket.write(new Buffer(getSection, 'hex'));
 
         self.client.state = 3;
+        
+        // TODO: It might be worth only clearing objects
+        //       that we know to exist (by watching packets)
         self.client.tellSelfToClearPlayers();
+        self.client.tellSelfToClearNPCs();
+        self.client.tellSelfToClearItems();
 
         // Routing Information for Warpplate entry
         if (self.client.routingInformation !== null) {

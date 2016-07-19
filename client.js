@@ -307,116 +307,56 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
     },
 
     tellSelfToClearPlayers: function() {
-      var packet;
-      var playerID, firstByte, secondByte, packetLength, prePacketLength;
-      for (var i = 0; i < 255; i++) {
-        if (i === this.player.id)
+      var playerActive;
+      for (var playerID = 0; playerID < 255; playerID++) {
+        if (playerID === this.player.id)
           continue;
 
-        playerID = (i).toString(16);
-        if (playerID.length % 2 !== 0) {
-          playerID = "0" + playerID;
-        }
-
-        prePacketLength = ((playerID.length + 4) / 2).toString(16);
-        if (prePacketLength.length !== 4) {
-          for (var j = prePacketLength.length; j < 4; j++) {
-            prePacketLength = "0" + prePacketLength;
-          }
-        }
-
-        // Assign hex packet length
-        packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
-
-        // Ensure it takes up 4 hex digits
-        if (packetLength.length !== 4) {
-          for (var j = packetLength.length; j < 4; j++) {
-            packetLength = "0" + packetLength;
-          }
-        }
-
-        // Reverse byte order
-        firstByte = packetLength.substr(0, 2);
-        secondByte = packetLength.substr(2, 2);
-        packetLength = secondByte + firstByte + packetLength.substr(4);
-
-        packet = packetLength + "0e" + playerID + "00";
-        this.socket.write(new Buffer(packet, 'hex'));
+        playerActive = Utils.PacketFactory()
+          .setType(PacketTypes.PlayerActive)
+          .packByte(playerID)
+          .packByte(0) // Active
+          .data();
+        this.socket.write(new Buffer(playerActive, 'hex'));
       }
     },
 
     tellSelfToClearNPCs: function() {
-      var packet;
-      var playerID, firstByte, secondByte, packetLength, prePacketLength;
-      for (var i = 0; i < 255; i++) {
-        if (i === this.player.id)
-          continue;
-
-        playerID = (i).toString(16);
-        if (playerID.length % 2 !== 0) {
-          playerID = "0" + playerID;
-        }
-
-        prePacketLength = ((playerID.length + 4) / 2).toString(16);
-        if (prePacketLength.length !== 4) {
-          for (var j = prePacketLength.length; j < 4; j++) {
-            prePacketLength = "0" + prePacketLength;
-          }
-        }
-
-        // Assign hex packet length
-        packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
-
-        // Ensure it takes up 4 hex digits
-        if (packetLength.length !== 4) {
-          for (var j = packetLength.length; j < 4; j++) {
-            packetLength = "0" + packetLength;
-          }
-        }
-
-        // Reverse byte order
-        firstByte = packetLength.substr(0, 2);
-        secondByte = packetLength.substr(2, 2);
-        packetLength = secondByte + firstByte + packetLength.substr(4);
-
-        packet = packetLength + "0e" + playerID + "00";
-        this.socket.write(new Buffer(packet, 'hex'));
+      var updateNPC;
+      for (var npcID = 0; npcID < 200; npcID++) {
+        updateNPC = Utils.PacketFactory()
+          .setType(PacketTypes.NPCUpdate)
+          .packInt16(npcID)
+          .packSingle(0) // PositionX
+          .packSingle(0) // PositionY
+          .packSingle(0) // VelocityX
+          .packSingle(0) // VelocityY
+          .packByte(0) // Target
+          .packByte(0) // Flags
+          .packInt16(0) // NPC NetID
+          .packInt32(0) // Life
+          .packByte(0)
+          .data();
+        this.socket.write(new Buffer(updateNPC, 'hex'));
       }
     },
 
     tellSelfToClearItems: function() {
-      var packet;
-      var playerID, firstByte, secondByte, packetLength, prePacketLength;
-      for (var i = 0; i < 400; i++) {
-        itemID = (i).toString(16);
-        if (itemID.length % 2 !== 0) {
-          itemID = "0" + itemID;
-        }
-
-        prePacketLength = ((playerID.length + 4) / 2).toString(16);
-        if (prePacketLength.length !== 4) {
-          for (var j = prePacketLength.length; j < 4; j++) {
-            prePacketLength = "0" + prePacketLength;
-          }
-        }
-
-        // Assign hex packet length
-        packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
-
-        // Ensure it takes up 4 hex digits
-        if (packetLength.length !== 4) {
-          for (var j = packetLength.length; j < 4; j++) {
-            packetLength = "0" + packetLength;
-          }
-        }
-
-        // Reverse byte order
-        firstByte = packetLength.substr(0, 2);
-        secondByte = packetLength.substr(2, 2);
-        packetLength = secondByte + firstByte + packetLength.substr(4);
-
-        packet = packetLength + "0e" + playerID + "00";
-        this.socket.write(new Buffer(packet, 'hex'));
+      var updateItemDrop;
+      for (var itemID = 0; itemID < 400; itemID++) {
+        updateItemDrop = Utils.PacketFactory()
+          .setType(PacketTypes.UpdateItemDrop)
+          .packInt16(itemID)
+          .packSingle(0) // PositionX
+          .packSingle(0) // PositionY
+          .packSingle(0) // VelocityX
+          .packSingle(0) // VelocityY
+          .packInt16(0) // Stacks
+          .packByte(0) // Prefix
+          .packByte(0) // NoDelay
+          .packInt16(0)
+          .data();
+        this.socket.write(new Buffer(updateItemDrop, 'hex'));
       }
     },
 
