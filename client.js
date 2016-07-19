@@ -232,7 +232,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         }
 
         var packetData = Utils.PacketFactory()
-          .setType(25)
+          .setType(PacketTypes.ChatMessage)
           .packByte(255)
           .packHex(color)
           .packString(message)
