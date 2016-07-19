@@ -230,6 +230,22 @@ define(['path', 'util'], function(path, util) {
         return number;
       };
 
+      this.readInt16 = function() {
+        // Read bytes
+        var firstByte = this.packetData.substr(6, 2);
+        var secondByte = this.packetData.substr(4, 2);
+        var thirdByte = this.packetData.substr(2, 2);
+        var fourthByte = this.packetData.substr(0, 2);
+
+        // Convert to int
+        var number = parseInt(firstByte + secondByte + thirdByte + fourthByte, 16);
+
+        // Chop of read data
+        this.packetData = this.packetData.substr(8);
+
+        return number;
+      };
+
       this.readString = function() {
         // Read string length
         var strLength = parseInt(this.packetData.substr(0, 2), 16)*2;
