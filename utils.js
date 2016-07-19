@@ -176,6 +176,30 @@ define(['path', 'util'], function(path, util) {
         return this;
       };
 
+      this.packInt32 = function(int) {
+        if (int < 0) {
+          int = 4294967295;
+        }
+
+        var intHex = (int).toString(16);
+        if (intHex.length !== 8) {
+          for (var j = intHex.length; j < 8; j++) {
+            intHex = "0" + intHex;
+          }
+        }
+
+
+        // Reverse byte order
+        firstByte = intHex.substr(0, 2);
+        secondByte = intHex.substr(2, 2);
+        thirdByte = intHex.substr(4, 2);
+        fourthByte = intHex.substr(6, 2);
+        intHex = fourthByte + thirdByte + secondByte + firstByte;
+        this.packetData += intHex;
+        this.updateLength();
+        return this;
+      };
+
       this.updateLength = function() {
         this.packetData = Utils.getPacketLengthFromData(this.packetData.substr(4)) + this.packetData.substr(4);
       };
