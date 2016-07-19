@@ -168,8 +168,8 @@ define(['path', 'util'], function(path, util) {
 
 
         // Reverse byte order
-        firstByte = intHex.substr(0, 2);
-        secondByte = intHex.substr(2, 2);
+        var firstByte = intHex.substr(0, 2);
+        var secondByte = intHex.substr(2, 2);
         intHex = secondByte + firstByte;
         this.packetData += intHex;
         this.updateLength();
@@ -190,13 +190,29 @@ define(['path', 'util'], function(path, util) {
 
 
         // Reverse byte order
-        firstByte = intHex.substr(0, 2);
-        secondByte = intHex.substr(2, 2);
-        thirdByte = intHex.substr(4, 2);
-        fourthByte = intHex.substr(6, 2);
+        var firstByte = intHex.substr(0, 2);
+        var secondByte = intHex.substr(2, 2);
+        var thirdByte = intHex.substr(4, 2);
+        var fourthByte = intHex.substr(6, 2);
         intHex = fourthByte + thirdByte + secondByte + firstByte;
         this.packetData += intHex;
         this.updateLength();
+        return this;
+      };
+      
+      this.packSingle = function(float) {
+        var tempBuffer = new Buffer(4);
+        tempBuffer.writeFloatLE(float, 0);
+        var single = tempBuffer.toString('hex');
+        this.packetData += single;
+        this.updateLength();
+        return this;
+      },
+
+      this.packColor = function(r, g, b) {
+        this.packByte(r);
+        this.packByte(g);
+        this.packByte(b);
         return this;
       };
 
@@ -268,7 +284,7 @@ define(['path', 'util'], function(path, util) {
 
         return strContent;
       };
-      
+
       return this;
     },
 
@@ -280,6 +296,12 @@ define(['path', 'util'], function(path, util) {
     requireNoCache: function(filePath, require) {
       Utils._invalidateRequireCacheForFile(filePath, require);
       return require(filePath);
+    },
+
+    Math: {
+      getRandomInt: function(min, max) {
+        return Math.floor(Math.random() * ((max+1) - min)) + min;
+      }
     }
   };
 
