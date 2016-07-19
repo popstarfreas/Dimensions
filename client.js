@@ -109,8 +109,6 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
                   self.setName(name);
                 }
                 break;
-              case 5:
-                break;
               case 6:
               case 9:
                 if (self.state === 0) {
@@ -123,7 +121,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
               case 22:
                   // Prevent this being sent unless state is 1
                   // this prevents issues with joining
-                  if (self.client.state !== 1) {
+                  if (self.state !== 1) {
                     handled = true;
                   }
                   break;
@@ -254,6 +252,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           self.serverCounts[self.server.name]++;
 
           // Send Packet 1
+          // This needs to be changed; it should not be hardcoded data
           self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
           if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
             self.routingInformation = options.routingInformation;
