@@ -100,7 +100,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
             }
             var handled = false;
             switch (packetType) {
-              case 4:
+              case PacketTypes.PlayerInfo:
                 var nameLength = parseInt(data.substr(12, 2), 16);
                 if (self.name === null) {
                   // Take the appropriate hex chars out of the packet
@@ -109,8 +109,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
                   self.setName(name);
                 }
                 break;
-              case 6:
-              case 9:
+              case PacketTypes.ContinueConnecting2:
+              case PacketTypes.Status:
                 if (self.state === 0) {
                   // Finished sending inventory
                   self.state = 1;
@@ -118,7 +118,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
                 break;
 
               // Update Item Owner
-              case 22:
+              case PacketTypes.UpdateItemOwner:
                   // Prevent this being sent unless state is 1
                   // this prevents issues with joining
                   if (self.state !== 1) {
@@ -126,7 +126,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
                   }
                   break;
                 // Chat
-              case 25:
+              case PacketTypes.ChatMessage:
                 var chatMessage = Utils.hex2a(data.substr(16));
                 var ip, port, serverName;
 
@@ -137,12 +137,12 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
                 }
                 break;
 
-              case 67:
+              case PacketTypes.DimensionsUpdate:
                 // Client cannot send 67 (It's used by Dimensions to communicate special info)
                 handled = true;
                 break;
 
-              case 68:
+              case PacketTypes.ClientUUID:
                 clientUUID = encodedData;
                 break;
             }

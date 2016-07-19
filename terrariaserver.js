@@ -95,7 +95,7 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
             var pT;
             var clientData;
             if (self.client.state === 2) {
-              if (packetType === 7) {
+              if (packetType === PacketTypes.WorldInfo) {
                 self.spawn.x = data.substr(26, 4);
                 self.spawn.y = data.substr(28, 4);
                 clientData = new Buffer("0b0008ffffffffffffffff", 'hex');
