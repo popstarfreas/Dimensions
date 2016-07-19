@@ -40,7 +40,7 @@ define(['path', 'util'], function(path, util) {
     },
 
     getPacketLengthFromData: function(hexStr) {
-      prePacketLength = (hexStr.length / 2).toString(16);
+      var prePacketLength = (hexStr.length / 2).toString(16);
       if (prePacketLength.length !== 4) {
         for (var j = prePacketLength.length; j < 4; j++) {
           prePacketLength = "0" + prePacketLength;
@@ -48,7 +48,7 @@ define(['path', 'util'], function(path, util) {
       }
 
       // Assign hex packet length
-      packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
+      var packetLength = (prePacketLength.length / 2 + parseInt(prePacketLength, 16)).toString(16);
 
       // Ensure it takes up 4 hex digits
       if (packetLength.length !== 4) {
@@ -58,9 +58,9 @@ define(['path', 'util'], function(path, util) {
       }
 
       // Reverse byte order
-      firstByte = packetLength.substr(0, 2);
-      secondByte = packetLength.substr(2, 2);
-      packetLength = secondByte + firstByte + packetLength.substr(4);
+      var firstByte = packetLength.substr(0, 2);
+      var secondByte = packetLength.substr(2, 2);
+      var packetLength = secondByte + firstByte + packetLength.substr(4);
 
       return packetLength;
     },
