@@ -216,21 +216,31 @@ define(['path', 'util'], function(path, util) {
       this.packetData = data.substr(6);
       this.type = parseInt(data.substr(4, 2), 16);
 
+      this.readByte = function() {
+        // Read byte and convert to int
+        var number = parseInt(this.packetData.substr(0, 2), 16);
+
+        // Chop off read data
+        this.packetData = this.packetData.substr(2);
+
+        return number;
+      };
+
       this.readInt16 = function() {
         // Read bytes
         var firstByte = this.packetData.substr(2, 2);
         var secondByte = this.packetData.substr(0, 2);
 
         // Convert to int
-        var number = parseInt(firstByte+secondByte, 16);
+        var number = parseInt(firstByte + secondByte, 16);
 
-        // Chop of read data
+        // Chop off read data
         this.packetData = this.packetData.substr(4);
 
         return number;
       };
 
-      this.readInt16 = function() {
+      this.readInt32 = function() {
         // Read bytes
         var firstByte = this.packetData.substr(6, 2);
         var secondByte = this.packetData.substr(4, 2);
@@ -240,7 +250,7 @@ define(['path', 'util'], function(path, util) {
         // Convert to int
         var number = parseInt(firstByte + secondByte + thirdByte + fourthByte, 16);
 
-        // Chop of read data
+        // Chop off read data
         this.packetData = this.packetData.substr(8);
 
         return number;
@@ -248,17 +258,17 @@ define(['path', 'util'], function(path, util) {
 
       this.readString = function() {
         // Read string length
-        var strLength = parseInt(this.packetData.substr(0, 2), 16)*2;
+        var strLength = parseInt(this.packetData.substr(0, 2), 16) * 2;
 
         // Read string content using length
         var strContent = Utils.hex2a(this.packetData.substr(2, strLength));
 
-        // Chop  read data
-        this.packetData = this.packetData.substr(2+strLength);
+        // Chop off read data
+        this.packetData = this.packetData.substr(2 + strLength);
 
         return strContent;
       };
-
+      
       return this;
     },
 
