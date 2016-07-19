@@ -181,9 +181,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           break;
       }
 
-      if (!handled) {
-        return packet.data;
-      }
+      return !handled ? packet.data : "";
     },
 
     /* Start Packet Handlers */
