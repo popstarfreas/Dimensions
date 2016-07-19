@@ -18,12 +18,6 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
       try {
         var self = this;
         var incompleteData = Utils.hex2str(encodedData);
-        //console.log(entireData);
-
-        if (this.bufferPacket.length > 0) {
-          //console.log("Used bufferPacket");
-        }
-        var skip = false;
 
         // This is the incomplete packet carried over from last time
         var bufferPacket = this.bufferPacket;
@@ -43,134 +37,161 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
         // Inspect and handle each packet
         var packets = entireDataInfo.packets;
         _.each(packets, function(packet) {
-          var handled = false;
-          var data = packet.data;
-          var packetType = packet.packetType;
-
-          // Used for any sending we do manually
-          var packetData;
-
-          //console.log(self.ip + ":" + self.port + " Server Packet [" + packetType + "]: " + (PacketTypes[packetType]));
-          if (!skip) {
-            if (PacketTypes[packetType]) {
-              //console.log(hex);
-              if (packetType == 2) {
-                handled = true;
-                if (!self.client.ingame) {
-                  self.client.socket.write(new Buffer(packet.data, 'hex'));
-                  self.client.socket.destroy();
-                } else {
-                  var dcReason = Utils.hex2a(data.substr(8));
-                  if (dcReason.length < 50) {
-                    //self.socket.destroy();
-                    //console.log(this);
-                    var color = "C8FF00"; // shitty green
-                    var message = "[Dimensional Alert]";
-                    //console.log(entireData)
-                    self.client.sendChatMessage(message, color);
-                    self.client.sendChatMessage(dcReason, color);
-                    self.client.wasKicked = true;
-                    self.socket.destroy();
-                    self.client.connected = false;
-                  }
-                }
-              }
-            }
-
-            if (packetType === 3) {
-              self.client.player.id = parseInt(data.substr(6, 2), 16);
-              self.client.player.idHex = data.substr(6, 2);
-
-              // Send IP Address
-              var ip = Utils.getProperIP(self.client.socket.remoteAddress);
-              packetData = Utils.PacketFactory()
-                .setType(67)
-                .packInt16(0)
-                .packString(ip)
-                .data();
-              data = new Buffer(packetData, 'hex');
-              self.socket.write(data);
-            }
-
-            var pT;
-            var clientData;
-            if (self.client.state === 2) {
-              if (packetType === PacketTypes.WorldInfo) {
-                self.spawn.x = data.substr(26, 4);
-                self.spawn.y = data.substr(28, 4);
-                clientData = new Buffer("0b0008ffffffffffffffff", 'hex');
-                self.socket.write(clientData);
-                //console.log("Client Packet [8]: Get Section/Request Sync [By Relay]");
-                //LogClientPacket(clientData);
-
-
-                //setTimeout(function() {
-                //  clientData = new Buffer("0e 00 41 04 " + self.playerID + " 00 98 83 47 00 40 7c 46", 'hex');
-                //  self.client.socket.write(clientData);
-                //}.bind(this), 5000);
-
-                //clientData = new Buffer("00002cFF0000000100", 'hex');
-                //self.socket.write(clientData);
-                self.client.state = 3;
-                self.client.tellSelfToClearPlayers();
-                if (self.client.routingInformation !== null) {
-                  packetData = Utils.PacketFactory()
-                    .setType(67)
-                    .packInt16(self.client.routingInformation.type)
-                    .packString(self.client.routingInformation.info)
-                    .data();
-                  data = new Buffer(packetData, 'hex');
-                  self.socket.write(data);
-                  self.client.routingInformation = null;
-                }
-              }
-            }
-
-            if (packetType === 101 && self.client.state === 3) {
-              self.client.state = 1;
-              clientData = new Buffer("08000c" + self.client.player.idHex + self.spawn.x + self.spawn.y, 'hex');
-              self.socket.write(clientData);
-              //console.log("Client Packet [12]: Spawn Player [By Relay]");
-              //console.log(self.ip + ":" + self.port + " Server Packet [12]: Spawn Player [By Relay]");
-
-              //self.client.tellSelfToClearNPCs();
-              setTimeout(function() {
-                if (self.client && self.client.socket) {
-                  self.socket.write(clientData);
-
-                  if (!self.client.preventSpawnOnJoin) {
-                    self.client.socket.write(clientData);
-                  }
-                }
-              }, 1000);
-            }
-
-            if (packetType === 101) {
-              self.client.ingame = true;
-            }
-
-            if (packetType === 67) {
-              // The server sent information for Dimensions, not the client
-              self.handleDirectInformation(packet.data);
-              handled = true;
-            }
-          }
-
-          if (!handled) {
-            allowedPackets += packet.data;
-          }
+          allowedPackets += self.handlePacket(packet);
         });
 
         if (allowedPackets.length > 0) {
           this.client.socket.write(new Buffer(allowedPackets, "hex"));
         }
-      } catch (e) {
+      }
+      catch (e) {
         console.log("TS Handle Data Error: " + e);
       }
     },
 
-    handleDirectInformation: function(data) {
-      var reader = Utils.ReadPacketFactory(data);
+    handlePacket: function(packet) {
+      var self = this;
+      var handled = false;
+      var packetType = packet.packetType;
+
+      switch (packetType) {
+        case PacketTypes.Disconnect:
+          handled = self.handleDisconnect(packet);
+          break;
+
+        case PacketTypes.ContinueConnecting:
+          handled = self.handleContinueConnecting(packet);
+          break;
+
+        case PacketTypes.WorldInfo:
+          handled = self.handleWorldInfo(packet);
+          break;
+
+        case PacketTypes.UpdateShieldStrengths:
+          handled = self.handleUpdateShieldStrengths(packet);
+          break;
+
+        case PacketTypes.DimensionsUpdate:
+          handled = self.handleDimensionsUpdate(packet);
+          break;
+
+        default:
+          break;
+      }
+      
+      return !handled ? packet.data : "";
+    },
+
+    /* Start Packet Handlers */
+    handleDisconnect: function(packet) {
+      var self = this;
+      if (!self.client.ingame) {
+        self.client.socket.write(new Buffer(packet.data, 'hex'));
+        self.client.socket.destroy();
+      }
+      else {
+        var reader = Utils.ReadPacketFactory(packet.data);
+        var dcReason = reader.readString();
+        if (dcReason.length < 50) {
+          var color = "C8FF00"; // shitty green
+          var message = "[Dimensional Alert]";
+          self.client.sendChatMessage(message, color);
+          self.client.sendChatMessage(dcReason, color);
+          self.client.wasKicked = true;
+          self.client.connected = false;
+          self.socket.destroy();
+        }
+      }
+
+      return true;
+    },
+
+    handleContinueConnecting: function(packet) {
+      var self = this;
+      var reader = Utils.ReadPacketFactory(packet.data);
+      self.client.player.id = reader.readByte();
+
+      // Send IP Address
+      var ip = Utils.getProperIP(self.client.socket.remoteAddress);
+      var packetData = Utils.PacketFactory()
+        .setType(PacketTypes.DimensionsUpdate)
+        .packInt16(0)
+        .packString(ip)
+        .data();
+      var data = new Buffer(packetData, 'hex');
+      self.socket.write(data);
+
+      return false;
+    },
+
+    handleWorldInfo: function(packet) {
+      var self = this;
+      if (self.client.state === 2) {
+        var reader = Utils.ReadPacketFactory(packet.data);
+        reader.readInt32(); // Time
+        reader.readByte(); // Day&MoonInfo
+        reader.readByte(); // Moon Phase
+        reader.readInt16(); // MaxTilesX
+        reader.readInt16(); // MaxTilesY
+        self.spawn.x = reader.readInt16();
+        self.spawn.y = reader.readInt16();
+
+        // In future it would be better to check if they used a warpplate
+        // so the tile section is where they came through instead of spawn
+        var getSection = Utils.PacketFactory()
+          .setType(PacketTypes.GetSectionOrRequestSync)
+          .packSingle(-1)
+          .packSingle(-1)
+          .data();
+        self.socket.write(new Buffer(getSection, 'hex'));
+
+        self.client.state = 3;
+        self.client.tellSelfToClearPlayers();
+
+        // Routing Information for Warpplate entry
+        if (self.client.routingInformation !== null) {
+          var dimensionsUpdate = Utils.PacketFactory()
+            .setType(PacketTypes.DimensionsUpdate)
+            .packInt16(self.client.routingInformation.type)
+            .packString(self.client.routingInformation.info)
+            .data();
+          self.socket.write(new Buffer(dimensionsUpdate, 'hex'));
+          self.client.routingInformation = null;
+        }
+      }
+
+      return false;
+    },
+
+    handleUpdateShieldStrengths: function(packet) {
+      var self = this;
+      if (self.client.state === 3) {
+        self.client.state = 1;
+        var spawnPlayer = Utils.PacketFactory()
+          .setType(PacketTypes.SpawnPlayer)
+          .packByte(self.client.player.id)
+          .packInt16(self.spawn.x)
+          .packInt16(self.spawn.y)
+          .data();
+
+        setTimeout(function sendSpawnPlayer() {
+          if (self.client && self.client.socket) {
+            self.socket.write(new Buffer(spawnPlayer, 'hex'));
+
+            if (!self.client.preventSpawnOnJoin) {
+              self.client.socket.write(new Buffer(spawnPlayer, 'hex'));
+            }
+          }
+        }, 1000);
+      }
+
+      self.client.ingame = true;
+
+      return false;
+    },
+
+    handleDimensionsUpdate: function(packet) {
+      var reader = Utils.ReadPacketFactory(packet.data);
       var messageType = reader.readInt16();
       var messageContent = reader.readString();
 
@@ -178,10 +199,16 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
       if (messageType == 2) {
         if (this.client.servers[messageContent.toLowerCase()]) {
           this.client.sendChatMessage("Shifting to the " + messageContent + " Dimension", "FF0000");
-          this.client.changeServer(this.client.servers[messageContent.toLowerCase()], {preventSpawnOnJoin: true});
+          this.client.changeServer(this.client.servers[messageContent.toLowerCase()], {
+            preventSpawnOnJoin: true
+          });
         }
       }
+
+      return true;
     },
+
+    /* End Packet Handlers */
 
     handleClose: function() {
       //console.log("TerrariaServer socket closed. [" + this.name + "]");
@@ -190,13 +217,15 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
           this.client.serverCounts[this.name]--;
           this.client.countIncremented = false;
         }
-      } catch (e) {
+      }
+      catch (e) {
         console.log("handleClose Err: " + e);
       }
 
       if (this.afterClosed !== null) {
         this.afterClosed(this.client);
-      } else {
+      }
+      else {
         var dimensionsList = "";
         var dimensionNames = _.keys(this.client.servers);
         for (var i = 0; i < dimensionNames.length; i++) {
@@ -206,7 +235,8 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
         if (!this.client.wasKicked) {
           this.client.sendChatMessage("The timeline you were in has collapsed.", "00BFFF");
           this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
-        } else {
+        }
+        else {
           this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
           this.client.wasKicked = false;
         }
