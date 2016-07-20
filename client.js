@@ -126,7 +126,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
             self.connected = true;
 
             // Write the data the client sent us to the now connected server
-            self.server.socket.write(encodedData);
+            self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
+            //self.server.socket.write(encodedData);
           });
 
           this.server.socket.on('data', this.ServerHandleData);
