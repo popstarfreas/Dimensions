@@ -115,7 +115,7 @@ define(['utils', 'config', 'packettypes', 'underscore'], function(Utils, Config,
       var ip = Utils.getProperIP(self.client.socket.remoteAddress);
       var packetData = Utils.PacketFactory()
         .setType(PacketTypes.DimensionsUpdate)
-        .packInt16(0)
+        .packInt16(0) // Type
         .packString(ip)
         .data();
       var data = new Buffer(packetData, 'hex');
