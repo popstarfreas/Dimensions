@@ -60,7 +60,7 @@ define(['path', 'util'], function(path, util) {
       // Reverse byte order
       var firstByte = packetLength.substr(0, 2);
       var secondByte = packetLength.substr(2, 2);
-      var packetLength = secondByte + firstByte + packetLength.substr(4);
+      packetLength = secondByte + firstByte + packetLength.substr(4);
 
       return packetLength;
     },
@@ -207,7 +207,7 @@ define(['path', 'util'], function(path, util) {
         this.packetData += single;
         this.updateLength();
         return this;
-      },
+      };
 
       this.packColor = function(r, g, b) {
         this.packByte(r);
@@ -265,6 +265,20 @@ define(['path', 'util'], function(path, util) {
 
         // Convert to int
         var number = parseInt(firstByte + secondByte + thirdByte + fourthByte, 16);
+
+        // Chop off read data
+        this.packetData = this.packetData.substr(8);
+
+        return number;
+      };
+
+      this.readSingle = function() {
+        // Get hex string
+        var hex = this.packetData.substr(0, 8);
+
+        // Use buffer to read Float
+        var buf = new Buffer(hex, 'hex');
+        var number = buf.readFloatLE(0);
 
         // Chop off read data
         this.packetData = this.packetData.substr(8);
