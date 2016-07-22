@@ -1,9 +1,10 @@
 define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client) {
   var ListenServer = Class.extend({
-    init: function(info, serverCounts, globalHandlers, servers) {
+    init: function(info, serverCounts, globalHandlers, servers, options) {
       var self = this;
       self.clients = [];
       self.servers = servers;
+      self.options = options;
       self.serverCounts = serverCounts;
       self.port = info.listenPort;
       self.routingServers = info.routingServers;
@@ -81,7 +82,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
         console.log("Unknown client");
       }
 
-      var client = new Client(self.id++, socket, chosenServer, self.serversClientCounts, self.globalHandlers, self.servers);
+      var client = new Client(self.id++, socket, chosenServer, self.serversClientCounts, self.globalHandlers, self.servers, self.options);
       self.clients.push(client);
 
       socket.on('data', function(data) {

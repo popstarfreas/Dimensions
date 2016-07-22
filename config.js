@@ -25,7 +25,12 @@ var Config = {
         serverPort: "7777"
       }]
     }
-  ]
+  ],
+
+  options: {
+    fakeVersion: false,
+    fakeVersionNum: 169
+  }
 };
 
 if (typeof define !== 'undefined') {

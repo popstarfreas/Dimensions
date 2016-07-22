@@ -1,7 +1,10 @@
-define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'underscore'], function(Player, Utils, TerrariaServer, net, Config, PacketTypes, _) {
+define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'underscore', 'clientpackethandler'], function(Player, Utils, TerrariaServer, net, Config, PacketTypes, _, ClientPacketHandler) {
   var Client = Class.extend({
-    init: function(id, socket, server, serverCounts, globalHandlers, servers) {
+    init: function(id, socket, server, serverCounts, globalHandlers, servers, options) {
       this.ID = id;
+
+      // Options from the config
+      this.options = options;
 
       // TerrariaServer information available for connecting to
       this.servers = servers;
@@ -67,6 +70,8 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       this.ServerHandleError = this.server.handleError.bind(this.server);
       this.ServerHandleData = this.server.handleData.bind(this.server);
       this.ServerHandleClose = this.server.handleClose.bind(this.server);
+
+      this.packetHandler = this.globalHandlers.clientPacketHandler;
     },
 
     setName: function(name) {
@@ -102,20 +107,18 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         if (this.initialConnectionAlreadyCreated) {
           var allowedData = "";
           _.each(packets, function(packet) {
-            allowedData += self.handlePacket(packet);
+            allowedData += self.packetHandler.handlePacket(self, packet);
           });
 
           // Send allowedData to the server if the client is connected to one
           if (allowedData.length > 0 && this.connected) {
             if (this.server.socket) {
               this.server.socket.write(new Buffer(allowedData, 'hex'));
-            }
-            else {
+            } else {
               this.sendChatMessage("Are you even connected?", "ff0000");
             }
           }
-        }
-        else {
+        } else {
           // Connect to the server for the first time
           this.initialConnectionAlreadyCreated = true;
           this.server.socket = new net.Socket();
@@ -126,102 +129,25 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
             self.connected = true;
 
             // Write the data the client sent us to the now connected server
-            self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
-            //self.server.socket.write(encodedData);
+            if (self.options.fakeVersion) {
+              var packet = Utils.PacketFactory()
+                .setType(1)
+                .packString("Terraria" + self.options.fakeVersionNum)
+                .data();
+              self.server.socket.write(new Buffer(packet, "hex"));
+            } else {
+              self.server.socket.write(encodedData);
+            }
           });
 
           this.server.socket.on('data', this.ServerHandleData);
           this.server.socket.on('close', this.ServerHandleClose);
           this.server.socket.on('error', this.ServerHandleError);
         }
-      }
-      catch (e) {
+      } catch (e) {
         console.log("Client Handle Send Data Error: " + e);
       }
     },
-
-    handlePacket: function(packet) {
-      var self = this;
-      var packetType = packet.packetType;
-      var handled = false;
-
-      switch (packetType) {
-        case PacketTypes.PlayerInfo:
-          handled = self.handlePlayerInfo(packet);
-          break;
-
-          // Either will be sent, but not both
-        case PacketTypes.ContinueConnecting2:
-        case PacketTypes.Status:
-          if (self.state === 0) {
-            // Finished sending inventory
-            self.state = 1;
-          }
-          break;
-
-        case PacketTypes.UpdateItemOwner:
-          // Prevent this being sent unless state is 1
-          // this prevents issues with joining while items
-          // are next to the player on the past server
-          if (self.state !== 1) {
-            handled = true;
-          }
-          break;
-
-        case PacketTypes.ChatMessage:
-          handled = self.handleChatMessage(packet);
-          break;
-
-        case PacketTypes.DimensionsUpdate:
-          // Client cannot send 67 (It's used by Dimensions to communicate special info)
-          handled = true;
-          break;
-
-        case PacketTypes.ClientUUID:
-          handled = self.handleClientUUID(packet);
-          break;
-      }
-
-      return !handled ? packet.data : "";
-    },
-
-    /* Start Packet Handlers */
-    handlePlayerInfo: function(packet) {
-      var self = this;
-      var nameLength = parseInt(packet.data.substr(12, 2), 16);
-      if (self.name === null) {
-        // Take the appropriate hex chars out of the packet
-        // then convert them to ascii
-        var name = Utils.hex2a(packet.data.substr(14, nameLength * 2));
-        self.setName(name);
-      }
-
-      return false;
-    },
-
-    handleChatMessage: function(packet) {
-      var self = this;
-      var handled = false;
-      var chatMessage = Utils.hex2a(packet.data.substr(16));
-
-      // If chat message is a commandcommand
-      if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
-        var command = self.globalHandlers.command.parseCommand(chatMessage);
-        handled = self.globalHandlers.command.handle(command.name.toLowerCase(), command.args, self);
-      }
-
-      return handled;
-    },
-
-    handleClientUUID: function(packet) {
-      var self = this;
-      var reader = Utils.ReadPacketFactory(packet.data);
-      self.clientUUID = reader.readString();
-
-      return false;
-    },
-
-    /* End Packet Handlers */
 
     sendChatMessage: function(message, color) {
       if (message.length > 0) {
@@ -250,8 +176,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
       if (typeof options !== 'undefined' && options.preventSpawnOnJoin !== 'undefined') {
         self.preventSpawnOnJoin = options.preventSpawnOnJoin;
-      }
-      else {
+      } else {
         self.preventSpawnOnJoin = false;
       }
 
@@ -301,8 +226,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // Close the TerrariaServer socket completely
       if (!self.server.socket.destroyed) {
         self.server.socket.destroy();
-      }
-      else {
+      } else {
         self.server.afterClosed(self);
       }
     },
