@@ -20,7 +20,7 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
     },
 
     getPacketHandler: function() {
-      return this.client.globalHandlers.clientPacketHandler;
+      return this.client.globalHandlers.terrariaServerPacketHandler;
     },
 
     handleData: function(encodedData) {
