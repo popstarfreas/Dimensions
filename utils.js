@@ -199,7 +199,7 @@ define(['path', 'util'], function(path, util) {
         this.updateLength();
         return this;
       };
-      
+
       this.packSingle = function(float) {
         var tempBuffer = new Buffer(4);
         tempBuffer.writeFloatLE(float, 0);
@@ -238,6 +238,38 @@ define(['path', 'util'], function(path, util) {
 
         // Chop off read data
         this.packetData = this.packetData.substr(2);
+
+        return number;
+      };
+
+      this.readSByte = function() {
+        var byte = parseInt(this.packetData.substr(0, 2), 16);
+
+        // Chop off read data
+        this.packetData = this.packetData.substr(2);
+
+        var binaryValues = {
+          0: 1,
+          1: 2,
+          2: 4,
+          3: 8,
+          4: 16,
+          5: 32,
+          6: 64,
+          7: 128
+        };
+
+        // Convert byte to signed
+        var number = 0;
+        for (var i = 7; i >= 0; i--) {
+          if ((byte & binaryValues[i]) === binaryValues[i]) {
+            if (binaryValues[i] === 128) {
+              number = -128;
+            } else {
+              number += binaryValues[i];
+            }
+          }
+        }
 
         return number;
       };
@@ -314,7 +346,7 @@ define(['path', 'util'], function(path, util) {
 
     Math: {
       getRandomInt: function(min, max) {
-        return Math.floor(Math.random() * ((max+1) - min)) + min;
+        return Math.floor(Math.random() * ((max + 1) - min)) + min;
       }
     }
   };

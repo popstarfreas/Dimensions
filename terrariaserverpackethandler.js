@@ -1,4 +1,4 @@
-define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils) {
+define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Class, PacketTypes, Utils, _, NPC) {
   var TerrariaServerPacketHandler = function(PacketTypes, Utils) {
     return {
       init: function() {},
@@ -27,6 +27,23 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
 
           case PacketTypes.DimensionsUpdate:
             handled = self.handleDimensionsUpdate(packet);
+            break;
+
+          case PacketTypes.NPCUpdate:
+            handled = self.handleNPCUpdate(packet);
+            break;
+
+          case PacketTypes.NPCStrike:
+            handled = self.handleNPCStrike(packet);
+            break;
+
+          case PacketTypes.UpdateItemDrop_Instanced:
+          case PacketTypes.UpdateItemDrop:
+            handled = self.handleUpdateItemDrop(packet);
+            break;
+
+          case PacketTypes.PlayerActive:
+            handled = self.handlePlayerActive(packet);
             break;
 
           default:
@@ -99,7 +116,6 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
           self.currentServer.socket.write(new Buffer(getSection, 'hex'));
 
           self.currentServer.client.state = 3;
-          self.clearPlayers(self.currentServer.client);
 
           // Routing Information for Warpplate entry
           if (self.currentServer.client.routingInformation !== null) {
@@ -136,24 +152,28 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
                 server.client.socket.write(new Buffer(spawnPlayer, 'hex'));
               }
             }
-          }, 2000);
+          }, 1000);
         }
 
         self.currentServer.client.ingame = true;
 
+        self.clearPlayers(self.currentServer.client);
+        self.clearNPCs(self.currentServer.client);
+        self.clearItems(self.currentServer.client);
         return false;
       },
 
       handleDimensionsUpdate: function(packet) {
+        var self = this;
         var reader = Utils.ReadPacketFactory(packet.data);
         var messageType = reader.readInt16();
         var messageContent = reader.readString();
 
         // Switch server
         if (messageType == 2) {
-          if (this.client.servers[messageContent.toLowerCase()]) {
-            this.client.sendChatMessage("Shifting to the " + messageContent + " Dimension", "FF0000");
-            this.client.changeServer(this.client.servers[messageContent.toLowerCase()], {
+          if (self.currentServer.client.servers[messageContent.toLowerCase()]) {
+            self.currentServer.client.sendChatMessage("Shifting to the " + messageContent + " Dimension", "FF0000");
+            self.currentServer.client.changeServer(self.currentServer.client.servers[messageContent.toLowerCase()], {
               preventSpawnOnJoin: true
             });
           }
@@ -162,59 +182,204 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
         return true;
       },
 
+      handleNPCUpdate: function(packet) {
+        var self = this;
+        var reader = Utils.ReadPacketFactory(packet.data);
+        var NPCID = reader.readInt16();
+        var position = {
+          x: reader.readSingle(),
+          y: reader.readSingle()
+        };
+        var velocity = {
+          x: reader.readSingle(),
+          y: reader.readSingle()
+        };
+        var target = reader.readByte();
+
+        // FLags
+        var bits = reader.readByte();
+        var direction = (bits & 1) === 1;
+        var directionY = (bits & 2) === 2;
+        var AIBits = [];
+        AIBits[0] = (bits & 4) === 4;
+        AIBits[1] = (bits & 8) === 8;
+        AIBits[2] = (bits & 16) === 16;
+        AIBits[3] = (bits & 32) === 32;
+        var spriteDirection = (bits & 64) === 64;
+        var lifeMax = (bits & 128) === 128;
+
+        var AI = [];
+        if (AIBits[0]) {
+          AI[0] = reader.readSingle();
+        }
+        if (AIBits[1]) {
+          AI[1] = reader.readSingle();
+        }
+        if (AIBits[2]) {
+          AI[2] = reader.readSingle();
+        }
+        if (AIBits[3]) {
+          AI[3] = reader.readSingle();
+        }
+
+        var netID = reader.readInt16();
+        var life = 0;
+        var lifeBytes = 2;
+        if (!lifeMax) {
+          lifeBytes = reader.readByte();
+          if (lifeBytes == 2) {
+            life = reader.readInt16();
+          } else if (lifeBytes == 4) {
+            life = reader.readInt32();
+          } else {
+            life = reader.readSByte();
+          }
+        } else {
+          // Placeholder max
+          life = 1;
+        }
+
+        if (netID === 0 || life === 0) {
+          self.currentServer.entityTracking.NPCs[NPCID] = false;
+        } else {
+          if (self.currentServer.entityTracking.NPCs[NPCID] === false || typeof self.currentServer.entityTracking.NPCs[NPCID] === 'undefined') {
+            self.currentServer.entityTracking.NPCs[NPCID] = new NPC(NPCID, netID, life);
+          } else {
+            self.currentServer.entityTracking.NPCs[NPCID].life = life;
+            self.currentServer.entityTracking.NPCs[NPCID].type = netID;
+          }
+        }
+
+        //self.currentServer.client.socket.write(new Buffer(npcUpdate.data(), 'hex'));
+        return false;
+      },
+
+      handleNPCStrike: function(packet) {
+        var self = this;
+        var reader = Utils.ReadPacketFactory(packet.data);
+        var NPCID = reader.readInt16();
+        var damage = reader.readInt16();
+
+        if (self.currentServer.entityTracking.NPCs[NPCID]) {
+          if (damage > 0) {
+            self.currentServer.entityTracking.NPCs[NPCID].life -= damage;
+            if (self.currentServer.entityTracking.NPCs[NPCID].life <= 0) {
+              self.currentServer.entityTracking.NPCs[NPCID] = false;
+            }
+          } else {
+            self.currentServer.entityTracking.NPCs[NPCID] = false;
+          }
+        }
+        return false;
+      },
+
+      handleUpdateItemDrop: function(packet) {
+        var self = this;
+        var reader = Utils.ReadPacketFactory(packet.data);
+        var itemID = reader.readInt16();
+        var position = {
+          x: reader.readSingle(),
+          y: reader.readSingle()
+        };
+        var velocity = {
+          x: reader.readSingle(),
+          y: reader.readSingle()
+        };
+        var stacks = reader.readInt16();
+        var prefix = reader.readByte();
+        var noDelay = reader.readByte();
+        var netID = reader.readInt16();
+
+        if (netID > 0) {
+          self.currentServer.entityTracking.items[itemID] = true;
+        } else {
+          self.currentServer.entityTracking.items[itemID] = false;
+        }
+        return false;
+      },
+
+      handlePlayerActive: function(packet) {
+        var reader = Utils.ReadPacketFactory(packet.data);
+        var playerID = reader.readByte();
+        var active = reader.readByte() === 1;
+        self.currentServer.entityTracking.players[playerID] = active;
+      },
+
       clearPlayers: function(client) {
-        var playerActive;
-        for (var playerID = 0; playerID < 255; playerID++) {
-          if (playerID === client.player.id)
+        var playerIDs = _.keys(self.currentServer.entityTracking.players);
+        for (var i = 0, len = playerIDs.length; i < len; i++) {
+          if (playerIDs[i] === client.player.id)
             continue;
 
-          playerActive = Utils.PacketFactory()
-            .setType(PacketTypes.PlayerActive)
-            .packByte(playerID)
-            .packByte(0) // Active
-            .data();
-          client.socket.write(new Buffer(playerActive, 'hex'));
+          self.clearPlayer(client, playerIDs[i]);
         }
+      },
+
+      clearPlayer: function(client, playerIndex) {
+        var playerActive = Utils.PacketFactory()
+          .setType(PacketTypes.PlayerActive)
+          .packByte(playerIndex)
+          .packByte(0) // Active
+          .data();
+        client.socket.write(new Buffer(playerActive, 'hex'));
       },
 
       clearNPCs: function(client) {
+        var self = this;
         var updateNPC;
-        for (var npcID = 0; npcID < 200; npcID++) {
-          updateNPC = Utils.PacketFactory()
-            .setType(PacketTypes.NPCUpdate)
-            .packInt16(npcID)
-            .packSingle(0) // PositionX
-            .packSingle(0) // PositionY
-            .packSingle(0) // VelocityX
-            .packSingle(0) // VelocityY
-            .packByte(0) // Target
-            .packByte(0) // Flags
-            .packInt16(0) // NPC NetID
-            .packInt32(0) // Life
-            .packByte(0)
-            .data();
-          client.socket.write(new Buffer(updateNPC, 'hex'));
+        var npcIDs = _.keys(self.currentServer.entityTracking.NPCs);
+        for (var i = 0, len = npcIDs.length; i < len; i++) {
+          if (self.currentServer.entityTracking.NPCs[npcIDs[i]]) {
+            self.clearNPC(client, npcIDs[i]);
+          }
         }
       },
 
+      clearNPC: function(client, npcIndex) {
+        var updateNPC = Utils.PacketFactory()
+          .setType(PacketTypes.NPCUpdate)
+          .packInt16(parseInt(npcIndex))
+          .packSingle(0) // PositionX
+          .packSingle(0) // PositionY
+          .packSingle(0) // VelocityX
+          .packSingle(0) // VelocityY
+          .packByte(0) // Target
+          .packByte(0) // Flags
+          .packInt16(0) // NPC NetID
+          .packByte(4) // Life ByteSize
+          .packInt32(0) // Life
+          .packByte(0)
+          .data();
+        client.socket.write(new Buffer(updateNPC, 'hex'));
+        client.server.entityTracking.NPCs[npcIndex] = false;
+      },
+
       clearItems: function(client) {
+        var self = this;
         var updateItemDrop;
-        for (var itemID = 0; itemID < 400; itemID++) {
-          updateItemDrop = Utils.PacketFactory()
-            .setType(PacketTypes.UpdateItemDrop)
-            .packInt16(itemID)
-            .packSingle(0) // PositionX
-            .packSingle(0) // PositionY
-            .packSingle(0) // VelocityX
-            .packSingle(0) // VelocityY
-            .packInt16(0) // Stacks
-            .packByte(0) // Prefix
-            .packByte(0) // NoDelay
-            .packInt16(0)
-            .data();
-          client.socket.write(new Buffer(updateItemDrop, 'hex'));
+        var itemIDs = _.keys(self.currentServer.entityTracking.items);
+        for (var i = 0, len = itemIDs.length; i < len; i++) {
+          if (self.currentServer.entityTracking.items[itemIDs[i]]) {
+            self.clearItem(client, itemIDs[i]);
+          }
         }
       },
+
+      clearItem: function(client, itemIndex) {
+        var updateItemDrop = Utils.PacketFactory()
+          .setType(PacketTypes.UpdateItemDrop)
+          .packInt16(itemIndex)
+          .packSingle(0) // PositionX
+          .packSingle(0) // PositionY
+          .packSingle(0) // VelocityX
+          .packSingle(0) // VelocityY
+          .packInt16(0) // Stacks
+          .packByte(0) // Prefix
+          .packByte(0) // NoDelay
+          .packInt16(0)
+          .data();
+        client.socket.write(new Buffer(updateItemDrop, 'hex'));
+      }
     };
   };
   return Class.extend((TerrariaServerPacketHandler(PacketTypes, Utils)));

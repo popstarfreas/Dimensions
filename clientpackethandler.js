@@ -1,4 +1,4 @@
-define(['lib/class', 'PacketTypes', 'Utils'], function(Class, PacketTypes, Utils) {
+define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes, Utils, NPC) {
   var ClientPacketHandler = {
     init: function() {},
 
@@ -45,6 +45,10 @@ define(['lib/class', 'PacketTypes', 'Utils'], function(Class, PacketTypes, Utils
         case PacketTypes.ClientUUID:
           handled = self.handleClientUUID(packet);
           break;
+
+        case PacketTypes.NPCStrike:
+          handled = self.handleNPCStrike(packet);
+          break;
       }
 
       return !handled ? packet.data : "";
@@ -84,6 +88,26 @@ define(['lib/class', 'PacketTypes', 'Utils'], function(Class, PacketTypes, Utils
 
       return false;
     },
+
+    handleNPCStrike: function(packet) {
+      var self = this;
+      var reader = Utils.ReadPacketFactory(packet.data);
+      var NPCID = reader.readInt16();
+      var damage = reader.readInt16();
+
+      if (self.currentClient.server.entityTracking.NPCs[NPCID]) {
+        if (damage > 0) {
+          self.currentClient.server.entityTracking.NPCs[NPCID].life -= damage;
+          if (self.currentClient.server.entityTracking.NPCs[NPCID].life <= 0) {
+            self.currentClient.server.entityTracking.NPCs[NPCID] = false; 
+          }
+        } else {
+          self.currentClient.server.entityTracking.NPCs[NPCID] = false;
+        }
+      }
+      
+      return false;
+    }
   };
   return Class.extend(ClientPacketHandler);
 });

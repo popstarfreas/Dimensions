@@ -1,4 +1,4 @@
-  define(['lib/class'], function(Class) {
+  define(['lib/class', 'packettypes', 'utils', 'underscore'], function(Class, PacketTypes, Utils, _) {
     var ClientCommandHandler = {
       init: function() {
 
@@ -21,6 +21,9 @@
           handled = true;
         } else {
           switch (command) {
+            case "void":
+              handled = self.handleVoid(args, client);
+              break;
             case "join":
               handled = self.handleJoin(args, client);
               break;
@@ -28,6 +31,18 @@
         }
 
         return handled;
+      },
+
+      handleVoid: function(args, client) {
+        // Client is now not connected to a server
+        client.connected = false;
+
+        // Remove data and error listeners on TerrariaServer socket
+        client.server.socket.removeListener('data', client.ServerHandleData);
+        client.server.socket.removeListener('error', client.ServerHandleError);
+        client.server.socket.removeListener('close', client.ServerHandleClose);
+        client.server.socket.destroy();
+        client.sendChatMessage("You have entered the Void. It will soon close.");
       },
 
       handleJoin: function(args, client) {

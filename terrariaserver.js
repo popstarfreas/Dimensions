@@ -52,41 +52,38 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
         if (allowedPackets.length > 0) {
           this.client.socket.write(new Buffer(allowedPackets, "hex"));
         }
-      }
-      catch (e) {
+      } catch (e) {
         console.log("TS Handle Data Error: " + e);
       }
     },
 
     handleClose: function() {
-      //console.log("TerrariaServer socket closed. [" + this.name + "]");
+      var self = this;
+      //console.log("TerrariaServer socket closed. [" + self.name + "]");
       try {
-        if (this.client.countIncremented) {
-          this.client.serverCounts[this.name]--;
-          this.client.countIncremented = false;
+        if (self.client.countIncremented) {
+          self.client.serverCounts[self.name]--;
+          self.client.countIncremented = false;
         }
-      }
-      catch (e) {
+      } catch (e) {
         console.log("handleClose Err: " + e);
       }
 
-      if (this.afterClosed !== null) {
-        this.afterClosed(this.client);
-      }
-      else {
+      if (self.afterClosed !== null) {
+        self.afterClosed(self.client);
+      } else {
         var dimensionsList = "";
-        var dimensionNames = _.keys(this.client.servers);
+        var dimensionNames = _.keys(self.client.servers);
         for (var i = 0; i < dimensionNames.length; i++) {
           dimensionsList += (i > 0 ? ", " : " ") + "/" + dimensionNames[i];
         }
 
-        if (!this.client.wasKicked) {
-          this.client.sendChatMessage("The timeline you were in has collapsed.", "00BFFF");
-          this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
-        }
-        else {
-          this.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
-          this.client.wasKicked = false;
+        if (!self.client.wasKicked) {
+          self.client.sendChatMessage("The timeline you were in has collapsed.", "00BFFF");
+          self.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
+        } else {
+          self.client.sendChatMessage("Specify a [c/FF00CC:Dimension] to travel to: " + dimensionsList, "00BFFF");
+          self.client.wasKicked = false;
         }
       }
     },
