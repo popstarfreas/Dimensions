@@ -12,12 +12,15 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
       };
       this.bufferPacket = "";
       this.afterClosed = null;
-      this.packetHandler = client.globalHandlers.terrariaServerPacketHandler;
       this.entityTracking = {
         items: [],
         NPCs: [],
         players: []
       };
+    },
+
+    getPacketHandler: function() {
+      return this.client.globalHandlers.clientPacketHandler;
     },
 
     handleData: function(encodedData) {
@@ -43,7 +46,7 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
         // Inspect and handle each packet
         var packets = entireDataInfo.packets;
         _.each(packets, function(packet) {
-          allowedPackets += self.packetHandler.handlePacket(self, packet);
+          allowedPackets += self.getPacketHandler().handlePacket(self, packet);
         });
 
         if (allowedPackets.length > 0) {

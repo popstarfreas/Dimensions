@@ -69,12 +69,15 @@ define(['redis', 'listenserver', 'config', 'client', 'utils', 'interface', 'unde
             console.log("\033[33mReloaded Packet Handlers.\033[37m");
             break;
           case "reloadcmds":
-            try {
-              var ClientCommandHandler = Utils.requireNoCache('./clientcommandhandler.js', self.nativeRequire);
-              self.handlers.command = new ClientCommandHandler();
-            } catch (e) {
+            require(['clientcommandhandler'], function(ClientCommandHandler) {
+              try {
+                self.handlers.command = new ClientCommandHandler();
+              } catch (e) {
+                console.log("Error loading Command Handler: " + e);
+              }
+            }, function(err) {
               console.log("Error loading Command Handler: " + e);
-            }
+            });
             console.log("\033[33mReloaded Command Handler.\033[37m");
             break;
         }
@@ -82,73 +85,86 @@ define(['redis', 'listenserver', 'config', 'client', 'utils', 'interface', 'unde
 
       reloadClientHandlers: function() {
         var self = this;
-        try {
-          self.globalHandlers.clientPacketHandler = new (Utils.requireNoCache('./clientpackethandler.js', self.nativeRequire))();
-        } catch (e) {
+        require.undef('clientpackethandler');
+        require(['clientpackethandler'], function(ClientPacketHandler) {
+          try {
+            self.handlers.clientPacketHandler = new ClientPacketHandler();
+          } catch (e) {
+            console.log("Error loading Client Packet Handler: " + e);
+          }
+        }, function(err) {
           console.log("Error loading Client Packet Handler: " + e);
-        }
+        });
       },
 
       reloadTerrariaServerHandlers: function() {
         var self = this;
-        try {
-          self.globalHandlers.terrariaServerPacketHandler = new (Utils.requireNoCache('./terrariaserverpackethandler.js', self.nativeRequire))();
-        } catch (e) {
+        require.undef('terrariaserverpackethandler');
+        require(['terrariaserverpackethandler'], function(TerrariaServerPacketHandler) {
+          try {
+            self.handlers.terrariaServerPacketHandler = new TerrariaServerPacketHandler();
+          } catch (e) {
+            console.log("Error loading TerrariaServer Packet Handler: " + e);
+          }
+        }, function(e) {
           console.log("Error loading TerrariaServer Packet Handler: " + e);
-        }
+        });
       },
 
       reloadServers: function() {
         var self = this;
-        try {
-          Config = Utils.requireNoCache('./config.js', self.nativeRequire);
-        } catch (e) {
-          console.log("Error loading config: " + e);
-        }
+        require.undef('config');
+        require(['config'], function(Config) {
+          try {
+            var currentRoster = {};
+            var runAfterFinished = [];
+            for (var i = 0; i < Config.servers.length; i++) {
+              listenKey = Config.servers[i].listenPort;
+              if (self.listenServers[listenKey]) {
+                self.listenServers[listenKey].updateInfo(Config.servers[i]);
+                for (var j = 0; j < Config.servers[i].routingServers.length; j++) {
+                  self.servers[Config.servers[i].routingServers[j].name] = Config.servers[i].routingServers[j];
+                }
+              } else {
+                runAfterFinished.push({
+                  key: listenKey,
+                  index: i
+                });
+              }
 
-        var currentRoster = {};
-        var runAfterFinished = [];
-        for (var i = 0; i < Config.servers.length; i++) {
-          listenKey = Config.servers[i].listenPort;
-          if (self.listenServers[listenKey]) {
-            self.listenServers[listenKey].updateInfo(Config.servers[i]);
-            for (var j = 0; j < Config.servers[i].routingServers.length; j++) {
-              self.servers[Config.servers[i].routingServers[j].name] = Config.servers[i].routingServers[j];
+              currentRoster[listenKey] = 1;
             }
-          } else {
-            runAfterFinished.push({
-              key: listenKey,
-              index: i
-            });
+
+            var currentListenServers = _.keys(self.listenServers);
+            for (var i = 0; i < currentListenServers.length; i++) {
+              if (!currentRoster[currentListenServers[i]]) {
+                // Close down
+                self.listenServers[currentListenServers[i]].shutdown();
+                delete self.listenServers[currentListenServers[i]];
+              }
+            }
+
+            for (var i = 0; i < runAfterFinished.length; i++) {
+              var serversIndex = runAfterFinished[i].index;
+              self.listenServers[runAfterFinished[i].key] = new ListenServer(Config.servers[serversIndex], self.serverCounts, self.handlers, self.servers);
+              for (var j = 0; j < Config.servers[serversIndex].routingServers.length; j++) {
+                self.servers[Config.servers[serversIndex].routingServers[j].name] = Config.servers[serversIndex].routingServers[j];
+              }
+            }
+
+            // Update options
+            var keys = _.keys(self.options);
+            for (var i = 0; i < keys.length; i++) {
+              self.options[keys[i]] = Config.options[keys[i]];
+            }
+
+          } catch (e) {
+            console.log("Error loading Config: " + e);
           }
-
-          currentRoster[listenKey] = 1;
-        }
-
-        var currentListenServers = _.keys(self.listenServers);
-        for (var i = 0; i < currentListenServers.length; i++) {
-          if (!currentRoster[currentListenServers[i]]) {
-            // Close down
-            self.listenServers[currentListenServers[i]].shutdown();
-            delete self.listenServers[currentListenServers[i]];
-          }
-        }
-
-        for (var i = 0; i < runAfterFinished.length; i++) {
-          var serversIndex = runAfterFinished[i].index;
-          self.listenServers[runAfterFinished[i].key] = new ListenServer(Config.servers[serversIndex], self.serverCounts, self.handlers, self.servers);
-          for (var j = 0; j < Config.servers[serversIndex].routingServers.length; j++) {
-            self.servers[Config.servers[serversIndex].routingServers[j].name] = Config.servers[serversIndex].routingServers[j];
-          }
-        }
-
-        // Update options
-        var keys = _.keys(self.options);
-        for (var i = 0; i < keys.length; i++) {
-          self.options[keys[i]] = Config.options[keys[i]];
-        }
-
-        console.log("\033[33mReloaded Config.\033[37m");
+          console.log("\033[33mReloaded Config.\033[37m");
+        }, function(e) {
+          console.log("Error loading Config: " + e);
+        });
       }
     });
 

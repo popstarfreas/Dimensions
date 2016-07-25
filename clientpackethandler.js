@@ -1,6 +1,6 @@
+define(['lib/class', 'PacketTypes', 'Utils'], function(Class, PacketTypes, Utils) {
   var ClientPacketHandler = {
-    init: function() {
-    },
+    init: function() {},
 
     handlePacket: function(client, packet) {
       var self = this;
@@ -71,7 +71,7 @@
       // If chat message is a commandcommand
       if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
         var command = self.currentClient.globalHandlers.command.parseCommand(chatMessage);
-        handled = self.currentClient.globalHandlers.command.handle(command.name.toLowerCase(), command.args, self);
+        handled = self.currentClient.globalHandlers.command.handle(command.name.toLowerCase(), command.args, self.currentClient);
       }
 
       return handled;
@@ -85,12 +85,5 @@
       return false;
     },
   };
-
-  if (typeof define !== 'undefined') {
-    define(['lib/class'], function(Class) {
-      return Class.extend(ClientPacketHandler);
-    });
-  } else {
-    var Class = require('./lib/class.js');
-    module.exports = (Class.extend(ClientPacketHandler));
-  }
+  return Class.extend(ClientPacketHandler);
+});

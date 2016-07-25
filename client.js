@@ -70,8 +70,10 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       this.ServerHandleError = this.server.handleError.bind(this.server);
       this.ServerHandleData = this.server.handleData.bind(this.server);
       this.ServerHandleClose = this.server.handleClose.bind(this.server);
+    },
 
-      this.packetHandler = this.globalHandlers.clientPacketHandler;
+    getPacketHandler: function() {
+      return this.globalHandlers.clientPacketHandler;
     },
 
     setName: function(name) {
@@ -107,7 +109,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         if (this.initialConnectionAlreadyCreated) {
           var allowedData = "";
           _.each(packets, function(packet) {
-            allowedData += self.packetHandler.handlePacket(self, packet);
+            allowedData += self.getPacketHandler().handlePacket(self, packet);
           });
 
           // Send allowedData to the server if the client is connected to one
@@ -210,7 +212,11 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
           // Send Packet 1
           // This needs to be changed; it should not be hardcoded data
-          self.server.socket.write(new Buffer("0f00010b5465727261726961313639", "hex"));
+          var connectPacket = Utils.PacketFactory()
+              .setType(1)
+              .packString("Terraria173")
+              .data();
+          self.server.socket.write(new Buffer(connectPacket, "hex"));
           if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
             self.routingInformation = options.routingInformation;
           }
