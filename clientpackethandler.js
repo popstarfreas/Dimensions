@@ -68,7 +68,7 @@ define(['lib/class', 'PacketTypes', 'Utils'], function(Class, PacketTypes, Utils
       var handled = false;
       var chatMessage = Utils.hex2a(packet.data.substr(16));
 
-      // If chat message is a commandcommand
+      // If chat message is a command
       if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
         var command = self.currentClient.globalHandlers.command.parseCommand(chatMessage);
         handled = self.currentClient.globalHandlers.command.handle(command.name.toLowerCase(), command.args, self.currentClient);
