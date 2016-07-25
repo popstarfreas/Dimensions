@@ -304,6 +304,8 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
         var playerID = reader.readByte();
         var active = reader.readByte() === 1;
         self.currentServer.entityTracking.players[playerID] = active;
+
+        return false;
       },
 
       clearPlayers: function(client) {

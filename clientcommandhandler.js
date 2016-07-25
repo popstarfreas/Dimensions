@@ -21,6 +21,9 @@
           handled = true;
         } else {
           switch (command) {
+            case "who":
+              handled = self.handleWho(args, client);
+              break;
             case "dimensions":
               handled = self.handleDimensions(args, client);
               break;
@@ -34,6 +37,20 @@
         }
 
         return handled;
+      },
+
+      handleWho: function(args, client) {
+        var total = 0;
+        var keys = _.keys(client.serverCounts);
+        for (var i = 0, len = keys.length; i < len; i++) {
+          total += client.serverCounts[keys[i]];
+        }
+
+        // Try to make it come after the normal response
+        setTimeout(function() {
+          client.sendChatMessage("There are "+total+" across all Dimensions in your Timeline.");
+        }, 100);
+        return false;
       },
 
       handleDimensions: function(args, client) {
