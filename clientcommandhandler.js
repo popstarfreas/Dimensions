@@ -21,6 +21,9 @@
           handled = true;
         } else {
           switch (command) {
+            case "dimensions":
+              handled = self.handleDimensions(args, client);
+              break;
             case "void":
               handled = self.handleVoid(args, client);
               break;
@@ -33,6 +36,19 @@
         return handled;
       },
 
+      handleDimensions: function(args, client) {
+        var dimensionsList = "";
+        var dimensionNames = _.keys(client.servers);
+        for (var i = 0; i < dimensionNames.length; i++) {
+          dimensionsList += (i > 0 ? ", " : " ") + "/" + dimensionNames[i];
+        }
+
+        client.sendChatMessage("Available Dimensions: ");
+        client.sendChatMessage(dimensionsList);
+
+        return true;
+      },
+
       handleVoid: function(args, client) {
         // Client is now not connected to a server
         client.connected = false;
@@ -42,7 +58,8 @@
         client.server.socket.removeListener('error', client.ServerHandleError);
         client.server.socket.removeListener('close', client.ServerHandleClose);
         client.server.socket.destroy();
-        client.sendChatMessage("You have entered the Void. It will soon close.");
+        client.sendChatMessage("You have entered the Void. You will soon disappear.");
+        return true;
       },
 
       handleJoin: function(args, client) {
