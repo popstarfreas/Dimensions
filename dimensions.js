@@ -69,6 +69,7 @@ define(['redis', 'listenserver', 'config', 'client', 'utils', 'interface', 'unde
             console.log("\033[33mReloaded Packet Handlers.\033[37m");
             break;
           case "reloadcmds":
+            require.undef('clientcommandhandler');
             require(['clientcommandhandler'], function(ClientCommandHandler) {
               try {
                 self.handlers.command = new ClientCommandHandler();
