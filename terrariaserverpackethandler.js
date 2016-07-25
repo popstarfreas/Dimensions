@@ -27,23 +27,7 @@ var TerrariaServerPacketHandler = {
       case PacketTypes.DimensionsUpdate:
         handled = self.handleDimensionsUpdate(packet);
         break;
-
-      case PacketTypes.AddPlayerBuff:
-        var reader = Utils.ReadPacketFactory(packet.data);
-        var playerID = reader.readByte();
-        var buff = reader.readByte();
-        var time = reader.readInt16();
-
-        var replacement = Utils.PacketFactory()
-          .setType(55)
-          .packByte(playerID)
-          .packByte(buff)
-          .packInt32(time)
-          .data();
-
-        return replacement;
-        break;
-
+      
       default:
         break;
     }
@@ -175,13 +159,68 @@ var TerrariaServerPacketHandler = {
 
     return true;
   },
+
+  clearPlayers: function(client) {
+      var playerActive;
+      for (var playerID = 0; playerID < 255; playerID++) {
+        if (playerID === client.player.id)
+          continue;
+
+        playerActive = Utils.PacketFactory()
+          .setType(PacketTypes.PlayerActive)
+          .packByte(playerID)
+          .packByte(0) // Active
+          .data();
+        client.socket.write(new Buffer(playerActive, 'hex'));
+      }
+    },
+
+    clearNPCs: function(client) {
+      var updateNPC;
+      for (var npcID = 0; npcID < 200; npcID++) {
+        updateNPC = Utils.PacketFactory()
+          .setType(PacketTypes.NPCUpdate)
+          .packInt16(npcID)
+          .packSingle(0) // PositionX
+          .packSingle(0) // PositionY
+          .packSingle(0) // VelocityX
+          .packSingle(0) // VelocityY
+          .packByte(0) // Target
+          .packByte(0) // Flags
+          .packInt16(0) // NPC NetID
+          .packInt32(0) // Life
+          .packByte(0)
+          .data();
+        client.socket.write(new Buffer(updateNPC, 'hex'));
+      }
+    },
+
+    clearItems: function(client) {
+      var updateItemDrop;
+      for (var itemID = 0; itemID < 400; itemID++) {
+        updateItemDrop = Utils.PacketFactory()
+          .setType(PacketTypes.UpdateItemDrop)
+          .packInt16(itemID)
+          .packSingle(0) // PositionX
+          .packSingle(0) // PositionY
+          .packSingle(0) // VelocityX
+          .packSingle(0) // VelocityY
+          .packInt16(0) // Stacks
+          .packByte(0) // Prefix
+          .packByte(0) // NoDelay
+          .packInt16(0)
+          .data();
+        client.socket.write(new Buffer(updateItemDrop, 'hex'));
+      }
+    },
 };
 
 if (typeof define !== 'undefined') {
-  define(['lib/class'], function(Class) {
+  define(['lib/class', 'packettypes'], function(Class, PacketTypes) {
     return Class.extend(TerrariaServerPacketHandler);
   });
 } else {
   var Class = require('./lib/class.js');
+  var PacketTypes = require('./packettypes.js');
   module.exports = (Class.extend(TerrariaServerPacketHandler));
 }

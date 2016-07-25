@@ -231,60 +231,6 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       }
     },
 
-    tellSelfToClearPlayers: function() {
-      var playerActive;
-      for (var playerID = 0; playerID < 255; playerID++) {
-        if (playerID === this.player.id)
-          continue;
-
-        playerActive = Utils.PacketFactory()
-          .setType(PacketTypes.PlayerActive)
-          .packByte(playerID)
-          .packByte(0) // Active
-          .data();
-        this.socket.write(new Buffer(playerActive, 'hex'));
-      }
-    },
-
-    tellSelfToClearNPCs: function() {
-      var updateNPC;
-      for (var npcID = 0; npcID < 200; npcID++) {
-        updateNPC = Utils.PacketFactory()
-          .setType(PacketTypes.NPCUpdate)
-          .packInt16(npcID)
-          .packSingle(0) // PositionX
-          .packSingle(0) // PositionY
-          .packSingle(0) // VelocityX
-          .packSingle(0) // VelocityY
-          .packByte(0) // Target
-          .packByte(0) // Flags
-          .packInt16(0) // NPC NetID
-          .packInt32(0) // Life
-          .packByte(0)
-          .data();
-        this.socket.write(new Buffer(updateNPC, 'hex'));
-      }
-    },
-
-    tellSelfToClearItems: function() {
-      var updateItemDrop;
-      for (var itemID = 0; itemID < 400; itemID++) {
-        updateItemDrop = Utils.PacketFactory()
-          .setType(PacketTypes.UpdateItemDrop)
-          .packInt16(itemID)
-          .packSingle(0) // PositionX
-          .packSingle(0) // PositionY
-          .packSingle(0) // VelocityX
-          .packSingle(0) // VelocityY
-          .packInt16(0) // Stacks
-          .packByte(0) // Prefix
-          .packByte(0) // NoDelay
-          .packInt16(0)
-          .data();
-        this.socket.write(new Buffer(updateItemDrop, 'hex'));
-      }
-    },
-
     handleError: function(err) {
       //console.log("Client Socket Error: " + err);
     },
