@@ -48,7 +48,7 @@
 
         // Try to make it come after the normal response
         setTimeout(function() {
-          client.sendChatMessage("There are "+total+" across all Dimensions in your Timeline.");
+          client.sendChatMessage("There are "+total+" players across all Dimensions in your Timeline.");
         }, 100);
         return false;
       },
