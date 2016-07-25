@@ -21,8 +21,8 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
             handled = self.handleWorldInfo(packet);
             break;
 
-          case PacketTypes.UpdateShieldStrengths:
-            handled = self.handleUpdateShieldStrengths(packet);
+          case PacketTypes.CompleteConnectionAndSpawn:
+            handled = self.handleCompleteConnectionAndSpawn(packet);
             break;
 
           case PacketTypes.DimensionsUpdate:
@@ -116,7 +116,7 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
         return false;
       },
 
-      handleUpdateShieldStrengths: function(packet) {
+      handleCompleteConnectionAndSpawn: function(packet) {
         var self = this;
         if (self.currentServer.client.state === 3) {
           self.currentServer.client.state = 1;
@@ -135,7 +135,7 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
                 self.currentServer.client.socket.write(new Buffer(spawnPlayer, 'hex'));
               }
             }
-          }, 1000);
+          }, 2000);
         }
 
         self.currentServer.client.ingame = true;

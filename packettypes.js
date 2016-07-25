@@ -158,7 +158,7 @@ define(function() {
     RequestSign: 46,
     UpdateOrDisplaySign: 47,
     SetLiquid: 48,
-    CompleteConnectionandSpawn: 49,
+    CompleteConnectionAndSpawn: 49,
     UpdatePlayerBuff: 50,
     SpecialNPCEffect: 51,
     Unlock: 52,
