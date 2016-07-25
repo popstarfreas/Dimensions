@@ -40,7 +40,7 @@
         var dimensionsList = "";
         var dimensionNames = _.keys(client.servers);
         for (var i = 0; i < dimensionNames.length; i++) {
-          dimensionsList += (i > 0 ? ", " : " ") + "/" + dimensionNames[i];
+          dimensionsList += (i > 0 ? "[c/00B530:,] " : " ") + "/" + dimensionNames[i];
         }
 
         client.sendChatMessage("Available Dimensions: ");

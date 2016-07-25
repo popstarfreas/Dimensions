@@ -299,6 +299,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
       },
 
       handlePlayerActive: function(packet) {
+        var self = this;
         var reader = Utils.ReadPacketFactory(packet.data);
         var playerID = reader.readByte();
         var active = reader.readByte() === 1;
@@ -306,6 +307,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
       },
 
       clearPlayers: function(client) {
+        var self = this;
         var playerIDs = _.keys(self.currentServer.entityTracking.players);
         for (var i = 0, len = playerIDs.length; i < len; i++) {
           if (playerIDs[i] === client.player.id)
