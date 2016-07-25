@@ -127,12 +127,13 @@ define(['lib/class', 'packettypes', 'utils'], function(Class, PacketTypes, Utils
             .packInt16(self.currentServer.spawn.y)
             .data();
 
+          var server = self.currentServer;
           setTimeout(function sendSpawnPlayer() {
-            if (self.currentServer.client && self.currentServer.client.socket) {
-              self.currentServer.socket.write(new Buffer(spawnPlayer, 'hex'));
+            if (typeof server.client !== 'undefined' && typeof server.client.socket !== 'undefined') {
+              server.socket.write(new Buffer(spawnPlayer, 'hex'));
 
-              if (!self.currentServer.client.preventSpawnOnJoin) {
-                self.currentServer.client.socket.write(new Buffer(spawnPlayer, 'hex'));
+              if (!server.client.preventSpawnOnJoin) {
+                server.client.socket.write(new Buffer(spawnPlayer, 'hex'));
               }
             }
           }, 2000);
