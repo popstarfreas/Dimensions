@@ -9,12 +9,19 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
 
       // Set current client while we handle this packet
       self.currentClient = client;
-
       switch (packetType) {
         case PacketTypes.PlayerInfo:
           handled = self.handlePlayerInfo(packet);
           break;
 
+        case PacketTypes.UpdatePlayerBuff:
+          handled = self.handleUpdatePlayerBuff(packet);
+          break;
+
+        case PacketTypes.AddPlayerBuff:
+          handled = self.handleAddPlayerBuff(packet);
+          break;
+          //case PacketTypes. 
           // Either will be sent, but not both
         case PacketTypes.ContinueConnecting2:
         case PacketTypes.Status:
@@ -67,6 +74,43 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
       return false;
     },
 
+    handleUpdatePlayerBuff: function(packet) {
+      var self = this;
+      var reader = new Utils.ReadPacketFactory(packet.data);
+      var playerID = reader.readByte();
+      var updatePlayerBuff = (new Utils.PacketFactory())
+        .setType(PacketTypes.UpdatePlayerBuff)
+        .packByte(playerID);
+
+      for (var i = 0; i < 22; i++) {
+        if (reader.packetData.length !== 0) {
+          var buffType = reader.readByte();
+          if (!self.currentClient.options.blockInvis || buffType !== 10) {
+            updatePlayerBuff.packByte(buffType);
+          } else {
+            updatePlayerBuff.packByte(0);
+          }
+        }
+      }
+
+      self.currentClient.socket.write(new Buffer(updatePlayerBuff.data(), 'hex'));
+      return true;
+    },
+
+    handleAddPlayerBuff: function(packet) {
+      var self = this;
+      var reader = new Utils.ReadPacketFactory(packet.data);
+      var playerID = reader.readByte();
+      var buffID = reader.readByte();
+
+      if (self.currentClient.options.blockInvis) {
+        console.log("Blocking invis");
+        return buffID === 10;
+      } else {
+        return false;
+      }
+    },
+
     handleChatMessage: function(packet) {
       var self = this;
       var handled = false;
@@ -83,7 +127,7 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
 
     handleClientUUID: function(packet) {
       var self = this;
-      var reader = Utils.ReadPacketFactory(packet.data);
+      var reader = new Utils.ReadPacketFactory(packet.data);
       self.currentClient.clientUUID = reader.readString();
 
       return false;
@@ -91,7 +135,7 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
 
     handleNPCStrike: function(packet) {
       var self = this;
-      var reader = Utils.ReadPacketFactory(packet.data);
+      var reader = new Utils.ReadPacketFactory(packet.data);
       var NPCID = reader.readInt16();
       var damage = reader.readInt16();
 
@@ -99,13 +143,13 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
         if (damage > 0) {
           self.currentClient.server.entityTracking.NPCs[NPCID].life -= damage;
           if (self.currentClient.server.entityTracking.NPCs[NPCID].life <= 0) {
-            self.currentClient.server.entityTracking.NPCs[NPCID] = false; 
+            self.currentClient.server.entityTracking.NPCs[NPCID] = false;
           }
         } else {
           self.currentClient.server.entityTracking.NPCs[NPCID] = false;
         }
       }
-      
+
       return false;
     }
   };

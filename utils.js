@@ -109,10 +109,13 @@ define(['path', 'util'], function(path, util) {
       return { bufferPacket: bufferPacket, packets: packets };
     },
 
-    PacketFactory: function() {
-      this.packetData = "0000";
+    PacketFactory: Class.extend({
+      init: function() {
+        this.packetData = "0000";
+        return this;
+      },
 
-      this.setType = function(type) {
+      setType: function(type) {
         var typeHex = (type).toString(16);
         // Length must be even
         if (typeHex.length % 2 !== 0) {
@@ -122,9 +125,9 @@ define(['path', 'util'], function(path, util) {
         this.packetData = this.packetData.substr(0, 4) + typeHex + this.packetData.substr(6);
         this.updateLength();
         return this;
-      };
+      },
 
-      this.packString = function(str) {
+      packString: function(str) {
         var strHex = Utils.a2hex(str);
         var strHexLength = (strHex.length / 2).toString(16);
         // Length must be even
@@ -135,15 +138,15 @@ define(['path', 'util'], function(path, util) {
         this.packetData += strHexLength + strHex;
         this.updateLength();
         return this;
-      };
+      },
 
-      this.packHex = function(hex) {
+      packHex: function(hex) {
         this.packetData += hex;
         this.updateLength();
         return this;
-      };
+      },
 
-      this.packByte = function(int) {
+      packByte: function(int) {
         // 2 hex digits
         var intHex = (int).toString(16);
         if (intHex.length !== 2) {
@@ -155,9 +158,9 @@ define(['path', 'util'], function(path, util) {
         this.packetData += intHex;
         this.updateLength();
         return this;
-      };
+      },
 
-      this.packInt16 = function(int) {
+      packInt16: function(int) {
         // 4 hex digits
         var intHex = (int).toString(16);
         if (intHex.length !== 4) {
@@ -174,9 +177,9 @@ define(['path', 'util'], function(path, util) {
         this.packetData += intHex;
         this.updateLength();
         return this;
-      };
+      },
 
-      this.packInt32 = function(int) {
+      packInt32: function(int) {
         if (int < 0) {
           int = 4294967295;
         }
@@ -198,41 +201,42 @@ define(['path', 'util'], function(path, util) {
         this.packetData += intHex;
         this.updateLength();
         return this;
-      };
+      },
 
-      this.packSingle = function(float) {
+      packSingle: function(float) {
         var tempBuffer = new Buffer(4);
         tempBuffer.writeFloatLE(float, 0);
         var single = tempBuffer.toString('hex');
         this.packetData += single;
         this.updateLength();
         return this;
-      };
+      },
 
-      this.packColor = function(r, g, b) {
+      packColor: function(r, g, b) {
         this.packByte(r);
         this.packByte(g);
         this.packByte(b);
         return this;
-      };
+      },
 
-      this.updateLength = function() {
+      updateLength: function() {
         this.packetData = Utils.getPacketLengthFromData(this.packetData.substr(4)) + this.packetData.substr(4);
-      };
+      },
 
-      this.data = function() {
+      data: function() {
         return this.packetData;
-      };
+      }
+    }),
 
-      return this;
-    },
+    ReadPacketFactory: Class.extend({
+      init: function(data) {
+        // Store data after length and type
+        this.packetData = data.substr(6);
+        this.type = parseInt(data.substr(4, 2), 16);
+        return this;
+      },
 
-    ReadPacketFactory: function(data) {
-      // Store data after length and type
-      this.packetData = data.substr(6);
-      this.type = parseInt(data.substr(4, 2), 16);
-
-      this.readByte = function() {
+      readByte: function() {
         // Read byte and convert to int
         var number = parseInt(this.packetData.substr(0, 2), 16);
 
@@ -240,9 +244,9 @@ define(['path', 'util'], function(path, util) {
         this.packetData = this.packetData.substr(2);
 
         return number;
-      };
+      },
 
-      this.readSByte = function() {
+      readSByte: function() {
         var byte = parseInt(this.packetData.substr(0, 2), 16);
 
         // Chop off read data
@@ -272,9 +276,9 @@ define(['path', 'util'], function(path, util) {
         }
 
         return number;
-      };
+      },
 
-      this.readInt16 = function() {
+      readInt16: function() {
         // Read bytes
         var firstByte = this.packetData.substr(2, 2);
         var secondByte = this.packetData.substr(0, 2);
@@ -286,9 +290,9 @@ define(['path', 'util'], function(path, util) {
         this.packetData = this.packetData.substr(4);
 
         return number;
-      };
+      },
 
-      this.readInt32 = function() {
+      readInt32: function() {
         // Read bytes
         var firstByte = this.packetData.substr(6, 2);
         var secondByte = this.packetData.substr(4, 2);
@@ -302,9 +306,9 @@ define(['path', 'util'], function(path, util) {
         this.packetData = this.packetData.substr(8);
 
         return number;
-      };
+      },
 
-      this.readSingle = function() {
+      readSingle: function() {
         // Get hex string
         var hex = this.packetData.substr(0, 8);
 
@@ -316,9 +320,9 @@ define(['path', 'util'], function(path, util) {
         this.packetData = this.packetData.substr(8);
 
         return number;
-      };
+      },
 
-      this.readString = function() {
+      readString: function() {
         // Read string length
         var strLength = parseInt(this.packetData.substr(0, 2), 16) * 2;
 
@@ -329,10 +333,8 @@ define(['path', 'util'], function(path, util) {
         this.packetData = this.packetData.substr(2 + strLength);
 
         return strContent;
-      };
-
-      return this;
-    },
+      }
+    }),
 
     _invalidateRequireCacheForFile: function(filePath, require) {
       var realPath = path.resolve(filePath);

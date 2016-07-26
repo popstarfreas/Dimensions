@@ -3,6 +3,10 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
     init: function(socket, client) {
       this.socket = socket;
       this.client = client;
+      this.reset();
+    },
+
+    reset: function() {
       this.ip = null;
       this.port = null;
       this.name = "";
@@ -17,6 +21,7 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
         NPCs: [],
         players: []
       };
+      this.isSSC = false;
     },
 
     getPacketHandler: function() {

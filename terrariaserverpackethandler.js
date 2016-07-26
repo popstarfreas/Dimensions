@@ -60,7 +60,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
           self.currentServer.client.socket.write(new Buffer(packet.data, 'hex'));
           self.currentServer.client.socket.destroy();
         } else {
-          var reader = Utils.ReadPacketFactory(packet.data);
+          var reader = new Utils.ReadPacketFactory(packet.data);
           var dcReason = reader.readString();
           if (dcReason.length < 50) {
             var color = "C8FF00"; // shitty green
@@ -78,12 +78,12 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handleContinueConnecting: function(packet) {
         var self = this;
-        var reader = Utils.ReadPacketFactory(packet.data);
+        var reader = new Utils.ReadPacketFactory(packet.data);
         self.currentServer.client.player.id = reader.readByte();
 
         // Send IP Address
         var ip = Utils.getProperIP(self.currentServer.client.socket.remoteAddress);
-        var packetData = Utils.PacketFactory()
+        var packetData = (new Utils.PacketFactory())
           .setType(PacketTypes.DimensionsUpdate)
           .packInt16(0) // Type
           .packString(ip)
@@ -96,19 +96,63 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handleWorldInfo: function(packet) {
         var self = this;
-        if (self.currentServer.client.state === 2) {
-          var reader = Utils.ReadPacketFactory(packet.data);
+        var reader = new Utils.ReadPacketFactory(packet.data);
           reader.readInt32(); // Time
           reader.readByte(); // Day&MoonInfo
           reader.readByte(); // Moon Phase
           reader.readInt16(); // MaxTilesX
           reader.readInt16(); // MaxTilesY
-          self.currentServer.spawn.x = reader.readInt16();
-          self.currentServer.spawn.y = reader.readInt16();
-
+          var spawn = {
+            x: reader.readInt16(),
+            y: reader.readInt16()
+          };
+          reader.readInt16(); // WorldSurface
+          reader.readInt16(); // RockLayer
+          reader.readInt32(); // WorldID
+          reader.readString(); // World Name
+          reader.readByte(); // Moon Type
+          reader.readByte(); // Tree Background
+          reader.readByte(); // Corruption Background
+          reader.readByte(); // Jungle Background
+          reader.readByte(); // Snow Background
+          reader.readByte(); // Hallow Background
+          reader.readByte(); // Crimson Background
+          reader.readByte(); // Desert Background
+          reader.readByte(); // Ocean Background
+          reader.readByte(); // Ice Back Style
+          reader.readByte(); // Jungle Back Style
+          reader.readByte(); // Hell Back Style
+          reader.readSingle(); // Wind Speed Set
+          reader.readByte(); // Cloud Number
+          reader.readInt32(); // Tree 1
+          reader.readInt32(); // Tree 2
+          reader.readInt32(); // Tree 3
+          reader.readByte(); // Tree Style 1
+          reader.readByte(); // Tree Style 2
+          reader.readByte(); // Tree Style 3
+          reader.readByte(); // Tree Style 4
+          reader.readInt32(); // Cave Back 1
+          reader.readInt32(); // Cave Back 2
+          reader.readInt32(); // Cave Back 3
+          reader.readByte(); // Cave Back Style 1
+          reader.readByte(); // Cave Back Style 2
+          reader.readByte(); // Cave Back Style 3
+          reader.readByte(); // Cave Back Style 4
+          reader.readSingle(); // Rain
+          var eventInfo = reader.readByte();
+          if ((eventInfo & 64) === 64) {
+            console.log("Server is SSC");
+            self.currentServer.isSSC = true;
+          } else {
+            console.log("Server isn't SSC");
+            self.currentServer.isSSC = false;
+          }
+        if (self.currentServer.client.state === 2) {
+          self.currentServer.spawn.x = spawn.x;
+          self.currentServer.spawn.y = spawn.y;
           // In future it would be better to check if they used a warpplate
           // so the tile section is where they came through instead of spawn
-          var getSection = Utils.PacketFactory()
+          var getSection = (new Utils.PacketFactory())
             .setType(PacketTypes.GetSectionOrRequestSync)
             .packSingle(-1)
             .packSingle(-1)
@@ -119,7 +163,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
           // Routing Information for Warpplate entry
           if (self.currentServer.client.routingInformation !== null) {
-            var dimensionsUpdate = Utils.PacketFactory()
+            var dimensionsUpdate = (new Utils.PacketFactory())
               .setType(PacketTypes.DimensionsUpdate)
               .packInt16(self.currentServer.client.routingInformation.type)
               .packString(self.currentServer.client.routingInformation.info)
@@ -136,7 +180,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
         var self = this;
         if (self.currentServer.client.state === 3) {
           self.currentServer.client.state = 1;
-          var spawnPlayer = Utils.PacketFactory()
+          var spawnPlayer = (new Utils.PacketFactory())
             .setType(PacketTypes.SpawnPlayer)
             .packByte(self.currentServer.client.player.id)
             .packInt16(self.currentServer.spawn.x)
@@ -165,7 +209,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handleDimensionsUpdate: function(packet) {
         var self = this;
-        var reader = Utils.ReadPacketFactory(packet.data);
+        var reader = new Utils.ReadPacketFactory(packet.data);
         var messageType = reader.readInt16();
         var messageContent = reader.readString();
 
@@ -184,7 +228,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handleNPCUpdate: function(packet) {
         var self = this;
-        var reader = Utils.ReadPacketFactory(packet.data);
+        var reader = new Utils.ReadPacketFactory(packet.data);
         var NPCID = reader.readInt16();
         var position = {
           x: reader.readSingle(),
@@ -256,7 +300,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handleNPCStrike: function(packet) {
         var self = this;
-        var reader = Utils.ReadPacketFactory(packet.data);
+        var reader = new Utils.ReadPacketFactory(packet.data);
         var NPCID = reader.readInt16();
         var damage = reader.readInt16();
 
@@ -275,7 +319,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handleUpdateItemDrop: function(packet) {
         var self = this;
-        var reader = Utils.ReadPacketFactory(packet.data);
+        var reader = new Utils.ReadPacketFactory(packet.data);
         var itemID = reader.readInt16();
         var position = {
           x: reader.readSingle(),
@@ -300,7 +344,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handlePlayerActive: function(packet) {
         var self = this;
-        var reader = Utils.ReadPacketFactory(packet.data);
+        var reader = new Utils.ReadPacketFactory(packet.data);
         var playerID = reader.readByte();
         var active = reader.readByte() === 1;
         self.currentServer.entityTracking.players[playerID] = active;
@@ -320,7 +364,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
       },
 
       clearPlayer: function(client, playerIndex) {
-        var playerActive = Utils.PacketFactory()
+        var playerActive = (new Utils.PacketFactory())
           .setType(PacketTypes.PlayerActive)
           .packByte(playerIndex)
           .packByte(0) // Active
@@ -340,7 +384,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
       },
 
       clearNPC: function(client, npcIndex) {
-        var updateNPC = Utils.PacketFactory()
+        var updateNPC = (new Utils.PacketFactory())
           .setType(PacketTypes.NPCUpdate)
           .packInt16(parseInt(npcIndex))
           .packSingle(0) // PositionX
@@ -370,7 +414,7 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
       },
 
       clearItem: function(client, itemIndex) {
-        var updateItemDrop = Utils.PacketFactory()
+        var updateItemDrop = (new Utils.PacketFactory())
           .setType(PacketTypes.UpdateItemDrop)
           .packInt16(itemIndex)
           .packSingle(0) // PositionX

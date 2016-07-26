@@ -132,7 +132,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
             // Write the data the client sent us to the now connected server
             if (self.options.fakeVersion) {
-              var packet = Utils.PacketFactory()
+              var packet = (new Utils.PacketFactory())
                 .setType(1)
                 .packString("Terraria" + self.options.fakeVersionNum)
                 .data();
@@ -158,7 +158,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           color = "00ff00";
         }
 
-        var packetData = Utils.PacketFactory()
+        var packetData = (new Utils.PacketFactory())
           .setType(PacketTypes.ChatMessage)
           .packByte(255)
           .packHex(color)
@@ -196,6 +196,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
         // Start new socket
         self.server.socket = new net.Socket();
+        self.server.reset();
 
         //console.log("Connecting to " + ip + ":" + port);
 
@@ -212,7 +213,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
           // Send Packet 1
           // This needs to be changed; it should not be hardcoded data
-          var connectPacket = Utils.PacketFactory()
+          var connectPacket = (new Utils.PacketFactory())
               .setType(1)
               .packString("Terraria173")
               .data();
