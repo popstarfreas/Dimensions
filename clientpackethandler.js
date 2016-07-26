@@ -104,7 +104,6 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
       var buffID = reader.readByte();
 
       if (self.currentClient.options.blockInvis) {
-        console.log("Blocking invis");
         return buffID === 10;
       } else {
         return false;
