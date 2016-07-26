@@ -93,7 +93,7 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
         }
       }
 
-      self.currentClient.socket.write(new Buffer(updatePlayerBuff.data(), 'hex'));
+      self.currentClient.server.socket.write(new Buffer(updatePlayerBuff.data(), 'hex'));
       return true;
     },
 
