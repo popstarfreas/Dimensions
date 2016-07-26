@@ -30,7 +30,8 @@
 
       options: {
         fakeVersion: false,
-        fakeVersionNum: 169
+        fakeVersionNum: 169,
+        blockInvis: true
       }
     };
 
