@@ -96,57 +96,61 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
 
       handleWorldInfo: function(packet) {
         var self = this;
+
+        if (self.currentServer.client.waitingInventoryReset) {
+          self.resetInventory(self.currentServer.client);
+          self.currentServer.client.waitingInventoryReset = false;
+        }
+
         var reader = new Utils.ReadPacketFactory(packet.data);
-          reader.readInt32(); // Time
-          reader.readByte(); // Day&MoonInfo
-          reader.readByte(); // Moon Phase
-          reader.readInt16(); // MaxTilesX
-          reader.readInt16(); // MaxTilesY
-          var spawn = {
-            x: reader.readInt16(),
-            y: reader.readInt16()
-          };
-          reader.readInt16(); // WorldSurface
-          reader.readInt16(); // RockLayer
-          reader.readInt32(); // WorldID
-          reader.readString(); // World Name
-          reader.readByte(); // Moon Type
-          reader.readByte(); // Tree Background
-          reader.readByte(); // Corruption Background
-          reader.readByte(); // Jungle Background
-          reader.readByte(); // Snow Background
-          reader.readByte(); // Hallow Background
-          reader.readByte(); // Crimson Background
-          reader.readByte(); // Desert Background
-          reader.readByte(); // Ocean Background
-          reader.readByte(); // Ice Back Style
-          reader.readByte(); // Jungle Back Style
-          reader.readByte(); // Hell Back Style
-          reader.readSingle(); // Wind Speed Set
-          reader.readByte(); // Cloud Number
-          reader.readInt32(); // Tree 1
-          reader.readInt32(); // Tree 2
-          reader.readInt32(); // Tree 3
-          reader.readByte(); // Tree Style 1
-          reader.readByte(); // Tree Style 2
-          reader.readByte(); // Tree Style 3
-          reader.readByte(); // Tree Style 4
-          reader.readInt32(); // Cave Back 1
-          reader.readInt32(); // Cave Back 2
-          reader.readInt32(); // Cave Back 3
-          reader.readByte(); // Cave Back Style 1
-          reader.readByte(); // Cave Back Style 2
-          reader.readByte(); // Cave Back Style 3
-          reader.readByte(); // Cave Back Style 4
-          reader.readSingle(); // Rain
-          var eventInfo = reader.readByte();
-          if ((eventInfo & 64) === 64) {
-            console.log("Server is SSC");
-            self.currentServer.isSSC = true;
-          } else {
-            console.log("Server isn't SSC");
-            self.currentServer.isSSC = false;
-          }
+        reader.readInt32(); // Time
+        reader.readByte(); // Day&MoonInfo
+        reader.readByte(); // Moon Phase
+        reader.readInt16(); // MaxTilesX
+        reader.readInt16(); // MaxTilesY
+        var spawn = {
+          x: reader.readInt16(),
+          y: reader.readInt16()
+        };
+        reader.readInt16(); // WorldSurface
+        reader.readInt16(); // RockLayer
+        reader.readInt32(); // WorldID
+        reader.readString(); // World Name
+        reader.readByte(); // Moon Type
+        reader.readByte(); // Tree Background
+        reader.readByte(); // Corruption Background
+        reader.readByte(); // Jungle Background
+        reader.readByte(); // Snow Background
+        reader.readByte(); // Hallow Background
+        reader.readByte(); // Crimson Background
+        reader.readByte(); // Desert Background
+        reader.readByte(); // Ocean Background
+        reader.readByte(); // Ice Back Style
+        reader.readByte(); // Jungle Back Style
+        reader.readByte(); // Hell Back Style
+        reader.readSingle(); // Wind Speed Set
+        reader.readByte(); // Cloud Number
+        reader.readInt32(); // Tree 1
+        reader.readInt32(); // Tree 2
+        reader.readInt32(); // Tree 3
+        reader.readByte(); // Tree Style 1
+        reader.readByte(); // Tree Style 2
+        reader.readByte(); // Tree Style 3
+        reader.readByte(); // Tree Style 4
+        reader.readInt32(); // Cave Back 1
+        reader.readInt32(); // Cave Back 2
+        reader.readInt32(); // Cave Back 3
+        reader.readByte(); // Cave Back Style 1
+        reader.readByte(); // Cave Back Style 2
+        reader.readByte(); // Cave Back Style 3
+        reader.readByte(); // Cave Back Style 4
+        reader.readSingle(); // Rain
+        var eventInfo = reader.readByte();
+        if ((eventInfo & 64) === 64) {
+          self.currentServer.isSSC = true;
+        } else {
+          self.currentServer.isSSC = false;
+        }
         if (self.currentServer.client.state === 2) {
           self.currentServer.spawn.x = spawn.x;
           self.currentServer.spawn.y = spawn.y;
@@ -427,6 +431,30 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
           .packInt16(0)
           .data();
         client.socket.write(new Buffer(updateItemDrop, 'hex'));
+      },
+
+      resetInventory: function(client) {
+        var self = this;
+        var updateItemDrop;
+        var slotIDs = _.keys(self.currentServer.client.inventory);
+        for (var i = 0, len = slotIDs.length; i < len; i++) {
+          if (self.currentServer.client.inventory[slotIDs[i]]) {
+            self.setItem(client, self.currentServer.client.inventory[slotIDs[i]]);
+          }
+        }
+      },
+
+      setItem: function(client, item) {
+        var self = this;
+        var playerInventorySlot = (new Utils.PacketFactory())
+          .setType(PacketTypes.PlayerInventorySlot)
+          .packByte(client.player.id)
+          .packByte(item.slot)
+          .packInt16(item.stack)
+          .packByte(item.prefix)
+          .packInt16(item.netID)
+          .data();
+        client.socket.write(new Buffer(playerInventorySlot, 'hex'));
       }
     };
   };

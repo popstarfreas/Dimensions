@@ -1,4 +1,4 @@
-define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes, Utils, NPC) {
+define(['lib/class', 'packettypes', 'utils', 'npc', 'item'], function(Class, PacketTypes, Utils, NPC, Item) {
   var ClientPacketHandler = {
     init: function() {},
 
@@ -21,7 +21,11 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
         case PacketTypes.AddPlayerBuff:
           handled = self.handleAddPlayerBuff(packet);
           break;
-          //case PacketTypes. 
+        
+        case PacketTypes. PlayerInventorySlot:
+          handled = self.handlePlayerInventorySlot(packet);
+          break;
+
           // Either will be sent, but not both
         case PacketTypes.ContinueConnecting2:
         case PacketTypes.Status:
@@ -108,6 +112,22 @@ define(['lib/class', 'packettypes', 'utils', 'npc'], function(Class, PacketTypes
       } else {
         return false;
       }
+    },
+
+    handlePlayerInventorySlot: function(packet) {
+      var self = this;
+
+      if ((self.currentClient.state === 0 || self.currentClient.state === 2) && !self.currentClient.waitingInventoryReset) {
+        var reader = new Utils.ReadPacketFactory(packet.data);
+        var playerID = reader.readByte();
+        var slotID = reader.readByte();
+        var stack = reader.readInt16();
+        var prefix = reader.readByte();
+        var netID = reader.readInt16();
+        self.currentClient.inventory[slotID] = new Item(slotID, stack, prefix, netID);
+      }
+
+      return false;
     },
 
     handleChatMessage: function(packet) {

@@ -13,8 +13,8 @@
           listenPort: "7779",
           routingServers: [{
             name: "zombies",
-            serverIP: "gm.dark-gaming.com",
-            serverPort: "7777"
+            serverIP: "142.4.202.106",
+            serverPort: "7002"
           }]
         },
 

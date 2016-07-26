@@ -58,7 +58,7 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
           this.client.socket.write(new Buffer(allowedPackets, "hex"));
         }
       } catch (e) {
-        console.log("TS Handle Data Error: " + e);
+        console.log("TS Handle Data Error: " + e.stack);
       }
     },
 

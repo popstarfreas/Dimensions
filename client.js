@@ -51,6 +51,10 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // UUID of client
       this.UUID = "";
 
+      // Inventory of Client - only used for SSC -> to Non-SSC switching
+      this.inventory = {};
+      this.waitingInventoryReset = false;
+
       // A boolean indicating that the socket was closed because the client was booted from the TerrariaServers
       // This is set to false again after the close handler has been run
       this.wasKicked = false;
@@ -196,6 +200,9 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
         // Start new socket
         self.server.socket = new net.Socket();
+        if (self.server.isSSC) {
+          self.waitingInventoryReset = true;
+        }
         self.server.reset();
 
         //console.log("Connecting to " + ip + ":" + port);
@@ -214,9 +221,9 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           // Send Packet 1
           // This needs to be changed; it should not be hardcoded data
           var connectPacket = (new Utils.PacketFactory())
-              .setType(1)
-              .packString("Terraria173")
-              .data();
+            .setType(1)
+            .packString("Terraria173")
+            .data();
           self.server.socket.write(new Buffer(connectPacket, "hex"));
           if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
             self.routingInformation = options.routingInformation;
