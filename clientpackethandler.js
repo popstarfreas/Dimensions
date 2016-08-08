@@ -82,23 +82,27 @@ define(['lib/class', 'packettypes', 'utils', 'npc', 'item'], function(Class, Pac
       var self = this;
       var reader = new Utils.ReadPacketFactory(packet.data);
       var playerID = reader.readByte();
-      var updatePlayerBuff = (new Utils.PacketFactory())
-        .setType(PacketTypes.UpdatePlayerBuff)
-        .packByte(playerID);
+      if (!self.currentClient.options.blockInvis) {
+        var updatePlayerBuff = (new Utils.PacketFactory())
+          .setType(PacketTypes.UpdatePlayerBuff)
+          .packByte(playerID);
 
-      for (var i = 0; i < 22; i++) {
-        if (reader.packetData.length !== 0) {
-          var buffType = reader.readByte();
-          if (!self.currentClient.options.blockInvis || buffType !== 10) {
-            updatePlayerBuff.packByte(buffType);
-          } else {
-            updatePlayerBuff.packByte(0);
+        for (var i = 0; i < 22; i++) {
+          if (reader.packetData.length !== 0) {
+            var buffType = reader.readByte();
+            if (buffType !== 10) {
+              updatePlayerBuff.packByte(buffType);
+            } else {
+              updatePlayerBuff.packByte(0);
+            }
           }
         }
-      }
 
-      self.currentClient.server.socket.write(new Buffer(updatePlayerBuff.data(), 'hex'));
-      return true;
+        self.currentClient.server.socket.write(new Buffer(updatePlayerBuff.data(), 'hex'));
+        return true;
+      } else {
+        return false;
+      }
     },
 
     handleAddPlayerBuff: function(packet) {
