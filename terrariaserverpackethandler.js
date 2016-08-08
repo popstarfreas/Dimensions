@@ -69,7 +69,10 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
             self.currentServer.client.sendChatMessage(dcReason, color);
             self.currentServer.client.wasKicked = true;
             self.currentServer.client.connected = false;
-            self.socket.destroy();
+
+            if (self.socket) {
+              self.socket.destroy();
+            }
           }
         }
 
