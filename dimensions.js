@@ -8,9 +8,7 @@ define(['redis', 'listenserver', 'config', 'client', 'utils', 'interface', 'unde
         self.servers = {};
         self.options = Config.options;
         self.listenServers = {};
-        self.serverDetails = {
-          counts: {},
-        };
+        self.serverDetails = {};
         self.handlers = {
           command: new ClientCommandHandler(),
           clientPacketHandler: new ClientPacketHandler(),

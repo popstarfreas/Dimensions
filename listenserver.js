@@ -5,15 +5,17 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       self.clients = [];
       self.servers = servers;
       self.options = options;
-      self.serverCounts = serverCounts;
       self.port = info.listenPort;
       self.routingServers = info.routingServers;
       self.serverDetails = serverDetails;
       self.globalHandlers = globalHandlers;
 
       // Init counts
+      var details;
       for (var i = 0; i < self.routingServers.length; i++) {
-        self.serversDetails.counts[self.routingServers[i].name] = 0;
+        details = self.serversDetails[self.routingServers[i].name];
+        details.clientCount = 0;
+        details.disabled = false;
       }
 
 
@@ -31,12 +33,14 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
     chooseServer: function() {
       var self = this;
       var chosenServer = null;
-      var currentServerCount = null;
+      var currentClientCount = null;
+      var details;
       for (var i = 0; i < self.routingServers.length; i++) {
-        if (!self.routingServers[i].disabled) {
-          if (currentServerCount === null || self.serversDetails.counts[self.routingServers[i].name] < currentServerCount) {
+        details = self.serversDetails[self.routingServers[i].name];
+        if (!details.disabled) {
+          if (currentClientCount === null || details.clientCount < currentClientCount) {
             chosenServer = self.routingServers[i];
-            currentServerCount = self.serversDetails.counts[self.routingServers[i].name];
+            currentClientCount = details.clientCount;
           }
         }
       }
@@ -50,8 +54,11 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       self.routingServers = info.routingServers;
 
       // Reset counts
+      var details;
       for (var i = 0; i < self.routingServers.length; i++) {
-        self.serversDetails.counts[self.routingServers[i].name] = 0;
+        details = self.serversDetails[self.routingServers[i].name];
+        details.clientCount = 0;
+        details.disabled = false;
       }
     },
 
@@ -79,7 +86,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       var self = this;
       var chosenServer = self.chooseServer();
       if (socket && socket.remoteAddress) {
-        console.log("[" + process.pid + "] Client: " + Utils.getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (self.serversClientCounts[chosenServer.name] + 1) + "]");
+        console.log("[" + process.pid + "] Client: " + Utils.getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (self.serverDetails[chosenServer.name].clientCount + 1) + "]");
       } else {
         console.log("Unknown client");
       }
@@ -106,7 +113,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       socket.on('close', function() {
         try {
           if (socket && socket.remoteAddress) {
-            console.log("[" + process.pid + "] Client: " + Utils.getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (self.serversDetails.counts[client.server.name]) + "]");
+            console.log("[" + process.pid + "] Client: " + Utils.getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (self.serversDetails[client.server.name].clientCount) + "]");
           } else {
             console.log("Client [" + client.ID + "] with unknown IP closed.");
           }
