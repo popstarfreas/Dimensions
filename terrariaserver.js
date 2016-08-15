@@ -67,7 +67,7 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
       //console.log("TerrariaServer socket closed. [" + self.name + "]");
       try {
         if (self.client.countIncremented) {
-          self.client.serverCounts[self.name]--;
+          self.client.serverDetails.counts[self.name]--;
           self.client.countIncremented = false;
         }
       } catch (e) {

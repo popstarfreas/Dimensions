@@ -1,6 +1,6 @@
 define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'underscore', 'clientpackethandler'], function(Player, Utils, TerrariaServer, net, Config, PacketTypes, _, ClientPacketHandler) {
   var Client = Class.extend({
-    init: function(id, socket, server, serverCounts, globalHandlers, servers, options) {
+    init: function(id, socket, server, serverDetails, globalHandlers, servers, options) {
       this.ID = id;
 
       // Options from the config
@@ -51,8 +51,6 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       // UUID of client
       this.UUID = "";
 
-      // Inventory of Client - only used for SSC -> to Non-SSC switching
-      this.inventory = {};
       this.waitingInventoryReset = false;
 
       // A boolean indicating that the socket was closed because the client was booted from the TerrariaServers
@@ -67,7 +65,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
       this.countIncremented = false;
 
       // The counts of all TerrariaServers available
-      this.serverCounts = serverCounts;
+      this.serverDetails = serverDetails;
 
       this.preventSpawnOnJoin = false;
 
@@ -131,7 +129,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
           this.server.socket.connect(self.server.port, self.server.ip, function() {
             self.countIncremented = true;
-            self.serverCounts[self.server.name]++;
+            self.serverDetails.counts[self.server.name]++;
             self.connected = true;
 
             // Write the data the client sent us to the now connected server
@@ -216,7 +214,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         self.server.socket.connect(parseInt(port), ip, function() {
           // Increment server count
           self.countIncremented = true;
-          self.serverCounts[self.server.name]++;
+          self.serverDetails.counts[self.server.name]++;
 
           // Send Packet 1
           // This needs to be changed; it should not be hardcoded data

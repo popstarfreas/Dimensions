@@ -8,7 +8,9 @@ define(['redis', 'listenserver', 'config', 'client', 'utils', 'interface', 'unde
         self.servers = {};
         self.options = Config.options;
         self.listenServers = {};
-        self.serverCounts = {};
+        self.serverDetails = {
+          counts: {},
+        };
         self.handlers = {
           command: new ClientCommandHandler(),
           clientPacketHandler: new ClientPacketHandler(),
@@ -32,7 +34,7 @@ define(['redis', 'listenserver', 'config', 'client', 'utils', 'interface', 'unde
         var listenKey;
         for (var i = 0; i < Config.servers.length; i++) {
           listenKey = Config.servers[i].listenPort;
-          self.listenServers[listenKey] = new ListenServer(Config.servers[i], self.serverCounts, self.handlers, self.servers, self.options);
+          self.listenServers[listenKey] = new ListenServer(Config.servers[i], self.serverDetails, self.handlers, self.servers, self.options);
 
           for (var j = 0; j < Config.servers[i].routingServers.length; j++) {
             self.servers[Config.servers[i].routingServers[j].name] = Config.servers[i].routingServers[j];

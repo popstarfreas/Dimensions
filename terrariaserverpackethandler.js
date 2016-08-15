@@ -441,8 +441,8 @@ define(['lib/class', 'packettypes', 'utils', 'underscore', 'npc'], function(Clas
         var updateItemDrop;
         var slotIDs = _.keys(self.currentServer.client.inventory);
         for (var i = 0, len = slotIDs.length; i < len; i++) {
-          if (self.currentServer.client.inventory[slotIDs[i]]) {
-            self.setItem(client, self.currentServer.client.inventory[slotIDs[i]]);
+          if (self.currentServer.client.player.inventory[slotIDs[i]]) {
+            self.setItem(client, self.currentServer.client.player.inventory[slotIDs[i]]);
           }
         }
       },

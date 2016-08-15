@@ -128,7 +128,7 @@ define(['lib/class', 'packettypes', 'utils', 'npc', 'item'], function(Class, Pac
         var stack = reader.readInt16();
         var prefix = reader.readByte();
         var netID = reader.readInt16();
-        self.currentClient.inventory[slotID] = new Item(slotID, stack, prefix, netID);
+        self.currentClient.player.inventory[slotID] = new Item(slotID, stack, prefix, netID);
       }
 
       return false;
