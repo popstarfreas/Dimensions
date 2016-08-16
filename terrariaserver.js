@@ -94,9 +94,20 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
     },
 
     handleError: function(error) {
+      var self = this;
       //console.log(this.ip + ":" + this.port + " " + this.name);
       //this.client.changeServer(Config.IP, Config.PORT);
-      console.log("TerrariaServer Socket Error: " + error);
+      var type = /ECONN([A-z]*?) /.exec(error.message)[1];
+      if (type === "REFUSED") {
+        if (!self.client.serverDetails[self.name].disabled && ++self.client.serverDetails[self.name].failedConnAttempts >= 3) {
+          self.client.serverDetails[self.name].disabled = true;
+          setTimeout(function() {
+            self.client.serverDetails[self.name].failedConnAttempts = 0;
+            self.client.serverDetails[self.name].disabled = false;
+          }, 20000);
+        }
+      }
+      console.log("TerrariaServer Socket Error: " + error.message);
       this.socket.destroy();
       this.client.connected = false;
     }

@@ -17,6 +17,7 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
         details = self.serverDetails[self.routingServers[i].name];
         details.clientCount = 0;
         details.disabled = false;
+        details.failedConnAttempts = 0;
       }
 
 
@@ -38,8 +39,11 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       var details;
       for (var i = 0; i < self.routingServers.length; i++) {
         details = self.serverDetails[self.routingServers[i].name];
-        if (!details.disabled) {
-          if (currentClientCount === null || details.clientCount < currentClientCount) {
+
+        // Even if the server has been disabled, if we have no current choice, we must use it
+        if (!details.disabled || currentClientCount === null) {
+          // Favour either lower player count or non-disability
+          if (currentClientCount === null || details.clientCount < currentClientCount || self.serverDetails[chosenServer.name].disabled) {
             chosenServer = self.routingServers[i];
             currentClientCount = details.clientCount;
           }
@@ -58,8 +62,8 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       var details;
       for (var i = 0; i < self.routingServers.length; i++) {
         details = self.serverDetails[self.routingServers[i].name];
-        details.clientCount = 0;
         details.disabled = false;
+        details.failedConnAttempts = 0;
       }
     },
 
@@ -76,6 +80,13 @@ define(['net', 'underscore', 'utils', 'client'], function(net, _, Utils, Client)
       self.clients = [];
       self.server.removeListener('error', self.ServerHandleError);
       self.server.close();
+
+      // Reset counts
+      var details;
+      for (var i = 0; i < self.routingServers.length; i++) {
+        details = self.serverDetails[self.routingServers[i].name];
+        details.clientCount = 0;
+      }
     },
 
     handleStart: function() {

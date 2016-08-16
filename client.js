@@ -130,6 +130,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           this.server.socket.connect(self.server.port, self.server.ip, function() {
             self.countIncremented = true;
             self.serverDetails[self.server.name].counts++;
+            self.serverDetails[self.server.name].failedConnAttempts = 0;
             self.connected = true;
 
             // Write the data the client sent us to the now connected server
@@ -215,6 +216,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
           // Increment server count
           self.countIncremented = true;
           self.serverDetails[self.server.name].counts++;
+          self.serverDetails[self.server.name].failedConnAttempts = 0;
 
           // Send Packet 1
           // This needs to be changed; it should not be hardcoded data
