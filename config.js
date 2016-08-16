@@ -7,11 +7,6 @@
             name: "ExampleServer",
             serverIP: "127.0.0.1",
             serverPort: "7777",
-          },
-          {
-            name: "ExampleServer2",
-            serverIP: "t.dark-gaming.com",
-            serverPort: "7777",
           }]
         },
       ],
