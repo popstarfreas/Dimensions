@@ -97,7 +97,8 @@ define(['utils', 'config', 'packettypes', 'underscore', 'terrariaserverpackethan
       var self = this;
       //console.log(this.ip + ":" + this.port + " " + this.name);
       //this.client.changeServer(Config.IP, Config.PORT);
-      var type = /ECONN([A-z]*?) /.exec(error.message)[1];
+      var typeMatches = /ECONN([A-z]*?) /.exec(error.message)[1];
+      var type = typeMatches !== null ? typeMatches[1] : "";
       if (type === "REFUSED") {
         if (!self.client.serverDetails[self.name].disabled && ++self.client.serverDetails[self.name].failedConnAttempts >= 3) {
           self.client.serverDetails[self.name].disabled = true;
