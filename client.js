@@ -129,7 +129,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
 
           this.server.socket.connect(self.server.port, self.server.ip, function() {
             self.countIncremented = true;
-            self.serverDetails[self.server.name].counts++;
+            self.serverDetails[self.server.name].clientCounts++;
             self.serverDetails[self.server.name].failedConnAttempts = 0;
             self.connected = true;
 
@@ -215,7 +215,7 @@ define(['player', 'utils', 'terrariaserver', 'net', 'config', 'packettypes', 'un
         self.server.socket.connect(parseInt(port), ip, function() {
           // Increment server count
           self.countIncremented = true;
-          self.serverDetails[self.server.name].counts++;
+          self.serverDetails[self.server.name].clientCounts++;
           self.serverDetails[self.server.name].failedConnAttempts = 0;
 
           // Send Packet 1
