@@ -87,7 +87,7 @@ class Dimensions {
         break;
       case "reloadcmds":
           try {
-            let ClientCommandHandler = requireNoCache('./clientcommandhandler.js', require);
+            let ClientCommandHandler = requireNoCache('./clientcommandhandler.js', require).default;
             this.handlers.command = new ClientCommandHandler();
           } catch (e) {
             console.log("Error loading Command Handler: " + e);
@@ -100,7 +100,7 @@ class Dimensions {
 
   reloadClientHandlers(): void {
       try {
-        let ClientPacketHandler = requireNoCache('./clientpackethandler.js', require);
+        let ClientPacketHandler = requireNoCache('./clientpackethandler.js', require).default;
         this.handlers.clientPacketHandler = new ClientPacketHandler();
       } catch (e) {
         console.log("Error loading Client Packet Handler: " + e);
@@ -109,7 +109,7 @@ class Dimensions {
 
   reloadTerrariaServerHandlers(): void {
       try {
-        let TerrariaServerPacketHandler = requireNoCache('./terrariaserverpackethandler.js', require);
+        let TerrariaServerPacketHandler = requireNoCache('./terrariaserverpackethandler.js', require).default;
         this.handlers.terrariaServerPacketHandler = new TerrariaServerPacketHandler();
       } catch (e) {
         console.log("Error loading TerrariaServer Packet Handler: " + e);
