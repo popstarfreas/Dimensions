@@ -127,7 +127,7 @@ class TerrariaServer {
     //console.log(this.ip + ":" + this.port + " " + this.name);
     //this.client.changeServer(Config.IP, Config.PORT);
     let matches: RegExpMatchArray = /ECONN([A-z]*?) /.exec(error.message);
-    let type: string = matches.length > 1 ? matches[1] : "";
+    let type: string = matches !== null && matches.length > 1 ? matches[1] : "";
     if (type === "REFUSED") {
       if (!this.client.serversDetails[this.name].disabled && ++this.client.serversDetails[this.name].failedConnAttempts >= 3) {
         this.client.serversDetails[this.name].disabled = true;
