@@ -11,7 +11,7 @@ import RoutingServer from './routingserver';
 class ListenServer {
   idCounter: number;
   clients: Client[];
-  servers: RoutingServer[];
+  servers: { [id: string]: RoutingServer };
   options: ConfigOptions;
   port: number;
   routingServers: RoutingServer[];
@@ -22,7 +22,7 @@ class ListenServer {
   ServerHandleStart: () => void;
   server: Net.Server;
 
-  constructor(info: ConfigServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: RoutingServer[], options: ConfigOptions) {
+  constructor(info: ConfigServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer}, options: ConfigOptions) {
     this.idCounter = 0;
     this.clients = [];
     this.servers = servers;

@@ -17,7 +17,7 @@ import ChangeServerOptions from './changeserveroptions';
 class Client {
   ID: number;
   options: ConfigOptions;
-  servers: RoutingServer[];
+  servers: { [id: string]: RoutingServer };
   socket: Net.Socket;
   ip: string;
   player: Player;
@@ -39,7 +39,7 @@ class Client {
   ServerHandleData: (data: Buffer) => void;
   ServerHandleClose: () => void;
 
-  constructor(id: number, socket: Net.Socket, server: RoutingServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: RoutingServer[], options: ConfigOptions) {
+  constructor(id: number, socket: Net.Socket, server: RoutingServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions) {
     this.ID = id;
 
     // Options from the config
