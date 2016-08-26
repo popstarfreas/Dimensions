@@ -18,7 +18,7 @@ interface Entities {
 
 class TerrariaServer {
   client: Client;
-  socket: Net.Socket;
+  socket: Net.Socket | null;
 
   // Connection Details
   ip: string;
@@ -28,19 +28,19 @@ class TerrariaServer {
   name: string;
   spawn: Point;
   bufferPacket: string;
-  afterClosed: (client: Client) => void;
+  afterClosed: ((client: Client) => void) | null;
   entityTracking: Entities;
   isSSC: boolean;
 
-  constructor(socket: Net.Socket, client: Client) {
+  constructor(socket: Net.Socket | null, client: Client) {
     this.socket = socket;
     this.client = client;
     this.reset();
   }
 
   reset(): void {
-    this.ip = null;
-    this.port = null;
+    this.ip = "127.0.0.1";
+    this.port = 7777;
     this.name = "";
     this.spawn = {
       x: 0,
@@ -126,7 +126,7 @@ class TerrariaServer {
   handleError(error: Error): void {
     //console.log(this.ip + ":" + this.port + " " + this.name);
     //this.client.changeServer(Config.IP, Config.PORT);
-    let matches: RegExpMatchArray = /ECONN([A-z]*?) /.exec(error.message);
+    let matches: RegExpMatchArray | null = /ECONN([A-z]*?) /.exec(error.message);
     let type: string = matches !== null && matches.length > 1 ? matches[1] : "";
     if (type === "REFUSED") {
       if (!this.client.serversDetails[this.name].disabled && ++this.client.serversDetails[this.name].failedConnAttempts >= 3) {
@@ -138,7 +138,10 @@ class TerrariaServer {
       }
     }
     console.log("TerrariaServer Socket Error: " + error.message);
-    this.socket.destroy();
+
+    if (this.socket !== null) {
+      this.socket.destroy();
+    }
     this.client.connected = false;
   }
 }

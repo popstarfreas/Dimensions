@@ -31,7 +31,7 @@ class Client {
   UUID: string;
   waitingInventoryReset: boolean;
   wasKicked: boolean;
-  routingInformation: RoutingInformation;
+  routingInformation: RoutingInformation | null;
   countIncremented: boolean;
   serversDetails: { [id: string]: ServerDetails };
   preventSpawnOnJoin: boolean;
