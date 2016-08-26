@@ -1,5 +1,4 @@
 import {hex2str, BuffersPackets, getPacketsFromHexString} from './utils';
-import Config from './config';
 import PacketTypes from './packettypes';
 import * as _ from 'lodash';
 import terrariaServerPacketHandler from './terrariaserverpackethandler';
