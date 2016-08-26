@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node ./build/index.js",
+    "build": "tsc index.ts --outDir ./build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
