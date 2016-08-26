@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node ./build/index.js",
     "build": "tsc index.ts --outDir ./build",
+    "bstart": "tsc index.ts --outDir ./build && cd ./build && node ./index.js && cd ../",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
