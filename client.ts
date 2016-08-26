@@ -2,7 +2,7 @@ import Player from './player';
 import {} from './utils';
 import TerrariaServer from './terrariaserver';
 import * as Net from 'net';
-import {ConfigSettings, ConfigOptions} from './config';
+import {ConfigSettings, ConfigOptions} from './configloader';
 import PacketTypes from './packettypes';
 import * as _ from 'lodash';
 import ClientPacketHandler from './clientpackethandler';

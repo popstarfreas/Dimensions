@@ -5,7 +5,7 @@ import {getProperIP} from './utils';
 import Client from './client';
 import ServerDetails from './serverdetails';
 import GlobalHandlers from './globalhandlers';
-import {ConfigServer, ConfigOptions} from './config';
+import {ConfigServer, ConfigOptions} from './configloader';
 import RoutingServer from './routingserver';
 
 class ListenServer {

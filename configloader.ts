@@ -17,4 +17,4 @@ export interface Config {
 }
 
 
-export const ConfigSettings: Config = require('./config.js');
+export const ConfigSettings: Config = require('./config.js').ConfigSettings;

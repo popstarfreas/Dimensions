@@ -2,7 +2,7 @@
 import * as redis from "redis";
 import RoutingServer from "./routingserver";
 import ListenServer from "./listenserver";
-import {ConfigSettings, Config, ConfigOptions} from "./config";
+import {ConfigSettings, Config, ConfigOptions} from "./configloader";
 import Client from "./client";
 import {requireNoCache} from "./utils";
 import * as _ from "lodash";
