@@ -13,7 +13,6 @@ import ServerDetails from "./serverdetails";
 import GlobalHandlers from "./globalhandlers";
 
 class Dimensions {
-  id: number;
   servers: { [id: string]: RoutingServer };
   options: ConfigOptions;
   listenServers: { [id: number]: ListenServer };
@@ -22,7 +21,6 @@ class Dimensions {
   serversDetails: { [id: string]: ServerDetails };
   
   constructor() {
-    this.id = 0;
     this.options = ConfigSettings.options;
     this.handlers = {
       command: new ClientCommandHandler(),
