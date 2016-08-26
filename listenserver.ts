@@ -32,8 +32,6 @@ class ListenServer {
     this.serversDetails = serversDetails;
     this.globalHandlers = globalHandlers;
 
-    // Init counts
-    var details;
     for (var i = 0; i < this.routingServers.length; i++) {
       this.serversDetails[this.routingServers[i].name] = {
         clientCount: 0,
@@ -88,7 +86,7 @@ class ListenServer {
   }
 
   shutdown(): void {
-    console.log("\033[33m[" + process.pid + "] Server on " + this.port + " is now shutting down.\033[37m");
+    console.log("\u001b[33m[" + process.pid + "] Server on " + this.port + " is now shutting down.\u001b[37m");
     for (let i: number = 0; i < this.clients.length; i++) {
       this.clients[i].server.socket.removeListener('data', this.clients[i].ServerHandleData);
       this.clients[i].server.socket.removeListener('error', this.clients[i].ServerHandleError);
@@ -109,7 +107,7 @@ class ListenServer {
   }
 
   handleStart(): void {
-    console.log("\033[32m[" + process.pid + "] Server on " + this.port + " started.\033[37m");
+    console.log("\u001b[32m[" + process.pid + "] Server on " + this.port + " started.\u001b[37m");
   }
 
   handleSocket(socket: Net.Socket): void {
@@ -160,7 +158,7 @@ class ListenServer {
   }
 
   handleError(error: Error) {
-    console.log("\033[31m Server on " + this.port + " encountered an error: " + error + ".\033[37m");
+    console.log("\u001b[31m Server on " + this.port + " encountered an error: " + error + ".\u001b[37m");
   }
 }
 

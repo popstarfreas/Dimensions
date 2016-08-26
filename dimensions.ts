@@ -14,9 +14,9 @@ import GlobalHandlers from "./globalhandlers";
 
 class Dimensions {
   id: number;
-  servers: RoutingServer[];
+  servers: { [id: string]: RoutingServer };
   options: ConfigOptions;
-  listenServers: ListenServer[];
+  listenServers: { [id: number]: ListenServer };
   handlers: GlobalHandlers;
   redisClient: redis.RedisClient;
   serversDetails: { [id: string]: ServerDetails };
@@ -41,6 +41,10 @@ class Dimensions {
       .on('error', (err: Error) => {
         console.log("RedisError: " + err);
       });
+
+    this.serversDetails = {};
+    this.listenServers = {};
+    this.servers = {};
 
 
     //self.interface = new Interface(self.handleCommand.bind(self));
@@ -79,7 +83,7 @@ class Dimensions {
       case "reloadhandlers":
         this.reloadClientHandlers();
         this.reloadTerrariaServerHandlers();
-        console.log("\033[33mReloaded Packet Handlers.\033[37m");
+        console.log("\u001b[33mReloaded Packet Handlers.\u001b[37m");
         break;
       case "reloadcmds":
           try {
@@ -89,7 +93,7 @@ class Dimensions {
             console.log("Error loading Command Handler: " + e);
           }
         
-        console.log("\033[33mReloaded Command Handler.\033[37m");
+        console.log("\u001b[33mReloaded Command Handler.\u001b[37m");
         break;
     }
   }
@@ -159,7 +163,7 @@ class Dimensions {
       } catch (e) {
         console.log("Error loading Config: " + e);
       }
-      console.log("\033[33mReloaded Config.\033[37m");
+      console.log("\u001b[33mReloaded Config.\u001b[37m");
   }
 }
 
