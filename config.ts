@@ -31,7 +31,7 @@ export const ConfigSettings: Config = {
 
   options: {
     fakeVersion: false,
-    fakeVersionNum: 169,
+    fakeVersionNum: 172,
     blockInvis: true
   }
 };

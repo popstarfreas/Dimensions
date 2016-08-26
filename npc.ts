@@ -1,5 +1,3 @@
-
-export default NPC;
 class NPC {
 	index: number;
 	type: number;
@@ -11,3 +9,5 @@ class NPC {
 		this.life = life;
 	}
 };
+
+export default NPC;

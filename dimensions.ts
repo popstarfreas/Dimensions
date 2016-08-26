@@ -4,7 +4,7 @@ import RoutingServer from "./routingserver";
 import ListenServer from "./listenserver";
 import {ConfigSettings, Config, ConfigOptions} from "./config";
 import Client from "./client";
-import {} from "./utils";
+import {requireNoCache} from "./utils";
 import * as _ from "lodash";
 import ClientCommandHandler from "./clientcommandhandler";
 import ClientPacketHandler from "./clientpackethandler";
@@ -87,7 +87,7 @@ class Dimensions {
         break;
       case "reloadcmds":
           try {
-            let ClientCommandHandler = require('./clientcommandhandler');
+            let ClientCommandHandler = requireNoCache('./clientcommandhandler.js', require);
             this.handlers.command = new ClientCommandHandler();
           } catch (e) {
             console.log("Error loading Command Handler: " + e);
@@ -100,7 +100,7 @@ class Dimensions {
 
   reloadClientHandlers(): void {
       try {
-        let ClientPacketHandler = require('./clientpackethandler');
+        let ClientPacketHandler = requireNoCache('./clientpackethandler.js', require);
         this.handlers.clientPacketHandler = new ClientPacketHandler();
       } catch (e) {
         console.log("Error loading Client Packet Handler: " + e);
@@ -109,7 +109,7 @@ class Dimensions {
 
   reloadTerrariaServerHandlers(): void {
       try {
-        let TerrariaServerPacketHandler = require('./terrariaserverpackethandler');
+        let TerrariaServerPacketHandler = requireNoCache('./terrariaserverpackethandler.js', require);
         this.handlers.terrariaServerPacketHandler = new TerrariaServerPacketHandler();
       } catch (e) {
         console.log("Error loading TerrariaServer Packet Handler: " + e);
@@ -118,7 +118,7 @@ class Dimensions {
 
   reloadServers(): void {
       try {
-        let ConfigSettings = require('./config').ConfigSettings;
+        let ConfigSettings = requireNoCache('./config.js', require).ConfigSettings;
         let currentRoster = {};
         let runAfterFinished = [];
         for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
@@ -164,6 +164,7 @@ class Dimensions {
         console.log("Error loading Config: " + e);
       }
       console.log("\u001b[33mReloaded Config.\u001b[37m");
+      console.log(ConfigSettings);
   }
 }
 

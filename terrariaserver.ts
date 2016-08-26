@@ -94,10 +94,10 @@ class TerrariaServer {
   }
 
   handleClose(): void {
-    //console.log("TerrariaServer socket closed. [" + self.name + "]");
+    //console.log("TerrariaServer socket closed. [" + this.name + "]");
     try {
       if (this.client.countIncremented) {
-        this.client.serversDetails[self.name].clientCount--;
+        this.client.serversDetails[this.name].clientCount--;
         this.client.countIncremented = false;
       }
     } catch (e) {
@@ -129,11 +129,11 @@ class TerrariaServer {
     let matches: RegExpMatchArray = /ECONN([A-z]*?) /.exec(error.message);
     let type: string = matches.length > 1 ? matches[1] : "";
     if (type === "REFUSED") {
-      if (!this.client.serversDetails[self.name].disabled && ++this.client.serversDetails[self.name].failedConnAttempts >= 3) {
-        this.client.serversDetails[self.name].disabled = true;
+      if (!this.client.serversDetails[this.name].disabled && ++this.client.serversDetails[this.name].failedConnAttempts >= 3) {
+        this.client.serversDetails[this.name].disabled = true;
         setTimeout(function () {
-          this.client.serverDetails[self.name].failedConnAttempts = 0;
-          this.client.serverDetails[self.name].disabled = false;
+          this.client.serverDetails[this.name].failedConnAttempts = 0;
+          this.client.serverDetails[this.name].disabled = false;
         }, 20000);
       }
     }

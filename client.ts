@@ -164,10 +164,10 @@ class Client {
         this.initialConnectionAlreadyCreated = true;
         this.server.socket = new Net.Socket();
 
-        this.server.socket.connect(this.server.port, this.server.ip, function () {
+        this.server.socket.connect(this.server.port, this.server.ip, () => {
           this.countIncremented = true;
-          this.serverDetails[this.server.name].clientCounts++;
-          this.serverDetails[this.server.name].failedConnAttempts = 0;
+          this.serversDetails[this.server.name].clientCount++;
+          this.serversDetails[this.server.name].failedConnAttempts = 0;
           this.connected = true;
 
           // Write the data the client sent us to the now connected server
@@ -247,11 +247,11 @@ class Client {
       this.server.name = name;
 
       // Create connection
-      this.server.socket.connect(port, ip, function () {
+      this.server.socket.connect(port, ip, () => {
         // Increment server count
         this.countIncremented = true;
-        this.serverDetails[this.server.name].clientCounts++;
-        this.serverDetails[this.server.name].failedConnAttempts = 0;
+        this.serversDetails[this.server.name].clientCount++;
+        this.serversDetails[this.server.name].failedConnAttempts = 0;
 
         // Send Packet 1
         // This needs to be changed; it should not be hardcoded data

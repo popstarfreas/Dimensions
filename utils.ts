@@ -348,7 +348,7 @@ export class ReadPacketFactory {
   }
 }
 
-export function _invalidateRequireCacheForFile(filePath: string, require) {
+export function _invalidateRequireCacheForFile(filePath: string, require: NodeRequire) {
   var realPath = path.resolve(filePath);
   delete require.cache[realPath];
 }
