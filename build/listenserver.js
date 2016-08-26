@@ -19,7 +19,7 @@ var ListenServer = (function () {
             this.serversDetails[this.routingServers[i].name] = {
                 clientCount: 0,
                 disabled: false,
-                failedConnAttemps: 0
+                failedConnAttempts: 0
             };
         }
         this.ServerHandleError = this.handleError.bind(this);

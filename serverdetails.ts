@@ -1,7 +1,7 @@
 interface ServerDetails {
     clientCount: number;
     disabled: boolean;
-    failedConnAttemps: number;
+    failedConnAttempts: number;
 }
 
 export default ServerDetails;

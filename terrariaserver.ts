@@ -98,7 +98,7 @@ class TerrariaServer {
     //console.log("TerrariaServer socket closed. [" + self.name + "]");
     try {
       if (this.client.countIncremented) {
-        this.client.serverDetails[self.name].clientCounts--;
+        this.client.serversDetails[self.name].clientCount--;
         this.client.countIncremented = false;
       }
     } catch (e) {
@@ -130,8 +130,8 @@ class TerrariaServer {
     let matches: RegExpMatchArray = /ECONN([A-z]*?) /.exec(error.message);
     let type: string = matches.length > 1 ? matches[1] : "";
     if (type === "REFUSED") {
-      if (!this.client.serverDetails[self.name].disabled && ++this.client.serverDetails[self.name].failedConnAttempts >= 3) {
-        this.client.serverDetails[self.name].disabled = true;
+      if (!this.client.serversDetails[self.name].disabled && ++this.client.serversDetails[self.name].failedConnAttempts >= 3) {
+        this.client.serversDetails[self.name].disabled = true;
         setTimeout(function () {
           this.client.serverDetails[self.name].failedConnAttempts = 0;
           this.client.serverDetails[self.name].disabled = false;

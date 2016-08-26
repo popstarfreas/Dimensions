@@ -73,7 +73,7 @@ class ClientPacketHandler {
 
   handlePlayerInfo(packet: Packet): boolean {
     let nameLength: number = parseInt(packet.data.substr(12, 2), 16);
-    if (this.currentClient.name === null) {
+    if (this.currentClient.player.name === null) {
       // Take the appropriate hex chars out of the packet
       // then convert them to ascii
       let name: string = hex2a(packet.data.substr(14, nameLength * 2));
@@ -142,7 +142,7 @@ class ClientPacketHandler {
     // If chat message is a command
     if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
       let command: Command = this.currentClient.globalHandlers.command.parseCommand(chatMessage);
-      handled = this.currentClient.globalHandlers.command.handle(command.name.toLowerCase(), command.args, this.currentClient);
+      handled = this.currentClient.globalHandlers.command.handle(command, this.currentClient);
     }
 
     return handled;
@@ -150,7 +150,7 @@ class ClientPacketHandler {
 
   handleClientUUID(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
-    this.currentClient.clientUUID = reader.readString();
+    this.currentClient.UUID = reader.readString();
 
     return false;
   }
@@ -164,10 +164,10 @@ class ClientPacketHandler {
       if (damage > 0) {
         this.currentClient.server.entityTracking.NPCs[NPCID].life -= damage;
         if (this.currentClient.server.entityTracking.NPCs[NPCID].life <= 0) {
-          this.currentClient.server.entityTracking.NPCs[NPCID] = false;
+          this.currentClient.server.entityTracking.NPCs[NPCID] = null;
         }
       } else {
-        this.currentClient.server.entityTracking.NPCs[NPCID] = false;
+        this.currentClient.server.entityTracking.NPCs[NPCID] = null;
       }
     }
 

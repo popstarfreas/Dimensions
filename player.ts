@@ -1,7 +1,8 @@
+import Item from './item';
 class Player {
 	id: number;
 	name: string;
-	inventory: string[];
+	inventory: Item[];
 	constructor() {
 		this.id = 0;
 		this.name = null;
