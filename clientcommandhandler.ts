@@ -13,7 +13,7 @@ export class ClientCommandHandler {
   parseCommand(message: string): Command {
     let args: string[] = message.split(' ');
     let name: string = message.substr(1, message.split(' ')[0].length - 1);
-    return { name: name, args: args };
+    return { name: name.toLowerCase(), args: args };
   }
 
   handle(command: Command, client: Client): boolean {
@@ -33,8 +33,40 @@ export class ClientCommandHandler {
         case "void":
           handled = this.handleVoid(command.args, client);
           break;
+        case "boss":
+          client.sendChatMessage("Shifting to the " + command.name.substr(0, 1).toUpperCase() + command.name.substr(1) + " Dimension", "FF0000");
+          client.changeServer(client.servers["pve"]);
+          handled = true;
+          break;
+        case "warp":
+          handled = this.handleWarp(command.args, client);
+          break;
         case "join":
           handled = this.handleJoin(command.args, client);
+          break;
+      }
+    }
+
+    return handled;
+  }
+
+  handleWarp(args: string[], client: Client): boolean {
+    let handled: boolean = false;
+    if (args.length > 1) {
+      switch (args[0].toLowerCase()) {
+        case "boss":
+          if (client.server.name !== "pve") {
+            client.sendChatMessage("Shifting to the PvE Dimension", "FF0000");
+            client.changeServer(client.servers["pve"]);
+            handled = true;
+          }
+          break;
+        case "bosshard":
+          if (client.server.name !== "pve") {
+            client.sendChatMessage("Shifting to the PvE Dimension", "FF0000");
+            client.changeServer(client.servers["pve"]);
+            handled = true;
+          }
           break;
       }
     }

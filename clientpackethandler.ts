@@ -8,7 +8,7 @@ import {Command} from './clientcommandhandler';
 
 class ClientPacketHandler {
   currentClient: Client;
-  
+
   handlePacket(client: Client, packet: Packet): string {
     let packetType: number = packet.packetType;
     let handled: boolean = false;
@@ -139,6 +139,30 @@ class ClientPacketHandler {
     if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
       let command: Command = this.currentClient.globalHandlers.command.parseCommand(chatMessage);
       handled = this.currentClient.globalHandlers.command.handle(command, this.currentClient);
+      if (!handled && command.name.toLowerCase() === 'selfname') {
+        let properChat: RegExp = /\[c(.*?)\:(.*?)\]/g;
+        if (!properChat.test(chatMessage)) {
+          chatMessage = chatMessage.replace(/\[/g, '(');
+          let chatPacket: PacketFactory = (new PacketFactory())
+            .setType(PacketTypes.ChatMessage)
+            .packByte(0)
+            .packColor(0, 0, 0)
+            .packString(chatMessage);
+          this.currentClient.server.socket.write(new Buffer(chatPacket.data(), 'hex'));
+          handled = true;
+        }
+      }
+    } else {
+      let colorTag: RegExp = /\[c(.*?)\:(.*?)\]/g;
+      chatMessage = chatMessage.replace(colorTag, "$2");
+      chatMessage = chatMessage.replace("1.3.2.1", "the current Terraria version");
+      let chatPacket: PacketFactory = (new PacketFactory())
+        .setType(PacketTypes.ChatMessage)
+        .packByte(0)
+        .packColor(0, 0, 0)
+        .packString(chatMessage);
+      this.currentClient.server.socket.write(new Buffer(chatPacket.data(), 'hex'));
+      handled = true;
     }
 
     return handled;
