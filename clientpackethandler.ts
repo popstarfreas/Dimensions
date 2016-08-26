@@ -62,10 +62,6 @@ class ClientPacketHandler {
       case PacketTypes.ClientUUID:
         handled = this.handleClientUUID(packet);
         break;
-
-      case PacketTypes.NPCStrike:
-        handled = this.handleNPCStrike(packet);
-        break;
     }
 
     return !handled ? packet.data : "";
@@ -151,25 +147,6 @@ class ClientPacketHandler {
   handleClientUUID(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     this.currentClient.UUID = reader.readString();
-
-    return false;
-  }
-
-  handleNPCStrike(packet: Packet): boolean {
-    let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
-    var NPCID = reader.readInt16();
-    var damage = reader.readInt16();
-
-    if (this.currentClient.server.entityTracking.NPCs[NPCID]) {
-      if (damage > 0) {
-        this.currentClient.server.entityTracking.NPCs[NPCID].life -= damage;
-        if (this.currentClient.server.entityTracking.NPCs[NPCID].life <= 0) {
-          this.currentClient.server.entityTracking.NPCs[NPCID] = null;
-        }
-      } else {
-        this.currentClient.server.entityTracking.NPCs[NPCID] = null;
-      }
-    }
 
     return false;
   }
