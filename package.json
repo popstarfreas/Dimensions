@@ -9,8 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "lodash": "^4.15.0",
     "redis": "^2.6.2",
     "requirejs": "^2.2.0",
-    "underscore": "^1.8.3"
   }
 }
