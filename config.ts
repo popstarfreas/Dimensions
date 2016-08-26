@@ -17,21 +17,4 @@ export interface Config {
 }
 
 
-export const ConfigSettings: Config = {
-  servers: [
-    {
-      listenPort: 3000,
-      routingServers: [{
-        name: "ExampleServer",
-        serverIP: "127.0.0.1",
-        serverPort: 7777,
-      }]
-    },
-  ],
-
-  options: {
-    fakeVersion: false,
-    fakeVersionNum: 172,
-    blockInvis: true
-  }
-};
+export const ConfigSettings: Config = require('./config.js');

@@ -1,0 +1,40 @@
+"use strict"
+exports.ConfigSettings = {
+    servers: [{
+        // The port to listen on for this ListenServer.
+        // You can add as many as you want, as long as they
+        // are on different ports.
+        // If you want to load balance one port among many processes
+        // use something like pm2
+        listenPort: 7777,
+        
+        // The list of servers to load-balance between. When someone uses the listenPort
+        // the server will use the routingServer with the lowest player count and route them
+        // to it. Domains in the serverIP section are also supported.
+        // The name of each routingServer must be unique! Even if they are on a different ListenServer.
+        routingServers: [{
+            name: "Shard1",
+            serverIP: "127.0.0.1",
+            serverPort: 7778
+        },
+        {
+            name: "Shard2",
+            serverIP: "127.0.0.1",
+            serverPort: 7779
+        }]
+    },
+    ],
+    options: {
+        // Whether or not to fake version to the server.
+        // You can use this when small patches to Terraria are made
+        // that do not break compatibility with the server
+        fakeVersion: false,
+
+        // The version number to use if faking
+        fakeVersionNum: 172,
+
+        // Whether or not to block invisibility buff.
+        // This was added here because TShock's version is broken
+        blockInvis: true
+    }
+};
