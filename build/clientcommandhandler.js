@@ -12,7 +12,7 @@ var ClientCommandHandler = (function () {
         var handled = false;
         if (client.servers[command.name]) {
             client.sendChatMessage("Shifting to the " + command.name.substr(0, 1).toUpperCase() + command.name.substr(1) + " Dimension", "FF0000");
-            client.changeServer(client.servers[command]);
+            client.changeServer(client.servers[command.name]);
             handled = true;
         }
         else {
@@ -35,9 +35,9 @@ var ClientCommandHandler = (function () {
     };
     ClientCommandHandler.prototype.handleWho = function (args, client) {
         var total = 0;
-        var keys = _.keys(client.serverCounts);
+        var keys = _.keys(client.serversDetails);
         for (var i = 0, len = keys.length; i < len; i++) {
-            total += client.serverCounts[keys[i]];
+            total += client.serversDetails[keys[i]].clientCount;
         }
         // Try to make it come after the normal response
         setTimeout(function () {
@@ -72,14 +72,14 @@ var ClientCommandHandler = (function () {
             case "ctg":
             case "ffa":
             case "tdm":
-                if (client.currentServer.name !== "pvp") {
-                    if (client.servers.pvp) {
+                if (client.server.name !== "pvp") {
+                    if (client.servers["pvp"]) {
                         var routingInformation = {
                             type: 1,
                             info: args[0].toUpperCase()
                         };
                         client.sendChatMessage("Joining a " + args[0].toUpperCase() + " game.", "FF0000");
-                        client.changeServer(client.servers.pvp, { routingInformation: routingInformation });
+                        client.changeServer(client.servers["pvp"], { routingInformation: routingInformation });
                     }
                     else {
                         client.sendChatMessage(args[0].toUpperCase() + " is currently in an inaccessible Dimension. Maybe try later.", "FF0000");
@@ -88,14 +88,14 @@ var ClientCommandHandler = (function () {
                 }
                 break;
             case "zombies":
-                if (client.currentServer.name !== "zombies") {
-                    if (client.servers.zombies) {
+                if (client.server.name !== "zombies") {
+                    if (client.servers["zombies"]) {
                         var routingInformation = {
                             type: 1,
                             info: "ZombieSurvival"
                         };
                         client.sendChatMessage("Joining the survivors in the Zombies Dimension.", "FF0000");
-                        client.changeServer(client.servers.pvp, { routingInformation: routingInformation });
+                        client.changeServer(client.servers["zombies"], { routingInformation: routingInformation });
                     }
                     else {
                         client.sendChatMessage("Zombies is currently in an inaccessible Dimension. Maybe try later.", "FF0000");
@@ -103,7 +103,7 @@ var ClientCommandHandler = (function () {
                 }
                 break;
             default:
-                if (client.currentServer.name !== "pvp" && client.currentServer.name !== "zombies") {
+                if (client.server.name !== "pvp" && client.server.name !== "zombies") {
                     client.sendChatMessage("Unknown gametype to join.", "FF0000");
                     handled = true;
                 }

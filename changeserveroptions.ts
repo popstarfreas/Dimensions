@@ -1,7 +1,7 @@
 import RoutingInformation from './routinginformation';
 interface ChangeServerOptions {
     preventSpawnOnJoin?: boolean;
-    routingInformation: RoutingInformation;
+    routingInformation?: RoutingInformation;
 }
 
 export default ChangeServerOptions;

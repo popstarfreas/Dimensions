@@ -9,6 +9,7 @@ import Packet from './packet';
 import * as Net from 'net';
 import Point from './point';
 import Item from './item';
+import Player from './player';
 
 class TerrariaServerPacketHandler {
   currentServer: TerrariaServer;
@@ -295,9 +296,9 @@ class TerrariaServerPacketHandler {
     }
 
     if (netID === 0 || life === 0) {
-      this.currentServer.entityTracking.NPCs[NPCID] = false;
+      this.currentServer.entityTracking.NPCs[NPCID] = null;
     } else {
-      if (this.currentServer.entityTracking.NPCs[NPCID] === false || typeof this.currentServer.entityTracking.NPCs[NPCID] === 'undefined') {
+      if (this.currentServer.entityTracking.NPCs[NPCID] === null || typeof this.currentServer.entityTracking.NPCs[NPCID] === 'undefined') {
         this.currentServer.entityTracking.NPCs[NPCID] = new NPC(NPCID, netID, life);
       } else {
         this.currentServer.entityTracking.NPCs[NPCID].life = life;
@@ -318,10 +319,10 @@ class TerrariaServerPacketHandler {
       if (damage > 0) {
         this.currentServer.entityTracking.NPCs[NPCID].life -= damage;
         if (this.currentServer.entityTracking.NPCs[NPCID].life <= 0) {
-          this.currentServer.entityTracking.NPCs[NPCID] = false;
+          this.currentServer.entityTracking.NPCs[NPCID] = null;
         }
       } else {
-        this.currentServer.entityTracking.NPCs[NPCID] = false;
+        this.currentServer.entityTracking.NPCs[NPCID] = null;
       }
     }
     return false;
@@ -344,9 +345,9 @@ class TerrariaServerPacketHandler {
     var netID: number = reader.readInt16();
 
     if (netID > 0) {
-      this.currentServer.entityTracking.items[itemID] = true;
+      this.currentServer.entityTracking.items[itemID] = new Item(0, stacks, prefix, netID);
     } else {
-      this.currentServer.entityTracking.items[itemID] = false;
+      this.currentServer.entityTracking.items[itemID] = null;
     }
     return false;
   }
@@ -355,7 +356,11 @@ class TerrariaServerPacketHandler {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let playerID: number = reader.readByte();
     let active: boolean = reader.readByte() === 1;
-    this.currentServer.entityTracking.players[playerID] = active;
+    let player = null;
+    if (active) {
+      player = new Player();
+    }
+    this.currentServer.entityTracking.players[playerID] = player;
 
     return false;
   }
@@ -363,7 +368,7 @@ class TerrariaServerPacketHandler {
   clearPlayers(client: Client): void {
     let playerIDs: string[] = _.keys(this.currentServer.entityTracking.players);
     for (var i = 0, len = playerIDs.length; i < len; i++) {
-      if (playerIDs[i] === client.player.id)
+      if (parseInt(playerIDs[i]) === client.player.id)
         continue;
 
       this.clearPlayer(client, parseInt(playerIDs[i]));
@@ -404,7 +409,7 @@ class TerrariaServerPacketHandler {
       .packByte(0)
       .data();
     client.socket.write(new Buffer(updateNPC, 'hex'));
-    client.server.entityTracking.NPCs[npcIndex] = false;
+    client.server.entityTracking.NPCs[npcIndex] = null;
   }
 
   clearItems(client: Client): void {
@@ -433,7 +438,7 @@ class TerrariaServerPacketHandler {
   }
 
   resetInventory(client: Client): void {
-    let slotIDs: string[] = _.keys(this.currentServer.client.inventory);
+    let slotIDs: string[] = _.keys(this.currentServer.client.player.inventory);
     for (let i: number = 0, len = slotIDs.length; i < len; i++) {
       if (this.currentServer.client.player.inventory[slotIDs[i]]) {
         this.setItem(client, this.currentServer.client.player.inventory[slotIDs[i]]);

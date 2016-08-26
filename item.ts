@@ -4,7 +4,7 @@ class Item {
 	prefix: number;
 	netID: number;
 
-	constructor (slot, stack, prefix, netID) {
+	constructor (slot: number, stack: number, prefix: number, netID: number) {
 		this.slot = slot;
 		this.stack = stack;
 		this.prefix = prefix;

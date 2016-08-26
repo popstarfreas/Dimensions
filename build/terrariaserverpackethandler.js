@@ -4,6 +4,8 @@ var packettypes_1 = require('./packettypes');
 var utils_1 = require('./utils');
 var _ = require('lodash');
 var npc_1 = require('./npc');
+var item_1 = require('./item');
+var player_1 = require('./player');
 var TerrariaServerPacketHandler = (function () {
     function TerrariaServerPacketHandler() {
     }
@@ -258,10 +260,10 @@ var TerrariaServerPacketHandler = (function () {
             life = 1;
         }
         if (netID === 0 || life === 0) {
-            this.currentServer.entityTracking.NPCs[NPCID] = false;
+            this.currentServer.entityTracking.NPCs[NPCID] = null;
         }
         else {
-            if (this.currentServer.entityTracking.NPCs[NPCID] === false || typeof this.currentServer.entityTracking.NPCs[NPCID] === 'undefined') {
+            if (this.currentServer.entityTracking.NPCs[NPCID] === null || typeof this.currentServer.entityTracking.NPCs[NPCID] === 'undefined') {
                 this.currentServer.entityTracking.NPCs[NPCID] = new npc_1["default"](NPCID, netID, life);
             }
             else {
@@ -280,11 +282,11 @@ var TerrariaServerPacketHandler = (function () {
             if (damage > 0) {
                 this.currentServer.entityTracking.NPCs[NPCID].life -= damage;
                 if (this.currentServer.entityTracking.NPCs[NPCID].life <= 0) {
-                    this.currentServer.entityTracking.NPCs[NPCID] = false;
+                    this.currentServer.entityTracking.NPCs[NPCID] = null;
                 }
             }
             else {
-                this.currentServer.entityTracking.NPCs[NPCID] = false;
+                this.currentServer.entityTracking.NPCs[NPCID] = null;
             }
         }
         return false;
@@ -305,10 +307,10 @@ var TerrariaServerPacketHandler = (function () {
         var noDelay = reader.readByte();
         var netID = reader.readInt16();
         if (netID > 0) {
-            this.currentServer.entityTracking.items[itemID] = true;
+            this.currentServer.entityTracking.items[itemID] = new item_1["default"](0, stacks, prefix, netID);
         }
         else {
-            this.currentServer.entityTracking.items[itemID] = false;
+            this.currentServer.entityTracking.items[itemID] = null;
         }
         return false;
     };
@@ -316,13 +318,17 @@ var TerrariaServerPacketHandler = (function () {
         var reader = new utils_1.ReadPacketFactory(packet.data);
         var playerID = reader.readByte();
         var active = reader.readByte() === 1;
-        this.currentServer.entityTracking.players[playerID] = active;
+        var player = null;
+        if (active) {
+            player = new player_1["default"]();
+        }
+        this.currentServer.entityTracking.players[playerID] = player;
         return false;
     };
     TerrariaServerPacketHandler.prototype.clearPlayers = function (client) {
         var playerIDs = _.keys(this.currentServer.entityTracking.players);
         for (var i = 0, len = playerIDs.length; i < len; i++) {
-            if (playerIDs[i] === client.player.id)
+            if (parseInt(playerIDs[i]) === client.player.id)
                 continue;
             this.clearPlayer(client, parseInt(playerIDs[i]));
         }
@@ -359,7 +365,7 @@ var TerrariaServerPacketHandler = (function () {
             .packByte(0)
             .data();
         client.socket.write(new Buffer(updateNPC, 'hex'));
-        client.server.entityTracking.NPCs[npcIndex] = false;
+        client.server.entityTracking.NPCs[npcIndex] = null;
     };
     TerrariaServerPacketHandler.prototype.clearItems = function (client) {
         var itemIDs = _.keys(this.currentServer.entityTracking.items);
@@ -385,7 +391,7 @@ var TerrariaServerPacketHandler = (function () {
         client.socket.write(new Buffer(updateItemDrop, 'hex'));
     };
     TerrariaServerPacketHandler.prototype.resetInventory = function (client) {
-        var slotIDs = _.keys(this.currentServer.client.inventory);
+        var slotIDs = _.keys(this.currentServer.client.player.inventory);
         for (var i = 0, len = slotIDs.length; i < len; i++) {
             if (this.currentServer.client.player.inventory[slotIDs[i]]) {
                 this.setItem(client, this.currentServer.client.player.inventory[slotIDs[i]]);
