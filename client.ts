@@ -62,7 +62,7 @@ class Client {
     this.globalHandlers = globalHandlers;
 
     // TerrariaServer socket connection and packet handler
-    this.server = new TerrariaServer(null, this);
+    this.server = new TerrariaServer(new Net.Socket(), this);
     this.server.ip = server.serverIP;
     this.server.port = server.serverPort;
     this.server.name = server.name;
@@ -162,7 +162,6 @@ class Client {
       } else {
         // Connect to the server for the first time
         this.initialConnectionAlreadyCreated = true;
-        this.server.socket = new Net.Socket();
 
         this.server.socket.connect(this.server.port, this.server.ip, () => {
           this.countIncremented = true;

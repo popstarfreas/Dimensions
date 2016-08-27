@@ -52,9 +52,9 @@ class ListenServer {
   }
 
   // Finds server with lowest client count
-  chooseServer(): RoutingServer {
-    let chosenServer: RoutingServer = null;
-    let currentClientCount: number = null;
+  chooseServer(): RoutingServer | null {
+    let chosenServer: RoutingServer | null = null;
+    let currentClientCount: number | null = null;
     let details: ServerDetails;
     for (let i: number = 0; i < this.routingServers.length; i++) {
       details = this.serversDetails[this.routingServers[i].name];
@@ -62,7 +62,7 @@ class ListenServer {
       // Even if the server has been disabled, if we have no current choice, we must use it
       if (!details.disabled || currentClientCount === null) {
         // Favour either lower player count or non-disability
-        if (currentClientCount === null || details.clientCount < currentClientCount || this.serversDetails[chosenServer.name].disabled) {
+        if (currentClientCount === null || chosenServer === null || details.clientCount < currentClientCount || this.serversDetails[chosenServer.name].disabled) {
           chosenServer = this.routingServers[i];
           currentClientCount = details.clientCount;
         }
@@ -111,7 +111,13 @@ class ListenServer {
   }
 
   handleSocket(socket: Net.Socket): void {
-    let chosenServer: RoutingServer = this.chooseServer();
+    let chosenServer: RoutingServer | null = this.chooseServer();
+    if (chosenServer === null) {
+      console.log(`No servers available for ListenServer[Port: ${this.port}]`)
+      socket.destroy();
+      return;
+    }
+
     if (socket && socket.remoteAddress) {
       console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
     } else {

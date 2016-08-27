@@ -5,7 +5,7 @@ class Player {
 	inventory: Item[];
 	constructor() {
 		this.id = 0;
-		this.name = null;
+		this.name = "";
 
 		// Inventory of Client - only used for SSC -> to Non-SSC switching
 		this.inventory = [];

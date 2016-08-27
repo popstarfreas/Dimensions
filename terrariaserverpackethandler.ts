@@ -1,6 +1,6 @@
 /// <reference path="typings/index.d.ts" />
 import PacketTypes from './packettypes';
-import {ReadPacketFactory, getProperIP, PacketFactory} from './utils';
+import { ReadPacketFactory, getProperIP, PacketFactory } from './utils';
 import * as _ from 'lodash';
 import NPC from './npc';
 import TerrariaServer from './terrariaserver';
@@ -42,10 +42,6 @@ class TerrariaServerPacketHandler {
 
       case PacketTypes.NPCUpdate:
         handled = this.handleNPCUpdate(packet);
-        break;
-
-      case PacketTypes.NPCStrike:
-        handled = this.handleNPCStrike(packet);
         break;
 
       case PacketTypes.UpdateItemDrop_Instanced:
@@ -296,13 +292,14 @@ class TerrariaServerPacketHandler {
     }
 
     if (netID === 0 || life === 0) {
-      this.currentServer.entityTracking.NPCs[NPCID] = null;
+      this.currentServer.entityTracking.NPCs[NPCID] = undefined;
     } else {
-      if (this.currentServer.entityTracking.NPCs[NPCID] === null || typeof this.currentServer.entityTracking.NPCs[NPCID] === 'undefined') {
+      let npc: NPC | undefined = this.currentServer.entityTracking.NPCs[NPCID]
+      if (npc === undefined) {
         this.currentServer.entityTracking.NPCs[NPCID] = new NPC(NPCID, netID, life);
       } else {
-        this.currentServer.entityTracking.NPCs[NPCID].life = life;
-        this.currentServer.entityTracking.NPCs[NPCID].type = netID;
+        npc.life = life;
+        npc.type = netID;
       }
     }
 
@@ -310,23 +307,27 @@ class TerrariaServerPacketHandler {
     return false;
   }
 
-  handleNPCStrike(packet: Packet): boolean {
+  /* Removed as the damage could potentially make an npc count as dead
+     when it is really not, and therefore cause sync issues with mobs
+  */
+  /*handleNPCStrike(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let NPCID: number = reader.readInt16();
     let damage: number = reader.readInt16();
+    let npc: NPC | undefined = this.currentServer.entityTracking.NPCs[NPCID]
 
-    if (this.currentServer.entityTracking.NPCs[NPCID]) {
+    if (npc !== undefined) {
       if (damage > 0) {
-        this.currentServer.entityTracking.NPCs[NPCID].life -= damage;
-        if (this.currentServer.entityTracking.NPCs[NPCID].life <= 0) {
-          this.currentServer.entityTracking.NPCs[NPCID] = null;
+        npc.life -= damage;
+        if (npc.life <= 0) {
+          this.currentServer.entityTracking.NPCs[NPCID] = undefined;
         }
       } else {
-        this.currentServer.entityTracking.NPCs[NPCID] = null;
+        this.currentServer.entityTracking.NPCs[NPCID] = undefined;
       }
     }
     return false;
-  }
+  }*/
 
   handleUpdateItemDrop(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
@@ -347,7 +348,7 @@ class TerrariaServerPacketHandler {
     if (netID > 0) {
       this.currentServer.entityTracking.items[itemID] = new Item(0, stacks, prefix, netID);
     } else {
-      this.currentServer.entityTracking.items[itemID] = null;
+      this.currentServer.entityTracking.items[itemID] = undefined;
     }
     return false;
   }
@@ -356,7 +357,7 @@ class TerrariaServerPacketHandler {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let playerID: number = reader.readByte();
     let active: boolean = reader.readByte() === 1;
-    let player = null;
+    let player: Player | undefined = undefined;
     if (active) {
       player = new Player();
     }
@@ -409,7 +410,7 @@ class TerrariaServerPacketHandler {
       .packByte(0)
       .data();
     client.socket.write(new Buffer(updateNPC, 'hex'));
-    client.server.entityTracking.NPCs[npcIndex] = null;
+    client.server.entityTracking.NPCs[npcIndex] = undefined;
   }
 
   clearItems(client: Client): void {

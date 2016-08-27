@@ -11,6 +11,7 @@ import ClientPacketHandler from "./clientpackethandler";
 import TerrariaServerPacketHandler from "./terrariaserverpackethandler";
 import ServerDetails from "./serverdetails";
 import GlobalHandlers from "./globalhandlers";
+import ReloadTask from "./reloadtask";
 
 class Dimensions {
   servers: { [id: string]: RoutingServer };
@@ -19,7 +20,7 @@ class Dimensions {
   handlers: GlobalHandlers;
   redisClient: redis.RedisClient;
   serversDetails: { [id: string]: ServerDetails };
-  
+
   constructor() {
     this.options = ConfigSettings.options;
     this.handlers = {
@@ -118,7 +119,7 @@ class Dimensions {
       try {
         let ConfigSettings = requireNoCache('./config.js', require).ConfigSettings;
         let currentRoster = {};
-        let runAfterFinished = [];
+        let runAfterFinished: Array<ReloadTask> = [];
         for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
           let listenKey: number = ConfigSettings.servers[i].listenPort;
           if (this.listenServers[listenKey]) {

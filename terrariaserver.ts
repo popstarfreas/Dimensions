@@ -9,16 +9,11 @@ import Item from './item';
 import NPC from './npc';
 import Player from './player';
 import Packet from './packet';
-
-interface Entities {
-  items: Item[];
-  NPCs: NPC[];
-  players: Player[];
-}
+import Entities from './entities';
 
 class TerrariaServer {
   client: Client;
-  socket: Net.Socket | null;
+  socket: Net.Socket;
 
   // Connection Details
   ip: string;
@@ -32,7 +27,7 @@ class TerrariaServer {
   entityTracking: Entities;
   isSSC: boolean;
 
-  constructor(socket: Net.Socket | null, client: Client) {
+  constructor(socket: Net.Socket, client: Client) {
     this.socket = socket;
     this.client = client;
     this.reset();
@@ -131,9 +126,9 @@ class TerrariaServer {
     if (type === "REFUSED") {
       if (!this.client.serversDetails[this.name].disabled && ++this.client.serversDetails[this.name].failedConnAttempts >= 3) {
         this.client.serversDetails[this.name].disabled = true;
-        setTimeout(function () {
-          this.client.serverDetails[this.name].failedConnAttempts = 0;
-          this.client.serverDetails[this.name].disabled = false;
+        setTimeout(() => {
+          this.client.serversDetails[this.name].failedConnAttempts = 0;
+          this.client.serversDetails[this.name].disabled = false;
         }, 20000);
       }
     }
