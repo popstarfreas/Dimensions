@@ -9,6 +9,8 @@ export interface ConfigOptions {
   fakeVersion: boolean;
   fakeVersionNum: number;
   blockInvis: boolean;
+  useBlacklist: boolean;
+  blacklistAPIKey: string;
 }
 
 export interface Config {
