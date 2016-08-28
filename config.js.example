@@ -31,10 +31,16 @@ exports.ConfigSettings = {
         fakeVersion: false,
 
         // The version number to use if faking
-        fakeVersionNum: 172,
+        fakeVersionNum: 173,
 
         // Whether or not to block invisibility buff.
         // This was added here because TShock's version is broken
-        blockInvis: true
+        blockInvis: false,
+
+        // Whether or not to use a blacklist (for blocking vpn, etc)
+        useBlacklist: false,
+
+        // The API key for the blacklist
+        blacklistAPIKey: ""
     }
 };
