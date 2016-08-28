@@ -190,8 +190,12 @@ class Client {
     }
   }
 
-  sendChatMessage(message: string, color: string = "00ff00"): void {
+  sendChatMessage(message: string, color?: string | undefined): void {
     if (message.length > 0) {
+      if (typeof color === 'undefined') {
+        color = "00ff00"
+      }
+
       let packetData: string = (new PacketFactory())
         .setType(PacketTypes.ChatMessage)
         .packByte(255)
