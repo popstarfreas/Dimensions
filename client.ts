@@ -221,11 +221,12 @@ class Client {
     // Client is now not connected to a server
     this.connected = false;
 
-    // Remove data and error listeners on TerrariaServer socket
-    this.server.socket.removeListener('data', this.ServerHandleData);
-    this.server.socket.removeListener('error', this.ServerHandleError);
-
     this.server.afterClosed =  () => {
+      // Remove data and error listeners on TerrariaServer socket
+      // done AFTER being closed to avoid errors potentially cropping up unhandled
+      this.server.socket.removeListener('data', this.ServerHandleData);
+      this.server.socket.removeListener('error', this.ServerHandleError);
+
       this.server.afterClosed = null;
       // Remove close listener now that socket has been closed and event was called
       this.server.socket.removeListener('close', this.ServerHandleClose);
