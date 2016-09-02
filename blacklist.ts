@@ -22,8 +22,6 @@ class Blacklist {
                         resolve(resDetails["host-ip"]);
                     }
                 });
-
-                res
             }).on('error', (e) => {
                 reject(e);
             });
