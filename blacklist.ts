@@ -9,13 +9,21 @@ class Blacklist {
                     data += chunk;
                 });
                 res.on("end", function () {
-                    let resDetails = JSON.parse(data);
+                    let resDetails: any;
+                    try {
+                        resDetails = JSON.parse(data);
+                    } catch(e) {
+                        reject(e);
+                    }
+
                     if (resDetails.status !== 'success') {
                         reject(new Error("Invalid API call."));
                     } else {
                         resolve(resDetails["host-ip"]);
                     }
-                })
+                });
+
+                res
             }).on('error', (e) => {
                 reject(e);
             });
