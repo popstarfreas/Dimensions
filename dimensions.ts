@@ -1,18 +1,18 @@
 ///<reference path="./typings/index.d.ts"/>
-import * as redis from "redis";
-import RoutingServer from "./routingserver";
-import ListenServer from "./listenserver";
-import {ConfigSettings, Config, ConfigOptions} from "./configloader";
-import Client from "./client";
-import {requireNoCache} from "./utils";
-import * as _ from "lodash";
-import ClientCommandHandler from "./clientcommandhandler";
-import ClientPacketHandler from "./clientpackethandler";
-import TerrariaServerPacketHandler from "./terrariaserverpackethandler";
-import ServerDetails from "./serverdetails";
-import GlobalHandlers from "./globalhandlers";
-import ReloadTask from "./reloadtask";
-import GlobalTracking from "./globaltracking";
+import * as redis from 'redis';
+import RoutingServer from './routingserver';
+import ListenServer from './listenserver';
+import {ConfigSettings, Config, ConfigOptions} from './configloader';
+import Client from './client';
+import {requireNoCache} from './utils';
+import * as _ from 'lodash';
+import ClientCommandHandler from './clientcommandhandler';
+import ClientPacketHandler from './clientpackethandler';
+import TerrariaServerPacketHandler from './terrariaserverpackethandler';
+import ServerDetails from './serverdetails';
+import GlobalHandlers from './globalhandlers';
+import ReloadTask from './reloadtask';
+import GlobalTracking from './globaltracking';
 
 class Dimensions {
   servers: { [id: string]: RoutingServer };
