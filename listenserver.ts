@@ -10,6 +10,7 @@ import RoutingServer from './routingserver';
 import Blacklist from './blacklist';
 import PacketTypes from './packettypes';
 import {PacketFactory} from './utils';
+import GlobalTracking from './globaltracking';
 
 class ListenServer {
   idCounter: number;
@@ -24,8 +25,9 @@ class ListenServer {
   ServerHandleSocket: (socket: Net.Socket) => void;
   ServerHandleStart: () => void;
   server: Net.Server;
+  globalTracking: GlobalTracking;
 
-  constructor(info: ConfigServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions) {
+  constructor(info: ConfigServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions, globalTracking: GlobalTracking) {
     this.idCounter = 0;
     this.clients = [];
     this.servers = servers;
@@ -34,6 +36,7 @@ class ListenServer {
     this.routingServers = info.routingServers;
     this.serversDetails = serversDetails;
     this.globalHandlers = globalHandlers;
+    this.globalTracking = globalTracking;
 
     for (var i = 0; i < this.routingServers.length; i++) {
       this.serversDetails[this.routingServers[i].name] = {

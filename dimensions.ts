@@ -12,6 +12,7 @@ import TerrariaServerPacketHandler from "./terrariaserverpackethandler";
 import ServerDetails from "./serverdetails";
 import GlobalHandlers from "./globalhandlers";
 import ReloadTask from "./reloadtask";
+import GlobalTracking from "./globaltracking";
 
 class Dimensions {
   servers: { [id: string]: RoutingServer };
@@ -20,6 +21,7 @@ class Dimensions {
   handlers: GlobalHandlers;
   redisClient: redis.RedisClient;
   serversDetails: { [id: string]: ServerDetails };
+  globalTracking: GlobalTracking;
 
   constructor() {
     this.options = ConfigSettings.options;
@@ -44,13 +46,14 @@ class Dimensions {
     this.serversDetails = {};
     this.listenServers = {};
     this.servers = {};
+    this.globalTracking = {};
 
 
     //self.interface = new Interface(self.handleCommand.bind(self));
 
     for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
       let listenKey = ConfigSettings.servers[i].listenPort;
-      this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options);
+      this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking);
 
       for (let j: number = 0; j < ConfigSettings.servers[i].routingServers.length; j++) {
         this.servers[ConfigSettings.servers[i].routingServers[j].name] = ConfigSettings.servers[i].routingServers[j];
