@@ -13,6 +13,7 @@ import RoutingInformation from './routinginformation';
 import {hex2str, getPacketsFromHexString, BuffersPackets, PacketFactory} from './utils';
 import Packet from './packet';
 import ChangeServerOptions from './changeserveroptions';
+import GlobalTracking from './globaltracking';
 
 class Client {
   ID: number;
@@ -38,12 +39,16 @@ class Client {
   ServerHandleError: (error: Error) => void;
   ServerHandleData: (data: Buffer) => void;
   ServerHandleClose: () => void;
+  globalTracking: GlobalTracking;
 
-  constructor(id: number, socket: Net.Socket, server: RoutingServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions) {
+  constructor(id: number, socket: Net.Socket, server: RoutingServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions, globalTracking: GlobalTracking) {
     this.ID = id;
 
     // Options from the config
     this.options = options;
+
+    // Tracking Information
+    this.globalTracking = globalTracking;
 
     // TerrariaServer information available for connecting to
     this.servers = servers;
@@ -119,6 +124,10 @@ class Client {
 
   setName(name: string): void {
     this.player.name = name;
+
+    if (name !== "") {
+      this.globalTracking.names[name] = true;
+    }
   }
 
   getName(): string {
@@ -287,6 +296,10 @@ class Client {
     //console.log("Client Socket Closed.");
     if (this.server.socket && typeof this.server.socket.destroy === 'function') {
       this.server.socket.destroy();
+    }
+
+    if (this.getName() !== "") {
+      delete this.globalTracking.names[this.getName()];
     }
   }
 }

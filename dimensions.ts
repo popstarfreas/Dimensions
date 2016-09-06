@@ -46,7 +46,9 @@ class Dimensions {
     this.serversDetails = {};
     this.listenServers = {};
     this.servers = {};
-    this.globalTracking = {};
+    this.globalTracking = {
+      names: {}
+    };
 
 
     //self.interface = new Interface(self.handleCommand.bind(self));
@@ -151,7 +153,7 @@ class Dimensions {
 
         for (let i: number = 0; i < runAfterFinished.length; i++) {
           var serversIndex = runAfterFinished[i].index;
-          this.listenServers[runAfterFinished[i].key] = new ListenServer(ConfigSettings.servers[serversIndex], this.serversDetails, this.handlers, this.servers, this.options);
+          this.listenServers[runAfterFinished[i].key] = new ListenServer(ConfigSettings.servers[serversIndex], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking);
           for (let j: number = 0; j < ConfigSettings.servers[serversIndex].routingServers.length; j++) {
             this.servers[ConfigSettings.servers[serversIndex].routingServers[j].name] = ConfigSettings.servers[serversIndex].routingServers[j];
           }

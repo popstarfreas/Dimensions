@@ -148,7 +148,7 @@ class ListenServer {
       return;
     }
 
-    let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options);
+    let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
     this.clients.push(client);
 
     socket.on('data', (data: Buffer) => {
