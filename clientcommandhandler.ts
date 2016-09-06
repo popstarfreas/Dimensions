@@ -33,17 +33,6 @@ export class ClientCommandHandler {
         case "void":
           handled = this.handleVoid(command.args, client);
           break;
-        case "boss":
-          client.sendChatMessage("Shifting to the " + command.name.substr(0, 1).toUpperCase() + command.name.substr(1) + " Dimension", "FF0000");
-          client.changeServer(client.servers["pve"]);
-          handled = true;
-          break;
-        case "warp":
-          handled = this.handleWarp(command.args, client);
-          break;
-        case "join":
-          handled = this.handleJoin(command.args, client);
-          break;
       }
     }
 
