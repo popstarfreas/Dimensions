@@ -227,7 +227,7 @@ class TerrariaServerPacketHandler {
       if (this.currentServer.client.servers[messageContent.toLowerCase()]) {
         this.currentServer.client.sendChatMessage("Shifting to the " + messageContent + " Dimension", "FF0000");
         this.currentServer.client.changeServer(this.currentServer.client.servers[messageContent.toLowerCase()], {
-          preventSpawnOnJoin: true
+          preventSpawnOnJoin: false
         });
       }
     }
