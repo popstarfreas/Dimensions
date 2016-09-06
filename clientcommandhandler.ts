@@ -39,30 +39,6 @@ export class ClientCommandHandler {
     return handled;
   }
 
-  handleWarp(args: string[], client: Client): boolean {
-    let handled: boolean = false;
-    if (args.length > 1) {
-      switch (args[0].toLowerCase()) {
-        case "boss":
-          if (client.server.name !== "pve") {
-            client.sendChatMessage("Shifting to the PvE Dimension", "FF0000");
-            client.changeServer(client.servers["pve"]);
-            handled = true;
-          }
-          break;
-        case "bosshard":
-          if (client.server.name !== "pve") {
-            client.sendChatMessage("Shifting to the PvE Dimension", "FF0000");
-            client.changeServer(client.servers["pve"]);
-            handled = true;
-          }
-          break;
-      }
-    }
-
-    return handled;
-  }
-
   handleWho(args: string[], client: Client): boolean {
     let total: number = 0;
     let keys: string[] = _.keys(client.serversDetails);
@@ -101,51 +77,6 @@ export class ClientCommandHandler {
     client.server.socket.destroy();
     client.sendChatMessage("You have entered the Void. You will soon disappear.");
     return true;
-  }
-
-  handleJoin(args: string[], client: Client): boolean {
-    let handled: boolean = false;
-    switch (args[0].toLowerCase()) {
-      case "ctg":
-      case "ffa":
-      case "tdm":
-        if (client.server.name !== "pvp") {
-          if (client.servers["pvp"]) {
-            let routingInformation: RoutingInformation = {
-              type: 1,
-              info: args[0].toUpperCase()
-            };
-            client.sendChatMessage("Joining a " + args[0].toUpperCase() + " game.", "FF0000");
-            client.changeServer(client.servers["pvp"], { routingInformation: routingInformation });
-          } else {
-            client.sendChatMessage(args[0].toUpperCase() + " is currently in an inaccessible Dimension. Maybe try later.", "FF0000");
-          }
-          handled = true;
-        }
-        break;
-      case "zombies":
-        if (client.server.name !== "zombies") {
-          if (client.servers["zombies"]) {
-            let routingInformation: RoutingInformation = {
-              type: 1,
-              info: "ZombieSurvival"
-            };
-            client.sendChatMessage("Joining the survivors in the Zombies Dimension.", "FF0000");
-            client.changeServer(client.servers["zombies"], { routingInformation: routingInformation });
-          } else {
-            client.sendChatMessage("Zombies is currently in an inaccessible Dimension. Maybe try later.", "FF0000");
-          }
-        }
-        break;
-      default:
-        if (client.server.name !== "pvp" && client.server.name !== "zombies") {
-          client.sendChatMessage("Unknown gametype to join.", "FF0000");
-          handled = true;
-        }
-        break;
-    }
-
-    return handled;
   }
 };
 
