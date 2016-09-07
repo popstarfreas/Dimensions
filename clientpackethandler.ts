@@ -40,6 +40,10 @@ class ClientPacketHandler {
         handled = this.handlePlayerHP(packet);
         break;
 
+      case PacketTypes.UpdateItemOwner:
+        handled = this.handleUpdateItemOwner(packet);
+        break;
+
       // Either will be sent, but not both
       case PacketTypes.ContinueConnecting2:
       case PacketTypes.Status:
@@ -158,6 +162,14 @@ class ClientPacketHandler {
     reader.readInt16();
     let life: number = reader.readInt16();
     this.currentClient.player.life = life;
+
+    return false;
+  }
+
+  handleUpdateItemOwner(packet: Packet): boolean {
+    // This is just here to avoid it being scooped up by
+    // handleDefault as this is vital for SSC inventories to work
+    // properly
 
     return false;
   }
