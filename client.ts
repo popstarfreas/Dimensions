@@ -77,10 +77,11 @@ class Client {
 
     // Connection State
     // 0 => Fresh Connection
-    // 1 => Finished Sending Inventory / Completed Server switch
+    // 1 => Finished Sending Inventory
     // 2 => Connection to new server established (extra packet help required because of the actual clients state
     //      being incapable of sending certain packets)
     // 3 => Packet Help sent  Get Section/Request Sync [8] packet in response to world info [7], now waiting on Update Shield Strengths [101]
+    // 4 => Spawned on server / Completed Server switch
     this.state = 0;
 
     // Incomplete packet from last data received. This is used because all packets are inspected

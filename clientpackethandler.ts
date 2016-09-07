@@ -48,19 +48,7 @@ class ClientPacketHandler {
           this.currentClient.state = 1;
         }
         break;
-
-      case PacketTypes.AlterItemDrop:
-      case PacketTypes.UpdateItemDrop:
-      case PacketTypes.UpdateItemDrop_Instanced:
-      case PacketTypes.UpdateItemOwner:
-        // Prevent this being sent unless state is 1
-        // this prevents issues with joining while items
-        // are next to the player on the past server
-        if (this.currentClient.state !== 1) {
-          handled = true;
-        }
-        break;
-
+        
       case PacketTypes.ChatMessage:
         handled = this.handleChatMessage(packet);
         break;
