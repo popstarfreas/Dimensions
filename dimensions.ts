@@ -122,7 +122,7 @@ class Dimensions {
 
   reloadServers(): void {
       try {
-        let ConfigSettings = requireNoCache('./config.js', require).ConfigSettings;
+        let ConfigSettings = requireNoCache('../config.js', require).ConfigSettings;
         let currentRoster = {};
         let runAfterFinished: Array<ReloadTask> = [];
         for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
