@@ -32,6 +32,14 @@ class ClientPacketHandler {
         handled = this.handlePlayerInventorySlot(packet);
         break;
 
+      case PacketTypes.PlayerMana:
+        handled = this.handlePlayerMana(packet);
+        break;
+
+      case PacketTypes.PlayerHP:
+        handled = this.handlePlayerHP(packet);
+        break;
+
       // Either will be sent, but not both
       case PacketTypes.ContinueConnecting2:
       case PacketTypes.Status:
@@ -61,6 +69,10 @@ class ClientPacketHandler {
 
       case PacketTypes.ClientUUID:
         handled = this.handleClientUUID(packet);
+        break;
+
+      default:
+        handled = this.handleDefault(packet);
         break;
     }
 
@@ -131,6 +143,28 @@ class ClientPacketHandler {
     return false;
   }
 
+  handlePlayerMana(packet: Packet): boolean {
+    // Read mana sent and then set the player object mana
+    let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
+    reader.readByte();
+    reader.readInt16();
+    let mana: number = reader.readInt16();
+    this.currentClient.player.mana = mana;
+
+    return false;
+  }
+
+  handlePlayerHP(packet: Packet): boolean {
+    // Read life sent and then set the player object life
+    let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
+    reader.readByte();
+    reader.readInt16();
+    let life: number = reader.readInt16();
+    this.currentClient.player.life = life;
+
+    return false;
+  }
+
   handleChatMessage(packet: Packet): boolean {
     let handled: boolean = false;
     let chatMessage: string = hex2a(packet.data.substr(16));
@@ -173,6 +207,17 @@ class ClientPacketHandler {
     this.currentClient.UUID = reader.readString();
 
     return false;
+  }
+
+  handleDefault(packet: Packet): boolean {
+    let handled: boolean = false;
+
+    // Disallow packets that are not handled during the connection phase
+    if (this.currentClient.state !== 1) {
+      handled = true;
+    }
+
+    return handled;
   }
 }
 
