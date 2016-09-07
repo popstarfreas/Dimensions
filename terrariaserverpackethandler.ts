@@ -205,6 +205,10 @@ class TerrariaServerPacketHandler {
           if (!server.client.preventSpawnOnJoin) {
             server.client.socket.write(new Buffer(spawnPlayer, 'hex'));
           }
+
+          if (this.currentClient.state === 1) {
+            this.currentClient.state = 4;
+          }
         }
       }, 1000);
     }

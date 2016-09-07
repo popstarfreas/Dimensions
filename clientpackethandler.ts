@@ -48,7 +48,13 @@ class ClientPacketHandler {
           this.currentClient.state = 1;
         }
         break;
-        
+
+      case PacketTypes.SpawnPlayer:
+        if (this.currentClient.state === 1) {
+          this.currentClient.state = 4;
+        }
+        break;
+
       case PacketTypes.ChatMessage:
         handled = this.handleChatMessage(packet);
         break;
@@ -204,7 +210,7 @@ class ClientPacketHandler {
     let handled: boolean = false;
 
     // Disallow packets that are not handled during the connection phase
-    if (this.currentClient.state !== 1) {
+    if (this.currentClient.state !== 4) {
       handled = true;
     }
 
