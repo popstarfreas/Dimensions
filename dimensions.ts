@@ -73,6 +73,8 @@ class Dimensions {
     for (let i: number = 0; i < serverKeys.length; i++) {
       info += "[" + serverKeys[i] + ": " + this.serversDetails[serverKeys[i]].clientCount + "] ";
     }
+
+    console.log(this.globalTracking.names);
     console.log(info);
   }
 
