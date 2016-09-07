@@ -19,8 +19,12 @@ export class ClientCommandHandler {
   handle(command: Command, client: Client): boolean {
     let handled: boolean = false;
     if (client.servers[command.name]) {
-      client.sendChatMessage("Shifting to the " + command.name.substr(0, 1).toUpperCase() + command.name.substr(1) + " Dimension", "FF0000");
-      client.changeServer(client.servers[command.name]);
+      if (client.server.name == command.name) {
+        client.sendChatMessage("You are already in that Dimension.", "FF0000");
+      } else {
+        client.sendChatMessage("Shifting to the " + command.name.substr(0, 1).toUpperCase() + command.name.substr(1) + " Dimension", "FF0000");
+        client.changeServer(client.servers[command.name]);
+      }
       handled = true;
     } else {
       switch (command.name) {
