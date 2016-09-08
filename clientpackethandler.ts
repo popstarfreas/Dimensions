@@ -5,6 +5,7 @@ import Item from './item';
 import Client from './client';
 import Packet from './packet';
 import {Command} from './clientcommandhandler';
+import ClientStates from './clientstates';
 
 class ClientPacketHandler {
   currentClient: Client;
@@ -51,15 +52,15 @@ class ClientPacketHandler {
       // Either will be sent, but not both
       case PacketTypes.ContinueConnecting2:
       case PacketTypes.Status:
-        if (this.currentClient.state === 0) {
+        if (this.currentClient.state === ClientStates.FreshConnection) {
           // Finished sending inventory
-          this.currentClient.state = 1;
+          this.currentClient.state = ClientStates.FinishinedSendingInventory;
         }
         break;
 
       case PacketTypes.SpawnPlayer:
-        if (this.currentClient.state === 1) {
-          this.currentClient.state = 4;
+        if (this.currentClient.state === ClientStates.FinishinedSendingInventory) {
+          this.currentClient.state = ClientStates.FullyConnected;
         }
         break;
 
@@ -135,7 +136,7 @@ class ClientPacketHandler {
   }
 
   handlePlayerInventorySlot(packet: Packet): boolean {
-    if ((this.currentClient.state === 0 || this.currentClient.state === 2) && !this.currentClient.waitingInventoryReset) {
+    if ((this.currentClient.state === ClientStates.FreshConnection || this.currentClient.state === ClientStates.ConnectionSwitchEstablished) && !this.currentClient.waitingInventoryReset) {
       let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
       let playerID: number = reader.readByte();
       let slotID: number = reader.readByte();
@@ -232,7 +233,7 @@ class ClientPacketHandler {
     let handled: boolean = false;
 
     // Disallow packets that are not handled during the connection phase
-    if (this.currentClient.state !== 4) {
+    if (this.currentClient.state !== ClientStates.FullyConnected) {
       handled = true;
     }
 

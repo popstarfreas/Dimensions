@@ -14,6 +14,7 @@ import {hex2str, getPacketsFromHexString, BuffersPackets, PacketFactory} from '.
 import Packet from './packet';
 import ChangeServerOptions from './changeserveroptions';
 import GlobalTracking from './globaltracking';
+import ClientStates from './clientstates';
 
 class Client {
   ID: number;
@@ -25,7 +26,7 @@ class Client {
   globalHandlers: GlobalHandlers;
   server: TerrariaServer;
   connected: boolean;
-  state: number;
+  state: ClientStates;
   bufferPacket: string;
   initialConnectionAlreadyCreated: boolean;
   ingame: boolean;
@@ -82,7 +83,7 @@ class Client {
     //      being incapable of sending certain packets)
     // 3 => Packet Help sent  Get Section/Request Sync [8] packet in response to world info [7], now waiting on Update Shield Strengths [101]
     // 4 => Spawned on server / Completed Server switch
-    this.state = 0;
+    this.state = ClientStates.FreshConnection;
 
     // Incomplete packet from last data received. This is used because all packets are inspected
     this.bufferPacket = "";
@@ -272,7 +273,7 @@ class Client {
         if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
           this.routingInformation = options.routingInformation;
         }
-        this.state = 2;
+        this.state = ClientStates.ConnectionSwitchEstablished;
         this.connected = true;
       });
 

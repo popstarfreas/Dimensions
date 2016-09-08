@@ -10,6 +10,7 @@ import * as Net from 'net';
 import Point from './point';
 import Item from './item';
 import Player from './player';
+import ClientStates from './clientstates';
 
 class TerrariaServerPacketHandler {
   currentServer: TerrariaServer;
@@ -157,7 +158,7 @@ class TerrariaServerPacketHandler {
     } else {
       this.currentServer.isSSC = false;
     }
-    if (this.currentServer.client.state === 2) {
+    if (this.currentServer.client.state === ClientStates.ConnectionSwitchEstablished) {
       this.currentServer.spawn.x = spawn.x;
       this.currentServer.spawn.y = spawn.y;
 
@@ -170,7 +171,7 @@ class TerrariaServerPacketHandler {
         .data();
       this.currentServer.socket.write(new Buffer(getSection, 'hex'));
 
-      this.currentServer.client.state = 3;
+      this.currentServer.client.state = ClientStates.FinalisingSwitch;
 
       // Routing Information for Warpplate entry
       if (this.currentServer.client.routingInformation !== null) {
@@ -188,8 +189,8 @@ class TerrariaServerPacketHandler {
   }
 
   handleCompleteConnectionAndSpawn(packet: Packet): boolean {
-    if (this.currentServer.client.state === 3) {
-      this.currentServer.client.state = 1;
+    if (this.currentServer.client.state === ClientStates.FinalisingSwitch) {
+      this.currentServer.client.state = ClientStates.FinishinedSendingInventory;
       let spawnPlayer: string = (new PacketFactory())
         .setType(PacketTypes.SpawnPlayer)
         .packByte(this.currentServer.client.player.id)
