@@ -76,10 +76,6 @@ class ClientPacketHandler {
       case PacketTypes.ClientUUID:
         handled = this.handleClientUUID(packet);
         break;
-
-      default:
-        handled = this.handleDefault(packet);
-        break;
     }
 
     return !handled ? packet.data : "";
