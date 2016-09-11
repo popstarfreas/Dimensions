@@ -83,12 +83,13 @@ class ListenServer {
     this.routingServers = info.routingServers;
 
     // Reset counts
-    var details;
-    for (let i: number = 0; i < this.routingServers.length; i++) {
-      details = this.serversDetails[this.routingServers[i].name];
-      details.disabled = false;
-      details.failedConnAttempts = 0;
-    }
+     for (var i = 0; i < this.routingServers.length; i++) {
+      this.serversDetails[this.routingServers[i].name] = {
+        clientCount: 0,
+        disabled: false,
+        failedConnAttempts: 0
+      };
+     }
   }
 
   shutdown(): void {
