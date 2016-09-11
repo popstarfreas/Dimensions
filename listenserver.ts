@@ -83,7 +83,7 @@ class ListenServer {
     this.routingServers = info.routingServers;
 
     // Reset counts
-     for (var i = 0; i < this.routingServers.length; i++) {
+     for (let i = 0; i < this.routingServers.length; i++) {
       this.serversDetails[this.routingServers[i].name] = {
         clientCount: 0,
         disabled: false,
