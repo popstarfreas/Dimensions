@@ -125,6 +125,22 @@ class Client {
   }
 
   setName(name: string): void {
+    // Is the name already in use?
+    if (this.globalTracking.names[name]) {
+      var disconnect = (new PacketFactory())
+        .setType(PacketTypes.Disconnect)
+        .packString(`Someone called ${name} is already on the server.`)
+        .data();
+      
+      this.socket.write(new Buffer(disconnect, 'hex'));
+      this.socket.destroy();
+      return;
+    }
+
+    if (this.player.name !== "") {
+      delete this.globalTracking.names[this.player.name];
+    }
+
     this.player.name = name;
 
     if (name !== "") {
