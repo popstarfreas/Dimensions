@@ -82,13 +82,21 @@ class ListenServer {
     this.port = info.listenPort;
     this.routingServers = info.routingServers;
 
-    // Reset counts
+    // Reset disabled and failedConnAttempts but only
+    // reset counts if it didn't already exist as a server
+     let details;
      for (let i = 0; i < this.routingServers.length; i++) {
-      this.serversDetails[this.routingServers[i].name] = {
-        clientCount: 0,
-        disabled: false,
-        failedConnAttempts: 0
-      };
+      if (this.serversDetails[this.routingServers[i].name]) {
+        details = this.serversDetails[this.routingServers[i].name]
+        details.disabled = false;
+        details.failedConnAttempts = 0;
+      } else {
+        this.serversDetails[this.routingServers[i].name] = {
+          clientCount: 0,
+          disabled: false,
+          failedConnAttempts: 0
+        };
+      }
      }
   }
 
