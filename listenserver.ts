@@ -150,12 +150,7 @@ class ListenServer {
       }
     }
 
-    if (socket && socket.remoteAddress) {
-      console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
-    } else {
-      console.log("Unknown client");
-      return;
-    }
+    console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
 
     let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
     this.clients.push(client);
