@@ -31,7 +31,7 @@ class Client {
   initialConnectionAlreadyCreated: boolean;
   ingame: boolean;
   UUID: string;
-  waitingInventoryReset: boolean;
+  waitingInventoryRestore: boolean;
   wasKicked: boolean;
   routingInformation: RoutingInformation | null;
   countIncremented: boolean;
@@ -97,7 +97,7 @@ class Client {
     // UUID of client
     this.UUID = "";
 
-    this.waitingInventoryReset = false;
+    this.waitingInventoryRestore = false;
 
     // A boolean indicating that the socket was closed because the client was booted from the TerrariaServers
     // This is set to false again after the close handler has been run
@@ -245,7 +245,7 @@ class Client {
       // Start new socket
       this.server.socket = new Net.Socket();
       if (this.server.isSSC) {
-        this.waitingInventoryReset = true;
+        this.waitingInventoryRestore = true;
       }
       this.server.reset();
 

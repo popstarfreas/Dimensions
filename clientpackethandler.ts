@@ -132,7 +132,7 @@ class ClientPacketHandler {
   }
 
   handlePlayerInventorySlot(packet: Packet): boolean {
-    if ((this.currentClient.state === ClientStates.FreshConnection || this.currentClient.state === ClientStates.ConnectionSwitchEstablished) && !this.currentClient.waitingInventoryReset) {
+    if ((this.currentClient.state === ClientStates.FreshConnection || this.currentClient.state === ClientStates.ConnectionSwitchEstablished) && !this.currentClient.waitingInventoryRestore) {
       let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
       let playerID: number = reader.readByte();
       let slotID: number = reader.readByte();

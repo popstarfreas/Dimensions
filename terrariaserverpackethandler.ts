@@ -104,9 +104,9 @@ class TerrariaServerPacketHandler {
   }
 
   handleWorldInfo(packet: Packet): boolean {
-    if (this.currentServer.client.waitingInventoryReset) {
+    if (this.currentServer.client.waitingInventoryRestore) {
       this.resetInventory(this.currentServer.client);
-      this.currentServer.client.waitingInventoryReset = false;
+      this.currentServer.client.waitingInventoryRestore = false;
     }
 
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
