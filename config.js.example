@@ -13,12 +13,12 @@ exports.ConfigSettings = {
         // to it. Domains in the serverIP section are also supported.
         // The name of each routingServer must be unique! Even if they are on a different ListenServer.
         routingServers: [{
-            name: "Shard1",
+            name: "sharda",
             serverIP: "127.0.0.1",
             serverPort: 7778
         },
         {
-            name: "Shard2",
+            name: "shardb",
             serverIP: "127.0.0.1",
             serverPort: 7779
         }]

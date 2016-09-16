@@ -82,13 +82,22 @@ class ListenServer {
     this.port = info.listenPort;
     this.routingServers = info.routingServers;
 
-    // Reset counts
-    var details;
-    for (let i: number = 0; i < this.routingServers.length; i++) {
-      details = this.serversDetails[this.routingServers[i].name];
-      details.disabled = false;
-      details.failedConnAttempts = 0;
-    }
+    // Reset disabled and failedConnAttempts but only
+    // reset counts if it didn't already exist as a server
+     let details;
+     for (let i = 0; i < this.routingServers.length; i++) {
+      if (this.serversDetails[this.routingServers[i].name]) {
+        details = this.serversDetails[this.routingServers[i].name]
+        details.disabled = false;
+        details.failedConnAttempts = 0;
+      } else {
+        this.serversDetails[this.routingServers[i].name] = {
+          clientCount: 0,
+          disabled: false,
+          failedConnAttempts: 0
+        };
+      }
+     }
   }
 
   shutdown(): void {
@@ -141,12 +150,7 @@ class ListenServer {
       }
     }
 
-    if (socket && socket.remoteAddress) {
-      console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
-    } else {
-      console.log("Unknown client");
-      return;
-    }
+    console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
 
     let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
     this.clients.push(client);
