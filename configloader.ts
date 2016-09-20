@@ -13,6 +13,7 @@ export interface LogOptions {
   tServerConnect: boolean;
   tServerDisconnect: boolean;
   tServerError: boolean;
+  clientBlocked: boolean;
 }
 
 export interface ConfigOptions {
