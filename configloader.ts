@@ -5,13 +5,24 @@ export interface ConfigServer {
   routingServers: RoutingServer[];
 }
 
+export interface LogOptions {
+  clientTimeouts: boolean;
+  clientConnect: boolean;
+  clientDisconnect: boolean;
+  clientError: boolean;
+  tServerConnect: boolean;
+  tServerDisconnect: boolean;
+  tServerError: boolean;
+}
+
 export interface ConfigOptions {
-  socketTimeout: number;
+  clientTimeout: number;
   fakeVersion: boolean;
   fakeVersionNum: number;
   blockInvis: boolean;
   useBlacklist: boolean;
   blacklistAPIKey: string;
+  log: LogOptions;
 }
 
 export interface Config {
