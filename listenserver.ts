@@ -141,7 +141,10 @@ class ListenServer {
             .setType(PacketTypes.Disconnect)
             .packString("Connecting using a Host Provider is not allowed.")
           socket.destroy();
-          console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " was blocked from joining.");
+
+          if (this.options.log.clientBlocked) {
+            console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " was blocked from joining.");
+          }
           return;
         }
       } catch (e) {
@@ -150,7 +153,9 @@ class ListenServer {
       }
     }
 
-    console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
+    if (this.options.log.clientConnect) {
+      console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
+    }
 
     let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
     this.clients.push(client);
@@ -163,7 +168,9 @@ class ListenServer {
       try {
         client.handleDataSend(data);
       } catch (e) {
-        console.log("HandleDataSend ERROR: " + e);
+        if (this.options.log.clientError) {
+          console.log("HandleDataSend ERROR: " + e);
+        }
       }
     });
 
@@ -171,16 +178,16 @@ class ListenServer {
       try {
         client.handleError(e);
       } catch (error) {
-        console.log("handleError ERROR: " + e);
+        if (this.options.log.clientError) {
+          console.log("handleError ERROR: " + e);
+        }
       }
     });
 
     socket.on('close', () => {
       try {
-        if (socket && socket.remoteAddress) {
+        if (this.options.log.clientDisconnect) {
           console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (this.serversDetails[client.server.name].clientCount) + "]");
-        } else {
-          console.log("Client [" + client.ID + "] with unknown IP closed.");
         }
         client.handleClose();
         for (let i: number = 0; i < this.clients.length; i++) {
@@ -190,7 +197,9 @@ class ListenServer {
           }
         }
       } catch (e) {
-        console.log("SocketCloseEvent ERROR: " + e);
+        if (this.options.log.clientError) {
+          console.log("SocketCloseEvent ERROR: " + e);
+        }
       }
     });
   }

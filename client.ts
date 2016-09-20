@@ -213,7 +213,9 @@ class Client {
         this.server.socket.on('error', this.ServerHandleError);
       }
     } catch (e) {
-      console.log("Client Handle Send Data Error: " + e);
+      if (this.options.log.clientError) {
+        console.log("Client Handle Send Data Error: " + e);
+      }
     }
   }
 
@@ -274,6 +276,10 @@ class Client {
 
       // Create connection
       this.server.socket.connect(port, ip, () => {
+        if (this.options.log.tServerConnect) {
+          console.log(`[${process.pid}] TerrariaServer Socket Connection [${ip}:${port}]`);
+        }
+
         // Increment server count
         this.countIncremented = true;
         this.serversDetails[this.server.name].clientCount++;

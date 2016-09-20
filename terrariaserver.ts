@@ -84,19 +84,26 @@ class TerrariaServer {
         this.client.socket.write(new Buffer(allowedPackets, "hex"));
       }
     } catch (e) {
-      console.log("TS Handle Data Error: " + e.stack);
+      if (this.client.options.log.tServerError) {
+        console.log("TS Handle Data Error: " + e.stack);
+      }
     }
   }
 
   handleClose(): void {
-    //console.log("TerrariaServer socket closed. [" + this.name + "]");
+    if (this.client.options.log.tServerDisconnect) {
+      console.log("TerrariaServer socket closed. [" + this.name + "]");
+    }
+
     try {
       if (this.client.countIncremented) {
         this.client.serversDetails[this.name].clientCount--;
         this.client.countIncremented = false;
       }
     } catch (e) {
-      console.log("handleClose Err: " + e);
+      if (this.client.options.log.tServerError) {
+        console.log("handleClose Err: " + e);
+      }
     }
 
     if (this.afterClosed !== null) {
@@ -132,7 +139,10 @@ class TerrariaServer {
         }, 20000);
       }
     }
-    console.log("TerrariaServer Socket Error: " + error.message);
+
+    if (this.client.options.log.tServerError) {
+      console.log("TerrariaServer Socket Error: " + error.message);
+    }
 
     if (this.socket !== null) {
       this.socket.destroy();
