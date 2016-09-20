@@ -6,6 +6,7 @@ export interface ConfigServer {
 }
 
 export interface ConfigOptions {
+  socketTimeout: number;
   fakeVersion: boolean;
   fakeVersionNum: number;
   blockInvis: boolean;

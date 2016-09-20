@@ -25,6 +25,10 @@ exports.ConfigSettings = {
     },
     ],
     options: {
+        // The number of millseconds of inactivity before a client socket is
+        // destroyed
+        socketTimeout: 1000*15,
+
         // Whether or not to fake version to the server.
         // You can use this when small patches to Terraria are made
         // that do not break compatibility with the server

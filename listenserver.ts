@@ -155,6 +155,10 @@ class ListenServer {
     let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
     this.clients.push(client);
 
+    socket.setTimeout(this.options.socketTimeout, () => {
+      socket.destroy();
+    });
+
     socket.on('data', (data: Buffer) => {
       try {
         client.handleDataSend(data);
