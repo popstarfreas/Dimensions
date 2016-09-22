@@ -160,10 +160,6 @@ class ListenServer {
     let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
     this.clients.push(client);
 
-    socket.setTimeout(this.options.clientTimeout, () => {
-      socket.destroy();
-    });
-
     socket.on('data', (data: Buffer) => {
       try {
         client.handleDataSend(data);
@@ -201,6 +197,10 @@ class ListenServer {
           console.log("SocketCloseEvent ERROR: " + e);
         }
       }
+    });
+
+    socket.setTimeout(this.options.clientTimeout, () => {
+      socket.destroy();
     });
   }
 
