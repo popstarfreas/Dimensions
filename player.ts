@@ -120,7 +120,6 @@ class Player {
 			.data()
 
 			this.client.server.socket.write(new Buffer(playerInfo, 'hex'));
-		}
 	}
 }
 
