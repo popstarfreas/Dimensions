@@ -1,6 +1,7 @@
 /// <reference path="typings/index.d.ts" />
 import * as path from 'path';
 import * as util from 'util';
+import Color from './color';
 import Packet from './packet';
 
 export interface BuffersPackets {
@@ -170,6 +171,44 @@ export class PacketFactory {
     return this;
   }
 
+  packColor(color: Color): PacketFactory {
+    // Not using packByte to avoid calling updateLength 2 times
+    // more than necessary
+
+    // Pack R
+    let intHex: string = (color.R).toString(16);
+    if (intHex.length !== 2) {
+      for (let j: number = intHex.length; j < 2; j++) {
+        intHex = "0" + intHex;
+      }
+    }
+
+    this.packetData += intHex;
+
+    // Pack G
+    intHex = (color.G).toString(16);
+    if (intHex.length !== 2) {
+      for (let j: number = intHex.length; j < 2; j++) {
+        intHex = "0" + intHex;
+      }
+    }
+
+    this.packetData += intHex;
+
+    // Pack B
+    intHex = (color.B).toString(16);
+    if (intHex.length !== 2) {
+      for (let j: number = intHex.length; j < 2; j++) {
+        intHex = "0" + intHex;
+      }
+    }
+
+    this.packetData += intHex;
+    this.updateLength();
+
+    return this;
+  }
+
   packInt16(int16: number): PacketFactory {
     // 4 hex digits
     var intHex = (int16).toString(16);
@@ -222,13 +261,6 @@ export class PacketFactory {
     return this;
   }
 
-  packColor(r: number, g: number, b: number): PacketFactory {
-    this.packByte(r);
-    this.packByte(g);
-    this.packByte(b);
-    return this;
-  }
-
   updateLength(): void {
     this.packetData = getPacketLengthFromData(this.packetData.substr(4)) + this.packetData.substr(4);
   }
@@ -256,6 +288,16 @@ export class ReadPacketFactory {
     this.packetData = this.packetData.substr(2);
 
     return byte;
+  }
+
+  readColor(): Color {
+    let color = {
+      R: this.readByte(),
+      G: this.readByte(),
+      B: this.readByte()
+    };
+
+    return color;
   }
 
   readSByte(): number {

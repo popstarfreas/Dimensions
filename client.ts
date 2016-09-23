@@ -31,7 +31,7 @@ class Client {
   initialConnectionAlreadyCreated: boolean;
   ingame: boolean;
   UUID: string;
-  waitingInventoryRestore: boolean;
+  waitingCharacterRestore: boolean;
   wasKicked: boolean;
   routingInformation: RoutingInformation | null;
   countIncremented: boolean;
@@ -62,7 +62,7 @@ class Client {
 
     // This clients player object which can be used
     // for storing inventory and other player information
-    this.player = new Player();
+    this.player = new Player(this);
 
     // Global Handlers object whose contents may be updated (reloaded/refreshed)
     this.globalHandlers = globalHandlers;
@@ -97,7 +97,7 @@ class Client {
     // UUID of client
     this.UUID = "";
 
-    this.waitingInventoryRestore = false;
+    this.waitingCharacterRestore = false;
 
     // A boolean indicating that the socket was closed because the client was booted from the TerrariaServers
     // This is set to false again after the close handler has been run
@@ -263,7 +263,12 @@ class Client {
       // Start new socket
       this.server.socket = new Net.Socket();
       if (this.server.isSSC) {
-        this.waitingInventoryRestore = true;
+        this.waitingCharacterRestore = true;
+      } else {
+        // Only allow updates to visuals if coming from non-ssc
+        this.player.allowedCharacterChange = true;
+        this.player.allowedLifeChange = true;
+        this.player.allowedManaChange = true;
       }
       this.server.reset();
 
@@ -273,6 +278,9 @@ class Client {
       this.server.ip = ip;
       this.server.port = port;
       this.server.name = name;
+
+      // Allow name change during this stage
+      this.player.allowedNameChange = true;
 
       // Create connection
       this.server.socket.connect(port, ip, () => {

@@ -104,9 +104,12 @@ class TerrariaServerPacketHandler {
   }
 
   handleWorldInfo(packet: Packet): boolean {
-    if (this.currentServer.client.waitingInventoryRestore) {
+    if (this.currentServer.client.waitingCharacterRestore) {
       this.restoreInventory(this.currentServer.client);
-      this.currentServer.client.waitingInventoryRestore = false;
+      this.restoreLife(this.currentServer.client);
+      this.restoreMana(this.currentServer.client);
+      this.restoreVisuals(this.currentServer.client);
+      this.currentServer.client.waitingCharacterRestore = false;
     }
 
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
@@ -364,7 +367,7 @@ class TerrariaServerPacketHandler {
     let active: boolean = reader.readByte() === 1;
     let player: Player | undefined = undefined;
     if (active) {
-      player = new Player();
+      player = new Player(null);
     }
     this.currentServer.entityTracking.players[playerID] = player;
 
@@ -447,21 +450,21 @@ class TerrariaServerPacketHandler {
     let slotIDs: string[] = _.keys(this.currentServer.client.player.inventory);
     for (let i: number = 0, len = slotIDs.length; i < len; i++) {
       if (this.currentServer.client.player.inventory[slotIDs[i]]) {
-        this.setItem(client, this.currentServer.client.player.inventory[slotIDs[i]]);
+        client.player.setItem(this.currentServer.client.player.inventory[slotIDs[i]]);
       }
     }
   }
 
-  setItem(client: Client, item: Item): void {
-    let playerInventorySlot: string = (new PacketFactory())
-      .setType(PacketTypes.PlayerInventorySlot)
-      .packByte(client.player.id)
-      .packByte(item.slot)
-      .packInt16(item.stack)
-      .packByte(item.prefix)
-      .packInt16(item.netID)
-      .data();
-    client.socket.write(new Buffer(playerInventorySlot, 'hex'));
+  restoreLife(client: Client): void {
+    client.player.setLife(this.currentServer.client.player.life);
+  }
+
+  restoreMana(client: Client): void {
+    client.player.setMana(this.currentServer.client.player.mana);
+  }
+
+  restoreVisuals(client: Client): void {
+    client.player.setVisuals();
   }
 };
 

@@ -6,6 +6,7 @@ import Client from './client';
 import Packet from './packet';
 import {Command} from './clientcommandhandler';
 import ClientStates from './clientstates';
+import Color from './color';
 
 class ClientPacketHandler {
   currentClient: Client;
@@ -83,11 +84,48 @@ class ClientPacketHandler {
 
   handlePlayerInfo(packet: Packet): boolean {
     let nameLength: number = parseInt(packet.data.substr(12, 2), 16);
-    if (this.currentClient.player.name === null) {
-      // Take the appropriate hex chars out of the packet
-      // then convert them to ascii
-      let name: string = hex2a(packet.data.substr(14, nameLength * 2));
+    let reader = new ReadPacketFactory(packet.data);
+    reader.readByte(); // Player ID
+    let skinVariant = reader.readByte();
+    let hair = reader.readByte();
+    if (hair > 134) {
+      hair = 0;
+    }
+    let name = reader.readString();
+    let hairDye = reader.readByte();
+    let hideVisuals = reader.readByte();
+    let hideVisuals2 = reader.readByte();
+    let hideMisc = reader.readByte();
+    let hairColor = reader.readColor();
+    let skinColor = reader.readColor();
+    let eyeColor = reader.readColor();
+    let shirtColor = reader.readColor();
+    let underShirtColor = reader.readColor();
+    let pantsColor = reader.readColor();
+    let shoeColor = reader.readColor();
+    let difficulty = reader.readByte();
+
+    let player = this.currentClient.player;
+    if (player.allowedNameChange) {
       this.currentClient.setName(name);
+    }
+
+    if (player.allowedCharacterChange) {
+      player.skinVariant = skinVariant;
+      player.hair = hair;
+      player.hairDye = hairDye;
+      player.hideVisuals = hideVisuals;
+      player.hideVisuals2 = hideVisuals2;
+      player.hideMisc = hideMisc;
+      player.hairColor = hairColor;
+      player.skinColor = skinColor;
+      player.eyeColor = eyeColor;
+      player.shirtColor = shirtColor;
+      player.underShirtColor = underShirtColor;
+      player.pantsColor = pantsColor;
+      player.shoeColor = shoeColor;
+      player.difficulty = difficulty;
+      player.allowedCharacterChange = false;
     }
 
     return false;
@@ -132,7 +170,7 @@ class ClientPacketHandler {
   }
 
   handlePlayerInventorySlot(packet: Packet): boolean {
-    if ((this.currentClient.state === ClientStates.FreshConnection || this.currentClient.state === ClientStates.ConnectionSwitchEstablished) && !this.currentClient.waitingInventoryRestore) {
+    if ((this.currentClient.state === ClientStates.FreshConnection || this.currentClient.state === ClientStates.ConnectionSwitchEstablished) && !this.currentClient.waitingCharacterRestore) {
       let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
       let playerID: number = reader.readByte();
       let slotID: number = reader.readByte();
@@ -152,23 +190,31 @@ class ClientPacketHandler {
   }
 
   handlePlayerMana(packet: Packet): boolean {
+    if (!this.currentClient.player.allowedManaChange)
+      return false;
+
     // Read mana sent and then set the player object mana
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     reader.readByte();
     reader.readInt16();
     let mana: number = reader.readInt16();
     this.currentClient.player.mana = mana;
+    this.currentClient.player.allowedManaChange = false;
 
     return false;
   }
 
   handlePlayerHP(packet: Packet): boolean {
+    if (!this.currentClient.player.allowedLifeChange)
+      return false;
+
     // Read life sent and then set the player object life
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     reader.readByte();
     reader.readInt16();
     let life: number = reader.readInt16();
     this.currentClient.player.life = life;
+    this.currentClient.player.allowedLifeChange = false;
 
     return false;
   }
@@ -196,7 +242,11 @@ class ClientPacketHandler {
           let chatPacket: PacketFactory = (new PacketFactory())
             .setType(PacketTypes.ChatMessage)
             .packByte(0)
-            .packColor(0, 0, 0)
+            .packColor({
+              R: 0,
+              G: 0,
+              B: 0
+            })
             .packString(chatMessage);
           this.currentClient.server.socket.write(new Buffer(chatPacket.data(), 'hex'));
           handled = true;
@@ -209,7 +259,11 @@ class ClientPacketHandler {
       let chatPacket: PacketFactory = (new PacketFactory())
         .setType(PacketTypes.ChatMessage)
         .packByte(0)
-        .packColor(0, 0, 0)
+        .packColor({
+          R: 0,
+          G: 0,
+          B: 0
+        })
         .packString(chatMessage);
       this.currentClient.server.socket.write(new Buffer(chatPacket.data(), 'hex'));
       handled = true;
