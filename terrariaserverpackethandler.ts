@@ -105,7 +105,7 @@ class TerrariaServerPacketHandler {
 
   handleWorldInfo(packet: Packet): boolean {
     if (this.currentServer.client.waitingInventoryRestore) {
-      this.resetInventory(this.currentServer.client);
+      this.restoreInventory(this.currentServer.client);
       this.currentServer.client.waitingInventoryRestore = false;
     }
 
@@ -443,7 +443,7 @@ class TerrariaServerPacketHandler {
     client.socket.write(new Buffer(updateItemDrop, 'hex'));
   }
 
-  resetInventory(client: Client): void {
+  restoreInventory(client: Client): void {
     let slotIDs: string[] = _.keys(this.currentServer.client.player.inventory);
     for (let i: number = 0, len = slotIDs.length; i < len; i++) {
       if (this.currentServer.client.player.inventory[slotIDs[i]]) {
