@@ -251,8 +251,8 @@ class ClientPacketHandler {
           this.currentClient.server.socket.write(new Buffer(chatPacket.data(), 'hex'));
           handled = true;
         }
-      }
-    } else {
+      }*/
+    } /*else {
       let colorTag: RegExp = /\[c(.*?)\:(.*?)\]/g;
       chatMessage = chatMessage.replace(colorTag, "$2");
       chatMessage = chatMessage.replace("1.3.2.1", "the current Terraria version");
