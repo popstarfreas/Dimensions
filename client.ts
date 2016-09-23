@@ -41,6 +41,7 @@ class Client {
   ServerHandleData: (data: Buffer) => void;
   ServerHandleClose: () => void;
   globalTracking: GlobalTracking;
+  packetQueue: string;
 
   constructor(id: number, socket: Net.Socket, server: RoutingServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions, globalTracking: GlobalTracking) {
     this.ID = id;
@@ -118,6 +119,10 @@ class Client {
     this.ServerHandleError = this.server.handleError.bind(this.server);
     this.ServerHandleData = this.server.handleData.bind(this.server);
     this.ServerHandleClose = this.server.handleClose.bind(this.server);
+
+    // Packets that have been queued as they were sent at the wrong time
+    // are stored in the packetQueue
+    this.packetQueue = "";
   }
 
   getPacketHandler(): ClientPacketHandler {
@@ -233,6 +238,13 @@ class Client {
         .data();
       let msg: Buffer = new Buffer(packetData, 'hex');
       this.socket.write(msg);
+    }
+  }
+
+  sendWaitingPackets(): void {
+    if (!this.server.socket.destroyed && this.packetQueue.length > 0) {
+      this.server.socket.write(new Buffer(this.packetQueue, 'hex'));
+      this.packetQueue = "";
     }
   }
 

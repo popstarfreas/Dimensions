@@ -46,6 +46,10 @@ class ClientPacketHandler {
         handled = this.handlePlayerHP(packet);
         break;
 
+      case PacketTypes.UpdateItemDrop:
+        handled = this.handleUpdateItemDrop(packet);
+        break;
+
       case PacketTypes.UpdateItemOwner:
         handled = this.handleUpdateItemOwner(packet);
         break;
@@ -219,10 +223,22 @@ class ClientPacketHandler {
     return false;
   }
 
+  handleUpdateItemDrop(packet: Packet): boolean {
+    // Prevent this being sent too early (causing kicked for invalid operation)
+    if (this.currentClient.state !== ClientStates.FullyConnected) {
+      this.currentClient.packetQueue += packet.data;
+      return true;
+    }
+
+    return false;
+  }
+
   handleUpdateItemOwner(packet: Packet): boolean {
-    // This is just here to avoid it being scooped up by
-    // handleDefault as this is vital for SSC inventories to work
-    // properly
+    // Prevent this being sent too early (causing kicked for invalid operation)
+    if (this.currentClient.state !== ClientStates.FullyConnected) {
+      this.currentClient.packetQueue += packet.data;
+      return true;
+    }
 
     return false;
   }
@@ -277,17 +293,6 @@ class ClientPacketHandler {
     this.currentClient.UUID = reader.readString();
 
     return false;
-  }
-
-  handleDefault(packet: Packet): boolean {
-    let handled: boolean = false;
-
-    // Disallow packets that are not handled during the connection phase
-    if (this.currentClient.state !== ClientStates.FullyConnected) {
-      handled = true;
-    }
-
-    return handled;
   }
 }
 

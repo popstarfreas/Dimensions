@@ -210,8 +210,9 @@ class TerrariaServerPacketHandler {
             server.client.socket.write(new Buffer(spawnPlayer, 'hex'));
           }
 
-          if (this.currentClient.state === ClientStates.FinishinedSendingInventory) {
-            this.currentClient.state = ClientStates.FullyConnected;
+          if (server.client.state === ClientStates.FinishinedSendingInventory) {
+            server.client.state = ClientStates.FullyConnected;
+            server.client.sendWaitingPackets();
           }
         }
       }, 1000);
