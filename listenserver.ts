@@ -142,7 +142,6 @@ class ListenServer {
           .packString("                                                            Checking IP...                                                     ")
           .data();
 
-        console.log(statusPacket);
         socket.write(new Buffer(statusPacket, 'hex'));
         
         // Get blocked status
