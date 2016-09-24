@@ -70,7 +70,7 @@ class Player {
 		}
 
 		let playerLife: string = (new PacketFactory())
-			.setType(PacketTypes.PlayerMana)
+			.setType(PacketTypes.PlayerHP)
 			.packByte(this.id)
 			.packInt16(this.life)
 			.packInt16(this.life)
