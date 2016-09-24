@@ -140,7 +140,13 @@ class ListenServer {
           var kickPacket = (new PacketFactory())
             .setType(PacketTypes.Disconnect)
             .packString("Connecting using a Host Provider is not allowed.")
-          socket.destroy();
+            .data();
+          socket.write(new Buffer(kickPacket, 'hex'));
+
+          // Allow time for client to receive and process kick packet
+          setTimeout(() => {
+            socket.destroy();
+          }, 1000);
 
           if (this.options.log.clientBlocked) {
             console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " was blocked from joining.");
