@@ -18,6 +18,7 @@ export interface LogOptions {
 
 export interface ConfigOptions {
   clientTimeout: number;
+  currentVersion: number;
   fakeVersion: boolean;
   fakeVersionNum: number;
   blockInvis: boolean;

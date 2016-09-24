@@ -29,6 +29,10 @@ exports.ConfigSettings = {
         // destroyed
         clientTimeout: 1000*15,
 
+        // The current Terraria version (used in switching, if incorrect
+        // players will not be able to switch)
+        currentVersion: 176,
+
         // Whether or not to fake version to the server.
         // You can use this when small patches to Terraria are made
         // that do not break compatibility with the server

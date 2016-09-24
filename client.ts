@@ -309,7 +309,7 @@ class Client {
         // This needs to be changed; it should not be hardcoded data
         var connectPacket = (new PacketFactory())
           .setType(1)
-          .packString("Terraria173")
+          .packString("Terraria"+this.options.currentVersion)
           .data();
         this.server.socket.write(new Buffer(connectPacket, "hex"));
         if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
