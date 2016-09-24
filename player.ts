@@ -76,7 +76,7 @@ class Player {
 			.packInt16(this.life)
 			.data();
 
-		this.client.server.socket.write(new Buffer(playerLife, 'hex'));
+		this.client.socket.write(new Buffer(playerLife, 'hex'));
 	}
 
 	setMana(mana: number): void {
@@ -91,7 +91,7 @@ class Player {
 			.packInt16(this.mana)
 			.data();
 
-		this.client.server.socket.write(new Buffer(playerMana, 'hex'));
+		this.client.socket.write(new Buffer(playerMana, 'hex'));
 	}
 
 	setVisuals(): void {
@@ -119,7 +119,7 @@ class Player {
 			.packByte(this.difficulty)
 			.data()
 
-			this.client.server.socket.write(new Buffer(playerInfo, 'hex'));
+		this.client.socket.write(new Buffer(playerInfo, 'hex'));
 	}
 }
 
