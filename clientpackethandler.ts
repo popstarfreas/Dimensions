@@ -64,9 +64,7 @@ class ClientPacketHandler {
         break;
 
       case PacketTypes.SpawnPlayer:
-        if (this.currentClient.state === ClientStates.FinishinedSendingInventory) {
-          this.currentClient.state = ClientStates.FullyConnected;
-        }
+        handled = this.handleSpawnPlayer(packet);
         break;
 
       case PacketTypes.ChatMessage:
@@ -239,6 +237,16 @@ class ClientPacketHandler {
       this.currentClient.packetQueue += packet.data;
       return true;
     }
+
+    return false;
+  }
+
+  handleSpawnPlayer(packet: Packet): boolean {
+    if (this.currentClient.state === ClientStates.FinishinedSendingInventory) {
+        this.currentClient.state = ClientStates.FullyConnected;
+    }
+    
+    this.currentClient.sendWaitingPackets();
 
     return false;
   }
