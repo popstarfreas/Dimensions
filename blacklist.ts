@@ -3,7 +3,7 @@ import * as http from 'http';
 class Blacklist {
     static checkIP(ip: string, key: string) {
         return new Promise<boolean>((resolve, reject) => {
-            http.get(`http://tools.xioax.com/networking/ip/${ip}/${key}`, (res) => {
+            http.get(`http://fake-response.appspot.com/api/?data={}&sleep=5`, (res) => {
                 let data = "";
                 res.on("data", function (chunk) {
                     data += chunk;

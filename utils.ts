@@ -20,7 +20,8 @@ export function hex2a(hexx: string): string {
 export function a2hex(str: string): string {
   let arr: string[] = [];
   for (var i = 0, l = str.length; i < l; i++) {
-    let hex: string = Number(str.charCodeAt(i)).toString(16);
+    let prehex: string = Number(str.charCodeAt(i)).toString(16);
+    let hex: string = prehex.length === 1 ? `0${prehex}` : prehex;
     arr.push(hex);
   }
 

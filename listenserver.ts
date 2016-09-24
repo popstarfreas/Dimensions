@@ -135,9 +135,20 @@ class ListenServer {
 
     if (this.options.useBlacklist) {
       try {
+        // Update client on current operation
+        let statusPacket: string = (new PacketFactory())
+          .setType(PacketTypes.Status)
+          .packInt32(10)
+          .packString("Checking IP...\n")
+          .data();
+
+        console.log(statusPacket);
+        socket.write(new Buffer(statusPacket, 'hex'));
+        
+        // Get blocked status
         let blocked: boolean = await Blacklist.checkIP(getProperIP(socket.remoteAddress), this.options.blacklistAPIKey);
         if (blocked) {
-          var kickPacket = (new PacketFactory())
+          let kickPacket: string = (new PacketFactory())
             .setType(PacketTypes.Disconnect)
             .packString("Connecting using a Host Provider is not allowed.")
             .data();
