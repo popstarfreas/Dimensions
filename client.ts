@@ -130,6 +130,9 @@ class Client {
   }
 
   setName(name: string): void {
+    if (this.player.name === name)
+      return;
+
     // Is the name already in use?
     if (this.globalTracking.names[name]) {
       var disconnect = (new PacketFactory())
@@ -312,7 +315,7 @@ class Client {
         // This needs to be changed; it should not be hardcoded data
         var connectPacket = (new PacketFactory())
           .setType(1)
-          .packString("Terraria"+this.options.currentVersion)
+          .packString(`Terraria${this.options.currentVersion}`)
           .data();
         this.server.socket.write(new Buffer(connectPacket, "hex"));
         if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
