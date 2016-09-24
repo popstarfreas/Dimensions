@@ -194,6 +194,9 @@ class Client {
       } else {
         // Connect to the server for the first time
         this.initialConnectionAlreadyCreated = true;
+        this.player.allowedCharacterChange = true;
+        this.player.allowedLifeChange = true;
+        this.player.allowedManaChange = true;
 
         this.server.socket.connect(this.server.port, this.server.ip, () => {
           this.countIncremented = true;
