@@ -138,8 +138,8 @@ class ListenServer {
         // Update client on current operation
         let statusPacket: string = (new PacketFactory())
           .setType(PacketTypes.Status)
-          .packInt32(10)
-          .packString("Checking IP...\n")
+          .packInt32(1)
+          .packString("                                                            Checking IP...                                                     ")
           .data();
 
         console.log(statusPacket);
