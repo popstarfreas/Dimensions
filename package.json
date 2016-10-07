@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "glob": "^7.1.0",
     "lodash": "^4.15.0",
     "redis": "^2.6.2",
     "requirejs": "^2.2.0",

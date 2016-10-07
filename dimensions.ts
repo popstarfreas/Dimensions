@@ -7,12 +7,14 @@ import Client from './client';
 import {requireNoCache} from './utils';
 import * as _ from 'lodash';
 import ClientCommandHandler from './clientcommandhandler';
-import ClientPacketHandler from './clientpackethandler';
+import PacketHandlerTypes from './packethandlertypes';
 import TerrariaServerPacketHandler from './terrariaserverpackethandler';
 import ServerDetails from './serverdetails';
 import GlobalHandlers from './globalhandlers';
 import ReloadTask from './reloadtask';
 import GlobalTracking from './globaltracking';
+import Extensions from './extentions';
+import PacketHandler from './defaultclientpackethandler';
 
 class Dimensions {
   servers: { [id: string]: RoutingServer };
@@ -28,7 +30,8 @@ class Dimensions {
     this.handlers = {
       command: new ClientCommandHandler(),
       clientPacketHandler: new ClientPacketHandler(),
-      terrariaServerPacketHandler: new TerrariaServerPacketHandler()
+      terrariaServerPacketHandler: new TerrariaServerPacketHandler(),
+      extensions: new Extensions()
     };
 
     this.redisClient = redis.createClient();

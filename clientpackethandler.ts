@@ -7,8 +7,9 @@ import Packet from './packet';
 import {Command} from './clientcommandhandler';
 import ClientStates from './clientstates';
 import Color from './color';
+import PacketHandlerTypes from './packethandlertypes';
 
-class ClientPacketHandler {
+class PacketHandler implements ClientPacketHandler {
   currentClient: Client;
 
   handlePacket(client: Client, packet: Packet): string {
@@ -304,4 +305,4 @@ class ClientPacketHandler {
   }
 }
 
-export default ClientPacketHandler;
+export default PacketHandler;
