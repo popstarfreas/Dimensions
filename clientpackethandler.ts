@@ -136,7 +136,7 @@ class ClientPacketHandler {
   handleUpdatePlayerBuff(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let playerID: number = reader.readByte();
-    if (!this.currentClient.options.blockInvis) {
+    if (this.currentClient.options.blockInvis) {
       var updatePlayerBuff: PacketFactory = (new PacketFactory())
         .setType(PacketTypes.UpdatePlayerBuff)
         .packByte(playerID);
