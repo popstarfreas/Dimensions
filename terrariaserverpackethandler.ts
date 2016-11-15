@@ -16,10 +16,48 @@ class TerrariaServerPacketHandler {
   currentServer: TerrariaServer;
   socket: Net.Socket;
 
+  runPriorHandlers(server: TerrariaServer, packet: Packet): boolean {
+    let handlers = server.client.globalHandlers.extensions;
+    let handled = false;
+    for (let key in handlers) {
+      let handler = handlers[key];
+      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.server !== 'undefined') {
+        handled = handler.priorPacketHandlers.server(server, packet);
+        if (handled) {
+          break;
+        }
+      }
+    }
+    
+    return handled;
+  }
+  
+  runPostHandlers(server: TerrariaServer, packet: Packet): boolean {
+    let handlers = server.client.globalHandlers.extensions;
+    let handled = false;
+    for (let key in handlers) {
+      let handler = handlers[key];
+      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.server !== 'undefined') {
+        handled = handler.postPacketHandlers.server(server, packet);
+        if (handled) {
+          break;
+        }
+      }
+    }
+    
+    return handled;
+  }
+
   handlePacket(server: TerrariaServer, packet: Packet): string {
+    let priorHandled: boolean = this.runPriorHandlers(server, packet);
+    if (priorHandled) {
+      return "";
+    }
+
     let handled: boolean = false;
     let packetType: number = packet.packetType;
     this.currentServer = server;
+
     switch (packetType) {
       case PacketTypes.Disconnect:
         handled = this.handleDisconnect(packet);
@@ -58,7 +96,16 @@ class TerrariaServerPacketHandler {
         break;
     }
 
-    return !handled ? packet.data : "";
+    if (handled) {
+      return "";
+    }
+    
+    let postHandled: boolean = this.runPostHandlers(server, packet);
+    if (postHandled) {
+      return "";
+    }
+    
+    return packet.data;
   }
 
   /* Start Packet Handlers */
@@ -204,9 +251,11 @@ class TerrariaServerPacketHandler {
       let server: TerrariaServer = this.currentServer;
       setTimeout(function sendSpawnPlayer() {
         if (typeof server.client !== 'undefined' && typeof server.client.socket !== 'undefined') {
+          console.log("[Client] SpawnPacket (Modified)");
           server.socket.write(new Buffer(spawnPlayer, 'hex'));
 
           if (!server.client.preventSpawnOnJoin) {
+            console.log("[Server] SpawnPacket (Modified)");
             server.client.socket.write(new Buffer(spawnPlayer, 'hex'));
           }
 
@@ -256,6 +305,7 @@ class TerrariaServerPacketHandler {
       y: reader.readSingle()
     };
     let target: number = reader.readByte();
+    let unknown: number = reader.readByte();
 
     // Flags
     let bits: number = reader.readByte();
@@ -299,7 +349,8 @@ class TerrariaServerPacketHandler {
       // Placeholder max
       life = 1;
     }
-
+    let releaseOwner: boolean = reader.readByte() > 0;
+    
     if (netID === 0 || life === 0) {
       this.currentServer.entityTracking.NPCs[NPCID] = undefined;
     } else {
@@ -412,6 +463,7 @@ class TerrariaServerPacketHandler {
       .packSingle(0) // VelocityX
       .packSingle(0) // VelocityY
       .packByte(0) // Target
+      .packByte(0) // Unknown
       .packByte(0) // Flags
       .packInt16(0) // NPC NetID
       .packByte(4) // Life ByteSize

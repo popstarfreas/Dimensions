@@ -207,6 +207,12 @@ class Client {
           this.serversDetails[this.server.name].failedConnAttempts = 0;
           this.connected = true;
 
+          // In order to allow inspection of first packet regardless of fake version
+          let allowedData: string = "";
+          _.each(packets, (packet: Packet) => {
+            allowedData += this.getPacketHandler().handlePacket(this, packet);
+          });
+
           // Write the data the client sent us to the now connected server
           if (this.options.fakeVersion) {
             let packet: string = (new PacketFactory())
@@ -215,7 +221,14 @@ class Client {
               .data();
             this.server.socket.write(new Buffer(packet, "hex"));
           } else {
-            this.server.socket.write(encodedData);
+            // Send allowedData to the server if the client is connected to one
+            if (allowedData.length > 0 && this.connected) {
+              if (this.server.socket) {
+                this.server.socket.write(new Buffer(allowedData, 'hex'));
+              } else {
+                this.sendChatMessage("Are you even connected?", "ff0000");
+              }
+            }
           }
         });
 

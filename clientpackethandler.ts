@@ -18,7 +18,7 @@ class ClientPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.priorPacketHandlers.client !== 'undefined') {
+      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.client !== 'undefined') {
         handled = handler.priorPacketHandlers.client(client, packet);
         if (handled) {
           break;
@@ -34,7 +34,7 @@ class ClientPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.postPacketHandlers.client !== 'undefined') {
+      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.client !== 'undefined') {
         handled = handler.postPacketHandlers.client(client, packet);
         if (handled) {
           break;
@@ -272,8 +272,8 @@ class ClientPacketHandler {
   handleUpdateItemDrop(packet: Packet): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientStates.FullyConnected) {
-      this.currentClient.packetQueue += packet.data;
-      return true;
+      //this.currentClient.packetQueue += packet.data;
+      //return true;
     }
 
     return false;
@@ -282,8 +282,8 @@ class ClientPacketHandler {
   handleUpdateItemOwner(packet: Packet): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientStates.FullyConnected) {
-      this.currentClient.packetQueue += packet.data;
-      return true;
+      //this.currentClient.packetQueue += packet.data;
+      //return true;
     }
 
     return false;
@@ -294,7 +294,7 @@ class ClientPacketHandler {
         this.currentClient.state = ClientStates.FullyConnected;
     }
     
-    this.currentClient.sendWaitingPackets();
+    //this.currentClient.sendWaitingPackets();
 
     return false;
   }
