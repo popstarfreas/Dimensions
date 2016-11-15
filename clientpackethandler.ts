@@ -1,32 +1,23 @@
-import PacketTypes from './packettypes';
-import {PacketFactory, ReadPacketFactory, hex2a} from './utils';
-import NPC from './npc';
-import Item from './item';
-import Client from './client';
-import Packet from './packet';
-import {Command} from './clientcommandhandler';
-import ClientStates from './clientstates';
-import Color from './color';
+import PacketTypes from 'packettypes';
+import {PacketFactory, ReadPacketFactory, hex2a} from 'utils';
+import NPC from 'npc';
+import Item from 'item';
+import Client from 'client';
+import Packet from 'packet';
+import {Command} from 'clientcommandhandler';
+import ClientStates from 'clientstates';
+import Color from 'color';
 import * as _ from 'lodash';
-import {PacketHandlers} from './extension';
+import {PacketHandlers} from 'extension';
 
 class ClientPacketHandler {
   currentClient: Client;
   
-  getPriorHandlers(): any {
-    
-  }
-  
-  getPostHandlers(): any {
-    
-  }
-  
   runPriorHandlers(client: Client, packet: Packet): boolean {
-    let handlers = _.toArray(client.globalHandlers.extensions);
+    let handlers = client.globalHandlers.extensions;
     let handled = false;
-    let len = handlers.length;
-    for (let i = 0; i < len; i++) {
-      let handler = handlers[i];
+    for (let key in handlers) {
+      let handler = handlers[key];
       if (typeof handler.priorPacketHandlers.client !== 'undefined') {
         handled = handler.priorPacketHandlers.client(client, packet);
         if (handled) {
@@ -39,11 +30,10 @@ class ClientPacketHandler {
   }
   
   runPostHandlers(client: Client, packet: Packet): boolean {
-    let handlers = _.toArray(client.globalHandlers.extensions);
+    let handlers = client.globalHandlers.extensions;
     let handled = false;
-    let len = handlers.length;
-    for (let i = 0; i < len; i++) {
-      let handler = handlers[i];
+    for (let key in handlers) {
+      let handler = handlers[key];
       if (typeof handler.postPacketHandlers.client !== 'undefined') {
         handled = handler.postPacketHandlers.client(client, packet);
         if (handled) {

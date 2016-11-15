@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "cd ./build && node ./index.js",
+    "start": "cd ./build && set NODE_PATH=.&& node ./index.js",
     "build": "tsc -p ./",
-    "bstart": "tsc -p ./ && cd ./build && node ./index.js && cd ../",
-    "bstart-debug": "tsc -p ./ && cd ./build && node-debug ./index.js && cd ../",
+    "bstart": "tsc -p ./ && cd ./build && set NODE_PATH=.&& node ./index.js && cd ../",
+    "bstart-debug": "tsc -p ./ && cd ./build && set NODE_PATH=.&& node-debug ./index.js && cd ../",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

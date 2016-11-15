@@ -14,10 +14,11 @@ export interface LogOptions {
   tServerDisconnect: boolean;
   tServerError: boolean;
   clientBlocked: boolean;
+  extensionLoad: boolean;
 }
 
 export interface ConfigOptions {
-  clientTimeout: number;
+  socketTimeout: number;
   currentVersion: number;
   fakeVersion: boolean;
   fakeVersionNum: number;

@@ -1,20 +1,20 @@
-import Player from './player';
-import {} from './utils';
-import TerrariaServer from './terrariaserver';
+import Player from 'player';
+import {} from 'utils';
+import TerrariaServer from 'terrariaserver';
 import * as Net from 'net';
-import {ConfigSettings, ConfigOptions} from './configloader';
-import PacketTypes from './packettypes';
+import {ConfigSettings, ConfigOptions} from 'configloader';
+import PacketTypes from 'packettypes';
 import * as _ from 'lodash';
-import ClientPacketHandler from './clientpackethandler';
-import RoutingServer from './routingserver';
-import GlobalHandlers from './globalhandlers';
-import ServerDetails from './serverdetails';
-import RoutingInformation from './routinginformation';
-import {hex2str, getPacketsFromHexString, BuffersPackets, PacketFactory} from './utils';
-import Packet from './packet';
-import ChangeServerOptions from './changeserveroptions';
-import GlobalTracking from './globaltracking';
-import ClientStates from './clientstates';
+import ClientPacketHandler from 'clientpackethandler';
+import RoutingServer from 'routingserver';
+import GlobalHandlers from 'globalhandlers';
+import ServerDetails from 'serverdetails';
+import RoutingInformation from 'routinginformation';
+import {hex2str, getPacketsFromHexString, BuffersPackets, PacketFactory} from 'utils';
+import Packet from 'packet';
+import ChangeServerOptions from 'changeserveroptions';
+import GlobalTracking from 'globaltracking';
+import ClientStates from 'clientstates';
 
 class Client {
   ID: number;

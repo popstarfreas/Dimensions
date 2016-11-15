@@ -27,7 +27,7 @@ exports.ConfigSettings = {
     options: {
         // The number of millseconds of inactivity before a client socket is
         // destroyed
-        clientTimeout: 1000*15,
+        socketTimeout: 1000*15,
 
         // The current Terraria version (used in switching, if incorrect
         // players will not be able to switch)
@@ -59,7 +59,8 @@ exports.ConfigSettings = {
             clientError: false,
             tServerConnect: false,
             tServerDisconnect: false,
-            tServerError: false
+            tServerError: false,
+            extensionLoad: true
         }
     }
 };

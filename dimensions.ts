@@ -1,19 +1,19 @@
 ///<reference path="./typings/index.d.ts"/>
 import * as redis from 'redis';
-import RoutingServer from './routingserver';
-import ListenServer from './listenserver';
-import {ConfigSettings, Config, ConfigOptions} from './configloader';
-import Client from './client';
-import {requireNoCache} from './utils';
+import RoutingServer from 'routingserver';
+import ListenServer from 'listenserver';
+import {ConfigSettings, Config, ConfigOptions} from 'configloader';
+import Client from 'client';
+import {requireNoCache} from 'utils';
 import * as _ from 'lodash';
-import ClientCommandHandler from './clientcommandhandler';
-import TerrariaServerPacketHandler from './terrariaserverpackethandler';
-import ServerDetails from './serverdetails';
-import GlobalHandlers from './globalhandlers';
-import ReloadTask from './reloadtask';
-import GlobalTracking from './globaltracking';
-import Extensions from './extensions';
-import ClientPacketHandler from './clientpackethandler';
+import ClientCommandHandler from 'clientcommandhandler';
+import TerrariaServerPacketHandler from 'terrariaserverpackethandler';
+import ServerDetails from 'serverdetails';
+import GlobalHandlers from 'globalhandlers';
+import ReloadTask from 'reloadtask';
+import GlobalTracking from 'globaltracking';
+import Extensions from 'extensions';
+import ClientPacketHandler from 'clientpackethandler';
 
 class Dimensions {
   servers: { [id: string]: RoutingServer };
@@ -33,7 +33,7 @@ class Dimensions {
       extensions: []
     };
     
-    Extensions.loadExtensions(this.handlers.extensions);
+    Extensions.loadExtensions(this.handlers.extensions, this.options.log.extensionLoad);
 
     this.redisClient = redis.createClient();
     this.redisClient.subscribe('dimensions_cli');
@@ -54,9 +54,6 @@ class Dimensions {
       names: {}
     };
 
-
-    //self.interface = new Interface(self.handleCommand.bind(self));
-
     for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
       let listenKey = ConfigSettings.servers[i].listenPort;
       this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking);
@@ -65,10 +62,6 @@ class Dimensions {
         this.servers[ConfigSettings.servers[i].routingServers[j].name] = ConfigSettings.servers[i].routingServers[j];
       }
     }
-
-    /*setInterval(function() {
-      self.printServerCounts();
-    }, 5000);*/
   }
 
   printServerCounts(): void {
@@ -93,7 +86,7 @@ class Dimensions {
       case "reloadhandlers":
         this.reloadClientHandlers();
         this.reloadTerrariaServerHandlers();
-        console.log("\u001b[33mReloaded Packet Handlers.\u001b[37m");
+        console.log("\u001b[33mReloaded Packet Handlers.\u001b[0m");
         break;
       case "reloadcmds":
           try {
@@ -103,7 +96,11 @@ class Dimensions {
             console.log("Error loading Command Handler: " + e);
           }
         
-        console.log("\u001b[33mReloaded Command Handler.\u001b[37m");
+        console.log("\u001b[33mReloaded Command Handler.\u001b[0m");
+        break;
+      case "reloadextensions":
+      case "reloadplugins":
+        this.reloadExtensions();
         break;
     }
   }
@@ -124,6 +121,18 @@ class Dimensions {
       } catch (e) {
         console.log("Error loading TerrariaServer Packet Handler: " + e);
       }
+  }
+
+  reloadExtensions(): void {
+    if (this.options.log.extensionLoad) {
+      for (let key in this.handlers.extensions) {
+        let extension = this.handlers.extensions[key];
+        console.log(`\u001b[33m[Extension] ${extension.name} ${extension.version} unloaded.\u001b[0m`);
+      } 
+    }
+
+    this.handlers.extensions = [];
+    Extensions.loadExtensions(this.handlers.extensions, this.options.log.extensionLoad);
   }
 
   reloadServers(): void {
@@ -173,7 +182,7 @@ class Dimensions {
       } catch (e) {
         console.log("Error loading Config: " + e);
       }
-      console.log("\u001b[33mReloaded Config.\u001b[37m");
+      console.log("\u001b[33mReloaded Config.\u001b[0m");
       console.log(ConfigSettings);
   }
 }

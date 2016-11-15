@@ -1,16 +1,16 @@
 /// <reference path="typings/index.d.ts" />
-import PacketTypes from './packettypes';
-import { ReadPacketFactory, getProperIP, PacketFactory } from './utils';
+import PacketTypes from 'packettypes';
+import { ReadPacketFactory, getProperIP, PacketFactory } from 'utils';
 import * as _ from 'lodash';
-import NPC from './npc';
-import TerrariaServer from './terrariaserver';
-import Client from './client';
-import Packet from './packet';
+import NPC from 'npc';
+import TerrariaServer from 'terrariaserver';
+import Client from 'client';
+import Packet from 'packet';
 import * as Net from 'net';
-import Point from './point';
-import Item from './item';
-import Player from './player';
-import ClientStates from './clientstates';
+import Point from 'point';
+import Item from 'item';
+import Player from 'player';
+import ClientStates from 'clientstates';
 
 class TerrariaServerPacketHandler {
   currentServer: TerrariaServer;

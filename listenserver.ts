@@ -1,16 +1,16 @@
 ///<reference path="./typings/index.d.ts"/>
 import * as Net from 'net';
 import * as _ from 'lodash';
-import { getProperIP } from './utils';
-import Client from './client';
-import ServerDetails from './serverdetails';
-import GlobalHandlers from './globalhandlers';
-import { ConfigServer, ConfigOptions } from './configloader';
-import RoutingServer from './routingserver';
-import Blacklist from './blacklist';
-import PacketTypes from './packettypes';
-import {PacketFactory} from './utils';
-import GlobalTracking from './globaltracking';
+import { getProperIP } from 'utils';
+import Client from 'client';
+import ServerDetails from 'serverdetails';
+import GlobalHandlers from 'globalhandlers';
+import { ConfigServer, ConfigOptions } from 'configloader';
+import RoutingServer from 'routingserver';
+import Blacklist from 'blacklist';
+import PacketTypes from 'packettypes';
+import {PacketFactory} from 'utils';
+import GlobalTracking from 'globaltracking';
 
 class ListenServer {
   idCounter: number;
@@ -48,11 +48,18 @@ class ListenServer {
 
 
     this.ServerHandleError = this.handleError.bind(this);
-    this.ServerHandleSocket = this.handleSocket.bind(this);
     this.ServerHandleStart = this.handleStart.bind(this);
 
     // Listen Server
-    this.server = Net.createServer(this.ServerHandleSocket);
+    this.server = Net.createServer();
+    this.server.on('connection', (socket) => {
+      this.handleSocket(socket)
+        .catch((e) => {
+          if (this.options.log.clientError) {
+            console.log(`Socket Error: ${e}`);
+          }
+        });
+    });
     this.server.listen(this.port, this.ServerHandleStart);
     this.server.on('error', this.ServerHandleError);
   }
@@ -101,7 +108,7 @@ class ListenServer {
   }
 
   shutdown(): void {
-    console.log("\u001b[33m[" + process.pid + "] Server on " + this.port + " is now shutting down.\u001b[37m");
+    console.log("\u001b[33m[" + process.pid + "] Server on " + this.port + " is now shutting down.\u001b[0m");
     for (let i: number = 0; i < this.clients.length; i++) {
       this.clients[i].server.socket.removeListener('data', this.clients[i].ServerHandleData);
       this.clients[i].server.socket.removeListener('error', this.clients[i].ServerHandleError);
@@ -122,10 +129,11 @@ class ListenServer {
   }
 
   handleStart(): void {
-    console.log("\u001b[32m[" + process.pid + "] Server on " + this.port + " started.\u001b[37m");
+    console.log("\u001b[32m[" + process.pid + "] Server on " + this.port + " started.\u001b[0m");
   }
 
   async handleSocket(socket: Net.Socket) {
+    let i = 0;
     let chosenServer: RoutingServer | null = this.chooseServer();
     if (chosenServer === null) {
       console.log(`No servers available for ListenServer[Port: ${this.port}]`)
@@ -215,13 +223,11 @@ class ListenServer {
       }
     });
 
-    socket.setTimeout(this.options.clientTimeout, () => {
-      socket.destroy();
-    });
+    socket.setTimeout(this.options.socketTimeout);
   }
 
   handleError(error: Error) {
-    console.log("\u001b[31m Server on " + this.port + " encountered an error: " + error + ".\u001b[37m");
+    console.log("\u001b[31m Server on " + this.port + " encountered an error: " + error + ".\u001b[0m");
   }
 }
 

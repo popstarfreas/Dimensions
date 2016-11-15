@@ -1,7 +1,7 @@
-import ClientCommandHandler from './clientcommandhandler';
-import ClientPacketHandler from './clientpackethandler';
-import TerrariaServerPacketHandler from './terrariaserverpackethandler';
-import Extension from './extension';
+import ClientCommandHandler from 'clientcommandhandler';
+import ClientPacketHandler from 'clientpackethandler';
+import TerrariaServerPacketHandler from 'terrariaserverpackethandler';
+import Extension from 'extension';
 
 interface GlobalHandlers {
     command: ClientCommandHandler;

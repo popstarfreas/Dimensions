@@ -1,8 +1,8 @@
 /// <reference path="typings/index.d.ts" />
 import * as path from 'path';
 import * as util from 'util';
-import Color from './color';
-import Packet from './packet';
+import Color from 'color';
+import Packet from 'packet';
 
 export interface BuffersPackets {
   bufferPacket: string;

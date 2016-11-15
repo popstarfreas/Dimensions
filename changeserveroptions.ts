@@ -1,4 +1,4 @@
-import RoutingInformation from './routinginformation';
+import RoutingInformation from 'routinginformation';
 interface ChangeServerOptions {
     preventSpawnOnJoin?: boolean;
     routingInformation?: RoutingInformation;

@@ -1,5 +1,10 @@
-import Dimensions from "./dimensions";
+import Dimensions from "dimensions";
 import * as fs from "fs";
+
+ process.on('unhandledRejection', (reason, promise) => {
+        console.log('Reason: ' + reason);
+        console.log(promise);
+    });
 
 process.on('uncaughtException', function(e) {
    fs.appendFile('../error-log.txt', `${e}\n`, function (err) {

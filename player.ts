@@ -1,8 +1,8 @@
-import Item from './item';
-import Client from './client';
-import { PacketFactory } from './utils';
-import PacketTypes from './packettypes';
-import Color from './color';
+import Item from 'item';
+import Client from 'client';
+import { PacketFactory } from 'utils';
+import PacketTypes from 'packettypes';
+import Color from 'color';
 
 class Player {
 	client: Client | null;

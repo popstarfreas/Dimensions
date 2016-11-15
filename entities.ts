@@ -1,6 +1,6 @@
-import Item from './item';
-import NPC from './npc';
-import Player from './player';
+import Item from 'item';
+import NPC from 'npc';
+import Player from 'player';
 
 interface Entities {
   items: (Item|undefined)[];

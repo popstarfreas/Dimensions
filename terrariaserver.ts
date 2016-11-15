@@ -1,15 +1,15 @@
-import {hex2str, BuffersPackets, getPacketsFromHexString} from './utils';
-import PacketTypes from './packettypes';
+import {hex2str, BuffersPackets, getPacketsFromHexString} from 'utils';
+import PacketTypes from 'packettypes';
 import * as _ from 'lodash';
-import terrariaServerPacketHandler from './terrariaserverpackethandler';
-import Client from './client';
+import terrariaServerPacketHandler from 'terrariaserverpackethandler';
+import Client from 'client';
 import * as Net from 'net';
-import Point from './point';
-import Item from './item';
-import NPC from './npc';
-import Player from './player';
-import Packet from './packet';
-import Entities from './entities';
+import Point from 'point';
+import Item from 'item';
+import NPC from 'npc';
+import Player from 'player';
+import Packet from 'packet';
+import Entities from 'entities';
 
 class TerrariaServer {
   client: Client;
