@@ -8,11 +8,45 @@ import {Command} from './clientcommandhandler';
 import ClientStates from './clientstates';
 import Color from './color';
 import PacketHandlerTypes from './packethandlertypes';
+import ClientHandlerExtension from './clienthandlerextension';
 
-class PacketHandler implements ClientPacketHandler {
+class ClientPacketHandler {
   currentClient: Client;
+  priorHandlers: ClientHandlerExtension[];
+  postHandlers: ClientHandlerExtension[];
+  
+  runPriorHandlers(client: Client, packet: Packet): boolean {
+    let handled = false;
+    let len = this.priorHandlers.length;
+    for (let i = 0; i < len; i++) {
+      handled = this.priorHandlers[i].handlePacket(client, packet);
+      if (handled) {
+        break;
+      }
+    }
+    
+    return handled;
+  }
+  
+  runPostHandlers(client: Client, packet: Packet): boolean {
+    let handled = false;
+    let len = this.postHandlers.length;
+    for (let i = 0; i < len; i++) {
+      handled = this.postHandlers[i].handlePacket(client, packet);
+      if (handled) {
+        break;
+      }
+    }
+    
+    return handled;
+  }
 
   handlePacket(client: Client, packet: Packet): string {
+    let priorHandled: boolean = this.runPriorHandlers(client, packet);
+    if (priorHandled) {
+      return "";
+    }
+    
     let packetType: number = packet.packetType;
     let handled: boolean = false;
 
@@ -81,8 +115,17 @@ class PacketHandler implements ClientPacketHandler {
         handled = this.handleClientUUID(packet);
         break;
     }
-
-    return !handled ? packet.data : "";
+    
+    if (handled) {
+      return "";
+    }
+    
+    let postHandled: boolean = this.runPostHandlers(client, packet);
+    if (postHandled) {
+      return "";
+    }
+    
+    return packet.data;
   }
 
   handlePlayerInfo(packet: Packet): boolean {
@@ -137,6 +180,7 @@ class PacketHandler implements ClientPacketHandler {
   handleUpdatePlayerBuff(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let playerID: number = reader.readByte();
+    
     if (!this.currentClient.options.blockInvis) {
       var updatePlayerBuff: PacketFactory = (new PacketFactory())
         .setType(PacketTypes.UpdatePlayerBuff)
@@ -153,11 +197,10 @@ class PacketHandler implements ClientPacketHandler {
         }
       }
 
-      this.currentClient.server.socket.write(new Buffer(updatePlayerBuff.data(), 'hex'));
-      return true;
-    } else {
-      return false;
+      packet.data = updatePlayerBuff.data();
     }
+    
+    return false;
   }
 
   handleAddPlayerBuff(packet: Packet): boolean {
@@ -305,4 +348,4 @@ class PacketHandler implements ClientPacketHandler {
   }
 }
 
-export default PacketHandler;
+export default ClientPacketHandler;

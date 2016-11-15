@@ -13,8 +13,8 @@ import ServerDetails from './serverdetails';
 import GlobalHandlers from './globalhandlers';
 import ReloadTask from './reloadtask';
 import GlobalTracking from './globaltracking';
-import Extensions from './extentions';
-import PacketHandler from './defaultclientpackethandler';
+import Extensions from './extensions';
+import ClientPacketHandler from './clientpackethandler';
 
 class Dimensions {
   servers: { [id: string]: RoutingServer };
@@ -31,8 +31,10 @@ class Dimensions {
       command: new ClientCommandHandler(),
       clientPacketHandler: new ClientPacketHandler(),
       terrariaServerPacketHandler: new TerrariaServerPacketHandler(),
-      extensions: new Extensions()
+      extensions: []
     };
+    
+    Extensions.loadExtensions(this.handlers.extensions);
 
     this.redisClient = redis.createClient();
     this.redisClient.subscribe('dimensions_cli');
