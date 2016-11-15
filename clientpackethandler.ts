@@ -7,21 +7,31 @@ import Packet from './packet';
 import {Command} from './clientcommandhandler';
 import ClientStates from './clientstates';
 import Color from './color';
-import PacketHandlerTypes from './packethandlertypes';
-import ClientHandlerExtension from './clienthandlerextension';
+import * as _ from 'lodash';
+import {PacketHandlers} from './extension';
 
 class ClientPacketHandler {
   currentClient: Client;
-  priorHandlers: ClientHandlerExtension[];
-  postHandlers: ClientHandlerExtension[];
+  
+  getPriorHandlers(): any {
+    
+  }
+  
+  getPostHandlers(): any {
+    
+  }
   
   runPriorHandlers(client: Client, packet: Packet): boolean {
+    let handlers = _.toArray(client.globalHandlers.extensions);
     let handled = false;
-    let len = this.priorHandlers.length;
+    let len = handlers.length;
     for (let i = 0; i < len; i++) {
-      handled = this.priorHandlers[i].handlePacket(client, packet);
-      if (handled) {
-        break;
+      let handler = handlers[i];
+      if (typeof handler.priorPacketHandlers.client !== 'undefined') {
+        handled = handler.priorPacketHandlers.client(client, packet);
+        if (handled) {
+          break;
+        }
       }
     }
     
@@ -29,12 +39,16 @@ class ClientPacketHandler {
   }
   
   runPostHandlers(client: Client, packet: Packet): boolean {
+    let handlers = _.toArray(client.globalHandlers.extensions);
     let handled = false;
-    let len = this.postHandlers.length;
+    let len = handlers.length;
     for (let i = 0; i < len; i++) {
-      handled = this.postHandlers[i].handlePacket(client, packet);
-      if (handled) {
-        break;
+      let handler = handlers[i];
+      if (typeof handler.postPacketHandlers.client !== 'undefined') {
+        handled = handler.postPacketHandlers.client(client, packet);
+        if (handled) {
+          break;
+        }
       }
     }
     

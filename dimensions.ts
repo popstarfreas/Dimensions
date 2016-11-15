@@ -7,7 +7,6 @@ import Client from './client';
 import {requireNoCache} from './utils';
 import * as _ from 'lodash';
 import ClientCommandHandler from './clientcommandhandler';
-import PacketHandlerTypes from './packethandlertypes';
 import TerrariaServerPacketHandler from './terrariaserverpackethandler';
 import ServerDetails from './serverdetails';
 import GlobalHandlers from './globalhandlers';
