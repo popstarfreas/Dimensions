@@ -363,7 +363,6 @@ class TerrariaServerPacketHandler {
       }
     }
 
-    //self.currentServer.client.socket.write(new Buffer(npcUpdate.data(), 'hex'));
     return false;
   }
 
