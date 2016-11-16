@@ -19,6 +19,11 @@ export interface Extension {
     name: string;
     version: string;
     author: string;
+    reloadable: boolean;
+    reloadName?: string;
+
+    // Reloading
+    reload?: (require: any) => void;
 
     // Packet Handling
     priorPacketHandlers: PacketHandlers,

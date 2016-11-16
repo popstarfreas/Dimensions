@@ -102,6 +102,21 @@ class Dimensions {
       case "reloadplugins":
         this.reloadExtensions();
         break;
+      default:
+        this.passOnReloadToExtensions();
+        break;
+    }
+  }
+
+  passOnReloadToExtensions(): void {
+    let handlers = this.handlers.extensions;
+    for (let key in handlers) {
+      let handler = handlers[key];
+      if (handler.reloadable && typeof handler.reloadName !== 'undefined') {
+        if (typeof handler.reload === 'function') {
+          handler.reload(require);
+        }
+      }
     }
   }
 
