@@ -251,11 +251,9 @@ class TerrariaServerPacketHandler {
       let server: TerrariaServer = this.currentServer;
       setTimeout(function sendSpawnPlayer() {
         if (typeof server.client !== 'undefined' && typeof server.client.socket !== 'undefined') {
-          console.log("[Client] SpawnPacket (Modified)");
           server.socket.write(new Buffer(spawnPlayer, 'hex'));
 
           if (!server.client.preventSpawnOnJoin) {
-            console.log("[Server] SpawnPacket (Modified)");
             server.client.socket.write(new Buffer(spawnPlayer, 'hex'));
           }
 
