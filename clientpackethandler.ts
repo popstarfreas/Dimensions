@@ -272,8 +272,8 @@ class ClientPacketHandler {
   handleUpdateItemDrop(packet: Packet): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientStates.FullyConnected) {
-      //this.currentClient.packetQueue += packet.data;
-      //return true;
+      this.currentClient.packetQueue += packet.data;
+      return true;
     }
 
     return false;
@@ -282,8 +282,8 @@ class ClientPacketHandler {
   handleUpdateItemOwner(packet: Packet): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientStates.FullyConnected) {
-      //this.currentClient.packetQueue += packet.data;
-      //return true;
+      this.currentClient.packetQueue += packet.data;
+      return true;
     }
 
     return false;
@@ -294,7 +294,7 @@ class ClientPacketHandler {
         this.currentClient.state = ClientStates.FullyConnected;
     }
     
-    //this.currentClient.sendWaitingPackets();
+    this.currentClient.sendWaitingPackets();
 
     return false;
   }
