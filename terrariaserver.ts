@@ -90,9 +90,45 @@ class TerrariaServer {
     }
   }
 
+  handledByPreCloseHandlers(): boolean {
+    let handlers = this.client.globalHandlers.extensions;
+    let handled = false;
+    for (let key in handlers) {
+      let handler = handlers[key];
+      if (typeof handler.serverDisconnectPreHandler !== 'undefined') {
+        handled = handler.serverDisconnectPreHandler(this);
+        if (handled) {
+          break;
+        }
+      }
+    }
+    
+    return handled;
+  }
+
+  handledByCloseHandlers(): boolean {
+    let handlers = this.client.globalHandlers.extensions;
+    let handled = false;
+    for (let key in handlers) {
+      let handler = handlers[key];
+      if (typeof handler.serverDisconnectHandler !== 'undefined') {
+        handled = handler.serverDisconnectHandler(this);
+        if (handled) {
+          break;
+        }
+      }
+    }
+    
+    return handled;
+  }
+
   handleClose(): void {
     if (this.client.options.log.tServerDisconnect) {
       console.log("TerrariaServer socket closed. [" + this.name + "]");
+    }
+
+    if (this.handledByPreCloseHandlers()) {
+      return;
     }
 
     try {
@@ -109,6 +145,10 @@ class TerrariaServer {
     if (this.afterClosed !== null) {
       this.afterClosed(this.client);
     } else {
+      if (this.handledByCloseHandlers()) {
+        return;
+      }
+
       let dimensionsList: string = "";
       let dimensionNames: string[] = _.keys(this.client.servers);
       for (var i = 0; i < dimensionNames.length; i++) {
