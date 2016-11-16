@@ -1,4 +1,4 @@
-import RoutingServer from './routingserver';
+import RoutingServer from 'routingserver';
 
 export interface ConfigServer {
   listenPort: number;
