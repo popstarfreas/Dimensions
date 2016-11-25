@@ -266,10 +266,6 @@ class TerrariaServerPacketHandler {
     }
 
     this.currentServer.client.ingame = true;
-
-    this.clearPlayers(this.currentServer.client);
-    this.clearNPCs(this.currentServer.client);
-    this.clearItems(this.currentServer.client);
     return false;
   }
 
@@ -421,79 +417,6 @@ class TerrariaServerPacketHandler {
     this.currentServer.entityTracking.players[playerID] = player;
 
     return false;
-  }
-
-  clearPlayers(client: Client): void {
-    let playerIDs: string[] = _.keys(this.currentServer.entityTracking.players);
-    for (var i = 0, len = playerIDs.length; i < len; i++) {
-      if (parseInt(playerIDs[i]) === client.player.id)
-        continue;
-
-      this.clearPlayer(client, parseInt(playerIDs[i]));
-    }
-  }
-
-  clearPlayer(client: Client, playerIndex: number): void {
-    let playerActive: string = (new PacketFactory())
-      .setType(PacketTypes.PlayerActive)
-      .packByte(playerIndex)
-      .packByte(0) // Active
-      .data();
-    client.socket.write(new Buffer(playerActive, 'hex'));
-  }
-
-  clearNPCs(client: Client): void {
-    let npcIDs: string[] = _.keys(this.currentServer.entityTracking.NPCs);
-    for (let i: number = 0, len = npcIDs.length; i < len; i++) {
-      if (this.currentServer.entityTracking.NPCs[npcIDs[i]]) {
-        this.clearNPC(client, parseInt(npcIDs[i]));
-      }
-    }
-  }
-
-  clearNPC(client: Client, npcIndex: number): void {
-    let updateNPC: string = (new PacketFactory())
-      .setType(PacketTypes.NPCUpdate)
-      .packInt16(npcIndex)
-      .packSingle(0) // PositionX
-      .packSingle(0) // PositionY
-      .packSingle(0) // VelocityX
-      .packSingle(0) // VelocityY
-      .packByte(0) // Target
-      .packByte(0) // Unknown
-      .packByte(0) // Flags
-      .packInt16(0) // NPC NetID
-      .packByte(4) // Life ByteSize
-      .packInt32(0) // Life
-      .packByte(0)
-      .data();
-    client.socket.write(new Buffer(updateNPC, 'hex'));
-    client.server.entityTracking.NPCs[npcIndex] = undefined;
-  }
-
-  clearItems(client: Client): void {
-    let itemIDs: string[] = _.keys(this.currentServer.entityTracking.items);
-    for (let i: number = 0, len = itemIDs.length; i < len; i++) {
-      if (this.currentServer.entityTracking.items[itemIDs[i]]) {
-        this.clearItem(client, parseInt(itemIDs[i]));
-      }
-    }
-  }
-
-  clearItem(client: Client, itemIndex: number): void {
-    let updateItemDrop: string = (new PacketFactory())
-      .setType(PacketTypes.UpdateItemDrop)
-      .packInt16(itemIndex)
-      .packSingle(0) // PositionX
-      .packSingle(0) // PositionY
-      .packSingle(0) // VelocityX
-      .packSingle(0) // VelocityY
-      .packInt16(0) // Stacks
-      .packByte(0) // Prefix
-      .packByte(0) // NoDelay
-      .packInt16(0)
-      .data();
-    client.socket.write(new Buffer(updateItemDrop, 'hex'));
   }
 
   restoreInventory(client: Client): void {
