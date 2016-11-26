@@ -313,6 +313,15 @@ class Client {
       // Allow name change during this stage
       this.player.allowedNameChange = true;
 
+      // Prevent Item problem
+      let stoned = (new PacketFactory())
+        .setType(PacketTypes.AddPlayerBuff)
+        .packByte(this.player.id)
+        .packByte(156)
+        .packInt16(300)
+        .data();
+      this.socket.write(new Buffer(stoned, 'hex'));
+
       // Create connection
       this.server.socket.connect(port, ip, () => {
         if (this.options.log.tServerConnect) {
