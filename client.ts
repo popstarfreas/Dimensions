@@ -314,13 +314,13 @@ class Client {
       this.player.allowedNameChange = true;
 
       // Prevent Item problem
-      let stoned = (new PacketFactory())
+      let webbed = (new PacketFactory())
         .setType(PacketTypes.AddPlayerBuff)
         .packByte(this.player.id)
         .packByte(156)
-        .packInt16(300)
+        .packInt32(300)
         .data();
-      this.socket.write(new Buffer(stoned, 'hex'));
+      this.socket.write(new Buffer(webbed, 'hex'));
 
       // Create connection
       this.server.socket.connect(port, ip, () => {
