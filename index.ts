@@ -10,7 +10,7 @@ import * as fs from "fs";
     });
 
 process.on('uncaughtException', function(e) {
-   fs.appendFile('../error-log.txt', `${e}\n`, function (err) {
+   fs.appendFile('../error-log.txt', `${new Date()}: ${e}\n`, function (err) {
 
    });
 });
