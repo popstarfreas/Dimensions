@@ -40,6 +40,12 @@ exports.ConfigSettings = {
             terrariaVersion: 173
         },
 
+        // Whether or not to enable a "/v2/status"-like http server 
+        restApi: {
+            enabled: false,
+            port: 7880
+        },
+
         // Whether or not to block invisibility buff.
         // This was added here because TShock's version is broken
         blockInvis: false,
