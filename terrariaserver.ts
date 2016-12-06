@@ -123,14 +123,6 @@ class TerrariaServer {
   }
 
   handleClose(): void {
-    if (this.client.options.log.tServerDisconnect) {
-      console.log("TerrariaServer socket closed. [" + this.name + "]");
-    }
-
-    if (this.handledByPreCloseHandlers()) {
-      return;
-    }
-
     try {
       if (this.client.countIncremented) {
         this.client.serversDetails[this.name].clientCount--;
@@ -140,6 +132,14 @@ class TerrariaServer {
       if (this.client.options.log.tServerError) {
         console.log("handleClose Err: " + e);
       }
+    }
+    
+    if (this.client.options.log.tServerDisconnect) {
+      console.log(`TerrariaServer socket closed. [${this.name}]`);
+    }
+
+    if (this.handledByPreCloseHandlers()) {
+      return;
     }
 
     if (this.afterClosed !== null) {
