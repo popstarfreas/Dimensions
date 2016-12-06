@@ -65,7 +65,9 @@ class Dimensions {
       }
     }
 
-    this.restApi = new RestApi(7123, this.globalTracking, this.serversDetails, this.servers);
+    if (this.options.restApi.enabled) {
+      this.restApi = new RestApi(this.options.restApi.port, this.globalTracking, this.serversDetails, this.servers);
+    }
   }
 
   printServerCounts(): void {
