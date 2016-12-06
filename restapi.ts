@@ -49,7 +49,9 @@ class RestApi {
         this.port = port;
         this.globalTracking = globalTracking;
         this.serversDetails = serversDetails;
+        this.openSockets = {};
 
+        this.createServer();
         console.log(`\u001b[35mRestApi on ${port} started.\u001b[0m`);
     }
 
