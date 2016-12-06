@@ -140,6 +140,38 @@ class ListenServer {
       socket.destroy();
       return;
     }
+    
+    let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
+    this.clients.push(client);
+
+    socket.on('error', (e: Error) => {
+      try {
+        client.handleError(e);
+      } catch (error) {
+        if (this.options.log.clientError) {
+          console.log("handleError ERROR: " + e);
+        }
+      }
+    });
+
+    socket.on('close', () => {
+      try {
+        if (this.options.log.clientDisconnect) {
+          console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (this.serversDetails[client.server.name].clientCount) + "]");
+        }
+        client.handleClose();
+        for (let i: number = 0; i < this.clients.length; i++) {
+          if (this.clients[i].ID === client.ID) {
+            this.clients.splice(i, 1);
+            break;
+          }
+        }
+      } catch (e) {
+        if (this.options.log.clientError) {
+          console.log("SocketCloseEvent ERROR: " + e);
+        }
+      }
+    });
 
     if (this.options.useBlacklist) {
       try {
@@ -181,44 +213,12 @@ class ListenServer {
       console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
     }
 
-    let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
-    this.clients.push(client);
-
     socket.on('data', (data: Buffer) => {
       try {
         client.handleDataSend(data);
       } catch (e) {
         if (this.options.log.clientError) {
           console.log("HandleDataSend ERROR: " + e);
-        }
-      }
-    });
-
-    socket.on('error', (e: Error) => {
-      try {
-        client.handleError(e);
-      } catch (error) {
-        if (this.options.log.clientError) {
-          console.log("handleError ERROR: " + e);
-        }
-      }
-    });
-
-    socket.on('close', () => {
-      try {
-        if (this.options.log.clientDisconnect) {
-          console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (this.serversDetails[client.server.name].clientCount) + "]");
-        }
-        client.handleClose();
-        for (let i: number = 0; i < this.clients.length; i++) {
-          if (this.clients[i].ID === client.ID) {
-            this.clients.splice(i, 1);
-            break;
-          }
-        }
-      } catch (e) {
-        if (this.options.log.clientError) {
-          console.log("SocketCloseEvent ERROR: " + e);
         }
       }
     });

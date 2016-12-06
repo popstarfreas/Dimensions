@@ -201,6 +201,10 @@ class Client {
         this.player.allowedLifeChange = true;
         this.player.allowedManaChange = true;
 
+        this.server.socket.on('data', this.ServerHandleData);
+        this.server.socket.on('close', this.ServerHandleClose);
+        this.server.socket.on('error', this.ServerHandleError);
+
         this.server.socket.connect(this.server.port, this.server.ip, () => {
           this.countIncremented = true;
           this.serversDetails[this.server.name].clientCount++;
@@ -231,10 +235,6 @@ class Client {
             }
           }
         });
-
-        this.server.socket.on('data', this.ServerHandleData);
-        this.server.socket.on('close', this.ServerHandleClose);
-        this.server.socket.on('error', this.ServerHandleError);
       }
     } catch (e) {
       if (this.options.log.clientError) {
@@ -321,6 +321,10 @@ class Client {
         .packInt32(300)
         .data();
       this.socket.write(new Buffer(webbed, 'hex'));
+      
+      this.server.socket.on('data', this.ServerHandleData);
+      this.server.socket.on('close', this.ServerHandleClose);
+      this.server.socket.on('error', this.ServerHandleError);
 
       // Create connection
       this.server.socket.connect(port, ip, () => {
@@ -346,10 +350,6 @@ class Client {
         this.state = ClientStates.ConnectionSwitchEstablished;
         this.connected = true;
       });
-
-      this.server.socket.on('data', this.ServerHandleData);
-      this.server.socket.on('close', this.ServerHandleClose);
-      this.server.socket.on('error', this.ServerHandleError);
     };
 
     // Close the TerrariaServer socket completely
