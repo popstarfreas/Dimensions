@@ -219,10 +219,10 @@ class Client {
           });
 
           // Write the data the client sent us to the now connected server
-          if (this.options.fakeVersion) {
+          if (this.options.fakeVersion.enabled) {
             let packet: string = (new PacketFactory())
               .setType(1)
-              .packString("Terraria" + this.options.fakeVersionNum)
+              .packString("Terraria" + this.options.fakeVersion.terrariaVersion)
               .data();
             this.server.socket.write(new Buffer(packet, "hex"));
           } else {
@@ -338,12 +338,11 @@ class Client {
         this.serversDetails[this.server.name].clientCount++;
         this.serversDetails[this.server.name].failedConnAttempts = 0;
 
-        // Send Packet 1
-        // This needs to be changed; it should not be hardcoded data
         var connectPacket = (new PacketFactory())
           .setType(1)
-          .packString(`Terraria${this.options.currentVersion}`)
+          .packString(`Terraria${this.options.currentTerrariaVersion}`)
           .data();
+
         this.server.socket.write(new Buffer(connectPacket, "hex"));
         if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
           this.routingInformation = options.routingInformation;

@@ -173,19 +173,19 @@ class ListenServer {
       }
     });
 
-    if (this.options.useBlacklist) {
+    if (this.options.blacklist.enabled) {
       try {
         // Update client on current operation
         let statusPacket: string = (new PacketFactory())
           .setType(PacketTypes.Status)
           .packInt32(1)
-          .packString("                                                            Checking IP...                                                     ")
+          .packString("Checking IP... ")
           .data();
 
         socket.write(new Buffer(statusPacket, 'hex'));
         
         // Get blocked status
-        let blocked: boolean = await Blacklist.checkIP(getProperIP(socket.remoteAddress), this.options.blacklistAPIKey);
+        let blocked: boolean = await Blacklist.checkIP(getProperIP(socket.remoteAddress), this.options.blacklist.apiKey);
         if (blocked) {
           let kickPacket: string = (new PacketFactory())
             .setType(PacketTypes.Disconnect)
@@ -199,7 +199,7 @@ class ListenServer {
           }, 1000);
 
           if (this.options.log.clientBlocked) {
-            console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " was blocked from joining.");
+            console.log(`${process.pid}] Client: ${getProperIP(socket.remoteAddress)} was blocked from joining.`);
           }
           return;
         }
@@ -210,7 +210,7 @@ class ListenServer {
     }
 
     if (this.options.log.clientConnect) {
-      console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " connected [" + chosenServer.name + ": " + (this.serversDetails[chosenServer.name].clientCount + 1) + "]");
+      console.log(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)}  connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
     }
 
     socket.on('data', (data: Buffer) => {
@@ -227,7 +227,7 @@ class ListenServer {
   }
 
   handleError(error: Error) {
-    console.log("\u001b[31m Server on " + this.port + " encountered an error: " + error + ".\u001b[0m");
+    console.log(`\u001b[31m Server on ${this.port} encountered an error: ${error}.\u001b[0m`);
   }
 }
 

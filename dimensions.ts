@@ -14,6 +14,7 @@ import ReloadTask from 'reloadtask';
 import GlobalTracking from 'globaltracking';
 import Extensions from 'extensions';
 import ClientPacketHandler from 'clientpackethandler';
+import RestApi from 'restapi';
 
 class Dimensions {
   servers: { [id: string]: RoutingServer };
@@ -23,6 +24,7 @@ class Dimensions {
   redisClient: redis.RedisClient;
   serversDetails: { [id: string]: ServerDetails };
   globalTracking: GlobalTracking;
+  restApi: RestApi;
 
   constructor() {
     this.options = ConfigSettings.options;
@@ -62,6 +64,8 @@ class Dimensions {
         this.servers[ConfigSettings.servers[i].routingServers[j].name] = ConfigSettings.servers[i].routingServers[j];
       }
     }
+
+    this.restApi = new RestApi(7123, this.globalTracking, this.serversDetails, this.servers);
   }
 
   printServerCounts(): void {
@@ -153,6 +157,10 @@ class Dimensions {
   reloadServers(): void {
       try {
         let ConfigSettings = requireNoCache('../config.js', require).ConfigSettings;
+        if (ConfigSettings.useRestApi) {
+          this.restApi.handleReload(ConfigSettings.restApiPort);
+        }
+
         let currentRoster = {};
         let runAfterFinished: Array<ReloadTask> = [];
         for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
@@ -198,7 +206,6 @@ class Dimensions {
         console.log("Error loading Config: " + e);
       }
       console.log("\u001b[33mReloaded Config.\u001b[0m");
-      console.log(ConfigSettings);
   }
 }
 

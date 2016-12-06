@@ -17,14 +17,22 @@ export interface LogOptions {
   extensionLoad: boolean;
 }
 
+interface FakeVersion {
+  enabled: boolean;
+  terrariaVersion: number;
+}
+
+interface BlackList {
+  enabled: boolean;
+  apiKey: string;
+} 
+
 export interface ConfigOptions {
   socketTimeout: number;
-  currentVersion: number;
-  fakeVersion: boolean;
-  fakeVersionNum: number;
+  currentTerrariaVersion: number;
+  fakeVersion: FakeVersion;
   blockInvis: boolean;
-  useBlacklist: boolean;
-  blacklistAPIKey: string;
+  blacklist: BlackList;
   log: LogOptions;
 }
 

@@ -31,25 +31,24 @@ exports.ConfigSettings = {
 
         // The current Terraria version (used in switching, if incorrect
         // players will not be able to switch)
-        currentVersion: 176,
+        currentTerrariaVersion: 187,
 
-        // Whether or not to fake version to the server.
         // You can use this when small patches to Terraria are made
         // that do not break compatibility with the server
-        fakeVersion: false,
-
-        // The version number to use if faking
-        fakeVersionNum: 173,
+        fakeVersion: {
+            enabled: false,
+            terrariaVersion: 173
+        },
 
         // Whether or not to block invisibility buff.
         // This was added here because TShock's version is broken
         blockInvis: false,
 
-        // Whether or not to use a blacklist (for blocking vpn, etc)
-        useBlacklist: false,
-
-        // The API key for the blacklist
-        blacklistAPIKey: "",
+        // Whether or not to use a blacklist (http service) (for blocking vpn, etc)
+        blacklist: {
+            enabled: false,
+            apiKey: ""
+        },
 
         // Logging options
         log: {

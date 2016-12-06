@@ -17,6 +17,7 @@
     "lodash": "^4.15.0",
     "redis": "^2.6.2",
     "requirejs": "^2.2.0",
-    "typescript": "^2.1.0-dev.20160826"
+    "typescript": "^2.1.0-dev.20160826",
+    "uuid": "^3.0.1"
   }
 }
