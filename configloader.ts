@@ -27,10 +27,16 @@ interface BlackList {
   apiKey: string;
 } 
 
+interface RestApi {
+  enabled: boolean;
+  port: number;
+}
+
 export interface ConfigOptions {
   socketTimeout: number;
   currentTerrariaVersion: number;
   fakeVersion: FakeVersion;
+  restApi: RestApi;
   blockInvis: boolean;
   blacklist: BlackList;
   log: LogOptions;
