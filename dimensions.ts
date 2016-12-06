@@ -159,8 +159,8 @@ class Dimensions {
   reloadServers(): void {
       try {
         let ConfigSettings = requireNoCache('../config.js', require).ConfigSettings;
-        if (ConfigSettings.restApi.enabled) {
-          this.restApi.handleReload(ConfigSettings.restApi.port);
+        if (ConfigSettings.options.restApi.enabled) {
+          this.restApi.handleReload(ConfigSettings.options.restApi.port);
         }
 
         let currentRoster = {};
