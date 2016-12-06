@@ -200,6 +200,7 @@ class Client {
         this.player.allowedCharacterChange = true;
         this.player.allowedLifeChange = true;
         this.player.allowedManaChange = true;
+        this.player.allowedNameChange = true;
 
         this.server.socket.on('data', this.ServerHandleData);
         this.server.socket.on('close', this.ServerHandleClose);
