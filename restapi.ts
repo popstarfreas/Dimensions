@@ -102,7 +102,7 @@ class RestApi {
             let response: ApiResponse = {
                 status: 200,
                 name: "",
-                serverversion: "1.3.4.3",
+                serverversion: "1.3.4.4",
                 tshockversion: {
                     Major: 4,
                     Minor: 3,
