@@ -7,6 +7,31 @@ import Client from 'client';
 
 class PriorHandlers {
     static newVersionClients = {};
+	
+    static client(client: Client, packet: Packet): boolean {
+        let handled = false;
+        switch (packet.packetType) {
+            case PacketTypes.ConnectRequest:
+                handled = this.handleConnect(client, packet);
+                break;
+        }
+
+        return handled;
+    }
+
+    static handleConnect(client: Client, packet: Packet): boolean {
+        let reader = new ReadPacketFactory(packet.data);
+        if (reader.readString() == "Terraria188") {
+            this.newVersionClients[client.ID] = true;
+        } else {
+            this.newVersionClients[client.ID] = false;
+        }
+        return false;
+    }
+}
+
+class PostHandlers {
+    
     static server(server: TerrariaServer, packet: Packet): boolean {
         let handled = false;
 		switch (packet.packetType) {
@@ -20,7 +45,7 @@ class PriorHandlers {
     static handleWorldInfo(server: TerrariaServer, packet: Packet): boolean {
         let handled = false;
 
-        if (!this.newVersionClients[server.client.ID]) {
+        if (!PriorHandlers.newVersionClients[server.client.ID]) {
             return false;
         }
 
@@ -132,30 +157,6 @@ class PriorHandlers {
         server.client.socket.write(new Buffer(worldInfoPrimary, 'hex'));
         return true;
     }
-	
-    static client(client: Client, packet: Packet): boolean {
-        let handled = false;
-        switch (packet.packetType) {
-            case PacketTypes.ConnectRequest:
-                handled = this.handleConnect(client, packet);
-                break;
-        }
-
-        return handled;
-    }
-
-    static handleConnect(client: Client, packet: Packet): boolean {
-        let reader = new ReadPacketFactory(packet.data);
-        if (reader.readString() == "Terraria188") {
-            this.newVersionClients[client.ID] = true;
-        } else {
-            this.newVersionClients[client.ID] = false;
-        }
-        return false;
-    }
-}
-
-class PostHandlers {
 }
 
 export default class Patch {
