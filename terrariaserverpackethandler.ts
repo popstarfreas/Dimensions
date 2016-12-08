@@ -49,6 +49,8 @@ class TerrariaServerPacketHandler {
   }
 
   handlePacket(server: TerrariaServer, packet: Packet): string {
+    this.currentServer = server;
+
     let priorHandled: boolean = this.runPriorHandlers(server, packet);
     if (priorHandled) {
       return "";
@@ -56,7 +58,6 @@ class TerrariaServerPacketHandler {
 
     let handled: boolean = false;
     let packetType: number = packet.packetType;
-    this.currentServer = server;
 
     switch (packetType) {
       case PacketTypes.Disconnect:
