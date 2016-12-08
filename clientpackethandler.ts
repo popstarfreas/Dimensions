@@ -73,10 +73,6 @@ class ClientPacketHandler {
         handled = this.handlePlayerInventorySlot(packet);
         break;
 
-      case PacketTypes.GetSectionOrRequestSync:
-        handled = this.handleGetSectionOrRequestSync(packet);
-        break;
-
       case PacketTypes.PlayerMana:
         handled = this.handlePlayerMana(packet);
         break;
@@ -229,12 +225,6 @@ class ClientPacketHandler {
       let netID: number = reader.readInt16();
       this.currentClient.player.inventory[slotID] = new Item(slotID, stack, prefix, netID);
     }
-
-    return false;
-  }
-
-  handleGetSectionOrRequestSync(packet: Packet): boolean {
-    // Avoids it being blocked by handleDefault
 
     return false;
   }
