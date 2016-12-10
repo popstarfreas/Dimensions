@@ -163,7 +163,6 @@ class Client {
   handleDataSend(encodedData: Buffer): void {
     try {
       let incompleteData: string = hex2str(encodedData);
-      //console.log(entireData);
 
       // Add Buffer Packet (incomplete packet from last data)
       // to the new data
@@ -244,6 +243,7 @@ class Client {
     }
   }
 
+  // Useful method for sending a chat message packet to a client */
   sendChatMessage(message: string, color?: string | undefined): void {
     if (message.length > 0) {
       if (typeof color === 'undefined') {
@@ -261,6 +261,7 @@ class Client {
     }
   }
 
+  /* Sends any queued packets from the connection phase to the server */
   sendWaitingPackets(): void {
     if (!this.server.socket.destroyed && this.packetQueue.length > 0) {
       this.server.socket.write(new Buffer(this.packetQueue, 'hex'));
@@ -268,6 +269,7 @@ class Client {
     }
   }
 
+  /* Handles switching from one server to another */
   changeServer(server: RoutingServer, options?: ChangeServerOptions): void {
     let ip: string = server.serverIP;
     let port: number = server.serverPort;
