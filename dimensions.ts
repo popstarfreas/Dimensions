@@ -16,6 +16,7 @@ import Extensions from 'extensions';
 import ClientPacketHandler from 'clientpackethandler';
 import RestApi from 'restapi';
 
+/* The core that sets up the listen servers, rest api and handles reloading */
 class Dimensions {
   servers: { [id: string]: RoutingServer };
   options: ConfigOptions;
@@ -70,6 +71,7 @@ class Dimensions {
     }
   }
 
+  /* Prints out the names currently used and the number of people on each Dimension */
   printServerCounts(): void {
     let serverKeys: string[] = _.keys(this.servers);
     let info = "";
@@ -81,6 +83,7 @@ class Dimensions {
     console.log(info);
   }
 
+  /* Handles commands received by the subscribed Redis channel */
   handleCommand(cmd: string): void {
     switch (cmd) {
       case "players":
@@ -114,6 +117,8 @@ class Dimensions {
     }
   }
 
+  /* When a command is not directly handled by handleCommand, it comes through here and is
+   * passed on to each extension in-case they have it as a command */
   passOnReloadToExtensions(): void {
     let handlers = this.handlers.extensions;
     for (let key in handlers) {
@@ -126,6 +131,7 @@ class Dimensions {
     }
   }
 
+  /* Loads a new instance of ClientPacketHandler by requiring the file again */
   reloadClientHandlers(): void {
       try {
         let ClientPacketHandler = requireNoCache('./clientpackethandler.js', require).default;
@@ -135,6 +141,7 @@ class Dimensions {
       }
   }
 
+  /* Loads a new instance of TerrariaServerPacketHandler by requiring the file again */
   reloadTerrariaServerHandlers(): void {
       try {
         let TerrariaServerPacketHandler = requireNoCache('./terrariaserverpackethandler.js', require).default;
@@ -144,6 +151,7 @@ class Dimensions {
       }
   }
 
+  /* Unloads and re-loads all extensions directly from their directories */
   reloadExtensions(): void {
     if (this.options.log.extensionLoad) {
       for (let key in this.handlers.extensions) {
@@ -156,6 +164,9 @@ class Dimensions {
     Extensions.loadExtensions(this.handlers.extensions, this.options.log.extensionLoad);
   }
 
+  /* Checks the config servers against the existing listen servers and updates any allocations
+   * of each individual dimension to the appropriate listenserver, and will destroy any listenservers
+   * that no longer should exist, and starts up new ones on the specified ports from the config */
   reloadServers(): void {
       try {
         let ConfigSettings = requireNoCache('../config.js', require).ConfigSettings;

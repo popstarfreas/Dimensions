@@ -11,6 +11,8 @@ import Player from 'player';
 import Packet from 'packet';
 import Entities from 'entities';
 
+/* Used to track information specific to the current server that a client is on
+ * as well as pass received data from the TerrariaServer to the handlers */
 class TerrariaServer {
   client: Client;
   socket: Net.Socket;
@@ -55,6 +57,7 @@ class TerrariaServer {
     return this.client.globalHandlers.terrariaServerPacketHandler;
   }
 
+  /* Handles all data coming from the TerrariaServer */
   handleData(encodedData: Buffer): void {
     try {
       let incompleteData: string = hex2str(encodedData);
@@ -90,6 +93,8 @@ class TerrariaServer {
     }
   }
 
+  /* Calls all server disconnect pre-handlers from extensions
+   * and returns whether the disconnect was handled by them.*/
   handledByPreCloseHandlers(): boolean {
     let handlers = this.client.globalHandlers.extensions;
     let handled = false;
@@ -106,6 +111,8 @@ class TerrariaServer {
     return handled;
   }
 
+  /* Calls all server disconnect handlers from extensions
+   * and returns whether the disconnect was handled by them.*/
   handledByCloseHandlers(): boolean {
     let handlers = this.client.globalHandlers.extensions;
     let handled = false;
@@ -122,6 +129,9 @@ class TerrariaServer {
     return handled;
   }
 
+  /* Decrements server counts when the socket connection to the TerrariaServer
+   * is closed, sends a message to the client and runs any handlers of this 
+   * event through extensions currently loaded */
   handleClose(): void {
     try {
       if (this.client.countIncremented) {
@@ -165,6 +175,9 @@ class TerrariaServer {
     }
   }
 
+  /* Checks the type of error, if it is because a server is down, the failed connection attempts
+   * property is incremented until it reaches 3 at which point it is marked as closed and will not
+   * be used by clients. */
   handleError(error: Error): void {
     //console.log(this.ip + ":" + this.port + " " + this.name);
     //this.client.changeServer(Config.IP, Config.PORT);

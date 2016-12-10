@@ -132,6 +132,8 @@ class ListenServer {
     console.log("\u001b[32m[" + process.pid + "] Server on " + this.port + " started.\u001b[0m");
   }
 
+  /* Gets a server to connect to for a new socket connection, sets up the appropriate handlers
+   * and checks if their IP is blacklisted */
   async handleSocket(socket: Net.Socket) {
     let i = 0;
     let chosenServer: RoutingServer | null = this.chooseServer();

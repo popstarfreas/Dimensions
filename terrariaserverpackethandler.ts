@@ -16,6 +16,7 @@ class TerrariaServerPacketHandler {
   currentServer: TerrariaServer;
   socket: Net.Socket;
 
+  /* Checks whether the packet was handled by extensions prior to being processed by this class */
   runPriorHandlers(server: TerrariaServer, packet: Packet): boolean {
     let handlers = server.client.globalHandlers.extensions;
     let handled = false;
@@ -32,6 +33,7 @@ class TerrariaServerPacketHandler {
     return handled;
   }
   
+  /* Checks whether the packet was handled by extensions after being processed by this class */
   runPostHandlers(server: TerrariaServer, packet: Packet): boolean {
     let handlers = server.client.globalHandlers.extensions;
     let handled = false;
@@ -48,6 +50,7 @@ class TerrariaServerPacketHandler {
     return handled;
   }
 
+  /* Runs the packet through extension handlers and runs any appropriate handlers of this class */
   handlePacket(server: TerrariaServer, packet: Packet): string {
     this.currentServer = server;
 
@@ -109,7 +112,8 @@ class TerrariaServerPacketHandler {
     return packet.data;
   }
 
-  /* Start Packet Handlers */
+  /* Passes on the disconnect message as a chat message to the client, unless the client
+   * has not fully connected to any Dimension yet. */
   handleDisconnect(packet: Packet): boolean {
     if (!this.currentServer.client.ingame) {
       this.currentServer.client.socket.write(new Buffer(packet.data, 'hex'));
@@ -134,6 +138,7 @@ class TerrariaServerPacketHandler {
     return true;
   }
 
+  /* Passes on the real IP of the client to the server */
   handleContinueConnecting(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     this.currentServer.client.player.id = reader.readByte();
@@ -151,6 +156,7 @@ class TerrariaServerPacketHandler {
     return false;
   }
 
+  /* Restores player data and updates the SSC tracking */
   handleWorldInfo(packet: Packet): boolean {
     if (this.currentServer.client.waitingCharacterRestore) {
       this.restoreInventory(this.currentServer.client);
@@ -239,6 +245,8 @@ class TerrariaServerPacketHandler {
     return false;
   }
 
+  /* Ensures the player spawns correctly by sending the SpawnPlayer packet
+   * that forces them to spawn if they're already in-game (on the world) */
   handleCompleteConnectionAndSpawn(packet: Packet): boolean {
     if (this.currentServer.client.state === ClientStates.FinalisingSwitch) {
       this.currentServer.client.state = ClientStates.FinishinedSendingInventory;
@@ -270,6 +278,7 @@ class TerrariaServerPacketHandler {
     return false;
   }
 
+  /* Handles the event that a warpplate requests switch of Dimension */
   handleDimensionsUpdate(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let messageType: number = reader.readInt16();
@@ -291,6 +300,7 @@ class TerrariaServerPacketHandler {
     return true;
   }
 
+  /* Tracks whether an NPC is alive or not, so it can be cleared when the player switches Dimensions */
   handleNPCUpdate(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let NPCID: number = reader.readInt16();
@@ -364,28 +374,7 @@ class TerrariaServerPacketHandler {
     return false;
   }
 
-  /* Removed as the damage could potentially make an npc count as dead
-     when it is really not, and therefore cause sync issues with mobs
-  */
-  /*handleNPCStrike(packet: Packet): boolean {
-    let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
-    let NPCID: number = reader.readInt16();
-    let damage: number = reader.readInt16();
-    let npc: NPC | undefined = this.currentServer.entityTracking.NPCs[NPCID]
-
-    if (npc !== undefined) {
-      if (damage > 0) {
-        npc.life -= damage;
-        if (npc.life <= 0) {
-          this.currentServer.entityTracking.NPCs[NPCID] = undefined;
-        }
-      } else {
-        this.currentServer.entityTracking.NPCs[NPCID] = undefined;
-      }
-    }
-    return false;
-  }*/
-
+  /* Tracks item drops so they can be cleared when the player switches Dimensions */
   handleUpdateItemDrop(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let itemID: number = reader.readInt16();
@@ -410,6 +399,7 @@ class TerrariaServerPacketHandler {
     return false;
   }
 
+  /* Tracks which players are active so they can be cleared when a player switches Dimensions */
   handlePlayerActive(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let playerID: number = reader.readByte();
@@ -423,6 +413,9 @@ class TerrariaServerPacketHandler {
     return false;
   }
 
+  /* Sends PlayerActive packets with false active for every client that 
+   * is currently tracked to be active, to clear them when switching
+   * Dimensions */
   clearPlayers(client: Client): void {
     let playerIDs: string[] = _.keys(this.currentServer.entityTracking.players);
     for (var i = 0, len = playerIDs.length; i < len; i++) {
@@ -433,6 +426,7 @@ class TerrariaServerPacketHandler {
     }
   }
 
+  /* Sends the PlayerActive packet with active set to false */
   clearPlayer(client: Client, playerIndex: number): void {
     let playerActive: string = (new PacketFactory())
       .setType(PacketTypes.PlayerActive)
@@ -442,6 +436,9 @@ class TerrariaServerPacketHandler {
     client.socket.write(new Buffer(playerActive, 'hex'));
   }
 
+  /* Sends NpcUpdate packets with netid set to 0 (inactive) for every 
+   * npc that is currently tracked to be active, to clear them when
+   * switching Dimensions */
   clearNPCs(client: Client): void {
     let npcIDs: string[] = _.keys(this.currentServer.entityTracking.NPCs);
     for (let i: number = 0, len = npcIDs.length; i < len; i++) {
@@ -451,6 +448,7 @@ class TerrariaServerPacketHandler {
     }
   }
 
+  /* Sends the NpcUpdate packet with netid set to 0 (inactive) */
   clearNPC(client: Client, npcIndex: number): void {
     let updateNPC: string = (new PacketFactory())
       .setType(PacketTypes.NPCUpdate)
@@ -471,6 +469,9 @@ class TerrariaServerPacketHandler {
     client.server.entityTracking.NPCs[npcIndex] = undefined;
   }
 
+  /* Sends UpdateItemDrop packets with netid set to 0 (inactive) for every 
+   * item that is currently tracked to be active, to clear them when
+   * switching Dimensions */
   clearItems(client: Client): void {
     let itemIDs: string[] = _.keys(this.currentServer.entityTracking.items);
     for (let i: number = 0, len = itemIDs.length; i < len; i++) {
@@ -480,6 +481,7 @@ class TerrariaServerPacketHandler {
     }
   }
 
+  /* Sends the UpdateItemDrop packet with netid set to 0 (inactive) */
   clearItem(client: Client, itemIndex: number): void {
     let updateItemDrop: string = (new PacketFactory())
       .setType(PacketTypes.UpdateItemDrop)
@@ -496,6 +498,8 @@ class TerrariaServerPacketHandler {
     client.socket.write(new Buffer(updateItemDrop, 'hex'));
   }
 
+  /* Sets the players slots back to what they were before they joined the SSC server.
+   * Used when a player switches from an SSC server to a non-SSC server */
   restoreInventory(client: Client): void {
     let slotIDs: string[] = _.keys(this.currentServer.client.player.inventory);
     for (let i: number = 0, len = slotIDs.length; i < len; i++) {
@@ -505,14 +509,20 @@ class TerrariaServerPacketHandler {
     }
   }
 
+  /* Sets the players life back to what they were before they joined the SSC server.
+   * Used when a player switches from an SSC server to a non-SSC server */
   restoreLife(client: Client): void {
     client.player.setLife(this.currentServer.client.player.life);
   }
 
+  /* Sets the players mana back to what they were before they joined the SSC server.
+   * Used when a player switches from an SSC server to a non-SSC server */
   restoreMana(client: Client): void {
     client.player.setMana(this.currentServer.client.player.mana);
   }
 
+  /* Sets the players visuals back to what they were before they joined the SSC server.
+   * Used when a player switches from an SSC server to a non-SSC server */
   restoreVisuals(client: Client): void {
     client.player.setVisuals();
   }

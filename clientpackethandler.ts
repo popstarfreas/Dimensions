@@ -13,6 +13,7 @@ import {PacketHandlers} from 'extension';
 class ClientPacketHandler {
   currentClient: Client;
   
+  /* Checks whether the packet was handled by extensions prior to being processed by this class */
   runPriorHandlers(client: Client, packet: Packet): boolean {
     let handlers = client.globalHandlers.extensions;
     let handled = false;
@@ -29,6 +30,7 @@ class ClientPacketHandler {
     return handled;
   }
   
+  /* Checks whether the packet was handled by extensions after being processed by this class */
   runPostHandlers(client: Client, packet: Packet): boolean {
     let handlers = client.globalHandlers.extensions;
     let handled = false;
@@ -45,6 +47,7 @@ class ClientPacketHandler {
     return handled;
   }
 
+  /* Runs the packet through extension handlers and runs any appropriate handlers of this class */
   handlePacket(client: Client, packet: Packet): string {
     let priorHandled: boolean = this.runPriorHandlers(client, packet);
     if (priorHandled) {
@@ -128,6 +131,8 @@ class ClientPacketHandler {
     return packet.data;
   }
 
+  /* Updates tracked visuals for player to restore them when they switch from
+   * an SSC to a non-SSC server */
   handlePlayerInfo(packet: Packet): boolean {
     let nameLength: number = parseInt(packet.data.substr(12, 2), 16);
     let reader = new ReadPacketFactory(packet.data);
@@ -177,6 +182,8 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* Used to prevent invisibility buff from being sent to the server
+   * for used when the config is set to blockInvis = true */
   handleUpdatePlayerBuff(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let playerID: number = reader.readByte();
@@ -203,6 +210,8 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* Used to prevent invisibility buff from being sent to the server
+   * for used when the config is set to blockInvis = true */
   handleAddPlayerBuff(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     let playerID: number = reader.readByte();
@@ -215,6 +224,8 @@ class ClientPacketHandler {
     }
   }
 
+  /* Tracks the players inventory slots to restore them when they switch
+   * from an SSC server to a Non-SSC server */
   handlePlayerInventorySlot(packet: Packet): boolean {
     if ((this.currentClient.state === ClientStates.FreshConnection || this.currentClient.state === ClientStates.ConnectionSwitchEstablished) && !this.currentClient.waitingCharacterRestore) {
       let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
@@ -229,6 +240,8 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* Tracks the player mana to restore it when they switch from an
+   * SSC server to a Non-SSC server */ 
   handlePlayerMana(packet: Packet): boolean {
     if (!this.currentClient.player.allowedManaChange)
       return false;
@@ -244,6 +257,8 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* Tracks the player HP to restore it when they switch from an
+   * SSC server to a Non-SSC server */
   handlePlayerHP(packet: Packet): boolean {
     if (!this.currentClient.player.allowedLifeChange)
       return false;
@@ -259,6 +274,10 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* Prevents the player sending the item drop packet too early
+   * which causes them to be kicked. It also adds it to the packet queue
+   * so that it may be sent when the client has fully connected (and wont
+   * get kicked for sending it) */
   handleUpdateItemDrop(packet: Packet): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientStates.FullyConnected) {
@@ -269,6 +288,13 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* Prevents the player sending the item owner packet too early
+   * which causes them to be kicked. It also adds it to the packet queue
+   * so that it may be sent when the client has fully connected (and wont
+   * get kicked for sending it) 
+   * 
+   * Note: This packet is important for tShock SSC to work. If this was
+   *       prevented outright, SSC would be broken (inventory would be unchangable) */
   handleUpdateItemOwner(packet: Packet): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientStates.FullyConnected) {
@@ -279,6 +305,12 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* When a player sends this, the clients packet queue is cleared. This may be
+   * a problem if the player kills themself and respawns during Dimension changes,
+   * which would cause the state to change incorrectly and waiting packets to be
+   * sent too early. But the amount of time for this to happen would likely result,
+   * in a disconnect from the client.
+  */
   handleSpawnPlayer(packet: Packet): boolean {
     if (this.currentClient.state === ClientStates.FinishinedSendingInventory) {
         this.currentClient.state = ClientStates.FullyConnected;
@@ -289,6 +321,7 @@ class ClientPacketHandler {
     return false;
   }
 
+  /* Handles any commands sent by the client given they start with "/" */
   handleChatMessage(packet: Packet): boolean {
     let handled: boolean = false;
     let chatMessage: string = hex2a(packet.data.substr(16));
@@ -297,43 +330,12 @@ class ClientPacketHandler {
     if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
       let command: Command = this.currentClient.globalHandlers.command.parseCommand(chatMessage);
       handled = this.currentClient.globalHandlers.command.handle(command, this.currentClient);
-      /*if (!handled && command.name.toLowerCase() === 'selfname') {
-        let properChat: RegExp = /\[c(.*?)\:(.*?)\]/g;
-        if (!properChat.test(chatMessage)) {
-          chatMessage = chatMessage.replace(/\[/g, '(');
-          let chatPacket: PacketFactory = (new PacketFactory())
-            .setType(PacketTypes.ChatMessage)
-            .packByte(0)
-            .packColor({
-              R: 0,
-              G: 0,
-              B: 0
-            })
-            .packString(chatMessage);
-          this.currentClient.server.socket.write(new Buffer(chatPacket.data(), 'hex'));
-          handled = true;
-        }
-      }*/
-    } /*else {
-      let colorTag: RegExp = /\[c(.*?)\:(.*?)\]/g;
-      chatMessage = chatMessage.replace(colorTag, "$2");
-      chatMessage = chatMessage.replace("1.3.2.1", "the current Terraria version");
-      let chatPacket: PacketFactory = (new PacketFactory())
-        .setType(PacketTypes.ChatMessage)
-        .packByte(0)
-        .packColor({
-          R: 0,
-          G: 0,
-          B: 0
-        })
-        .packString(chatMessage);
-      this.currentClient.server.socket.write(new Buffer(chatPacket.data(), 'hex'));
-      handled = true;
-    }*/
+    }
 
     return handled;
   }
 
+  /* Updates the clients current tracked UUID */
   handleClientUUID(packet: Packet): boolean {
     let reader: ReadPacketFactory = new ReadPacketFactory(packet.data);
     this.currentClient.UUID = reader.readString();
