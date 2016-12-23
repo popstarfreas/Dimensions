@@ -156,6 +156,11 @@ class ListenServer {
       }
     });
 
+    // Close inactive sockets
+    socket.on('timeout', () => {
+      socket.destroy();
+    });
+
     socket.on('close', () => {
       try {
         if (this.options.log.clientDisconnect) {
