@@ -119,6 +119,15 @@ export function getPacketsFromHexString(str: string): BuffersPackets {
   return { bufferPacket: bufferPacket, packets: packets };
 }
 
+/* Ensures a hex string is an even number of hex digits */
+export function getCorrectHex(hexString: string): string {
+    if (hexString.length % 2 !== 0) {
+      hexString = "0" + hexString;
+    }
+
+    return hexString;
+}
+
 export class PacketFactory {
   packetData: string;
 
@@ -140,14 +149,18 @@ export class PacketFactory {
 
   packString(str: string): PacketFactory {
     let strHex: string = a2hex(str);
-    let strHexLength: string = (strHex.length / 2).toString(16);
+    let sizeOfString: number = strHex.length / 2;
+    let strLengthInHex: string;
 
-    // Length must be even
-    if (strHexLength.length % 2 !== 0) {
-      strHexLength = "0" + strHexLength;
+    /* Sizes >= 128 require an extra byte (and maybe more but I doubt
+        we will get bigger than strings of length 255*128) */
+    if (sizeOfString >= 128) {
+        strLengthInHex = getCorrectHex(((sizeOfString % 128)+128).toString(16)) + getCorrectHex(Math.floor(sizeOfString/128).toString(16));
+    } else {
+        strLengthInHex = getCorrectHex((strHex.length / 2).toString(16));
     }
 
-    this.packetData += strHexLength + strHex;
+    this.packetData += strLengthInHex + strHex;
     this.updateLength();
     return this;
   }
@@ -378,16 +391,25 @@ export class ReadPacketFactory {
   }
 
   readString(): string {
-    // Read string length
-    let strLength: number = parseInt(this.packetData.substr(0, 2), 16) * 2;
+     // Read string length
+      let firstByte: number = parseInt(this.packetData.substr(0, 2), 16);
+      let strLength: number = firstByte;
+      let digitOffset = 2;
+      if (firstByte >= 128) {
+          let secondByte: string = this.packetData.substr(2, 2);
+          strLength = firstByte + (parseInt(secondByte, 16)-1)*128;
+          digitOffset = 4;
+      }
 
-    // Read string content using length
-    let strContent: string = hex2a(this.packetData.substr(2, strLength));
+      // The used string length is in hex digits rather than characters
+      strLength *= 2;
 
-    // Chop off read data
-    this.packetData = this.packetData.substr(2 + strLength);
+      // Read string content using length
+      let strContent: string = hex2a(this.packetData.substr(digitOffset, strLength));
 
-    return strContent;
+      // Chop off read data
+      this.packetData = this.packetData.substr(digitOffset + strLength);
+      return strContent;
   }
 }
 
