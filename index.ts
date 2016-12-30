@@ -5,7 +5,7 @@ import Dimensions from "dimensions";
 import Logger from "logger";
 import * as fs from "fs";
 
-let logging = new Logger(`${Date.now().toString()}.log`);
+let logging = new Logger();
 let errorLogging = new Logger("error-log.txt");
 
 process.on('unhandledRejection', (reason, promise) => {
