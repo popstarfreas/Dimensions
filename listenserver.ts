@@ -140,7 +140,7 @@ class ListenServer {
 
   handleStart(): void {
     if (this.options.log.outputToConsole) {
-      console.log(`\u001b[32m[${process.pid}] Server on ${this.port}started.\u001b[0m`);
+      console.log(`\u001b[32m[${process.pid}] Server on ${this.port} started.\u001b[0m`);
     }
 
     this.logging.appendLine(`[${process.pid}] Server on ${this.port} started.`);
