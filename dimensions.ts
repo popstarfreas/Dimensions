@@ -15,6 +15,7 @@ import GlobalTracking from 'globaltracking';
 import Extensions from 'extensions';
 import ClientPacketHandler from 'clientpackethandler';
 import RestApi from 'restapi';
+import Logger from 'logger';
 
 /* The core that sets up the listen servers, rest api and handles reloading */
 class Dimensions {
@@ -26,9 +27,11 @@ class Dimensions {
   serversDetails: { [id: string]: ServerDetails };
   globalTracking: GlobalTracking;
   restApi: RestApi;
+  logging: Logger;
 
-  constructor() {
+  constructor(logging: Logger) {
     this.options = ConfigSettings.options;
+    this.logging = logging;
     this.handlers = {
       command: new ClientCommandHandler(),
       clientPacketHandler: new ClientPacketHandler(),
@@ -59,7 +62,7 @@ class Dimensions {
 
     for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
       let listenKey = ConfigSettings.servers[i].listenPort;
-      this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking);
+      this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logger);
 
       for (let j: number = 0; j < ConfigSettings.servers[i].routingServers.length; j++) {
         this.servers[ConfigSettings.servers[i].routingServers[j].name] = ConfigSettings.servers[i].routingServers[j];
@@ -204,7 +207,7 @@ class Dimensions {
 
         for (let i: number = 0; i < runAfterFinished.length; i++) {
           var serversIndex = runAfterFinished[i].index;
-          this.listenServers[runAfterFinished[i].key] = new ListenServer(ConfigSettings.servers[serversIndex], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking);
+          this.listenServers[runAfterFinished[i].key] = new ListenServer(ConfigSettings.servers[serversIndex], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logger);
           for (let j: number = 0; j < ConfigSettings.servers[serversIndex].routingServers.length; j++) {
             this.servers[ConfigSettings.servers[serversIndex].routingServers[j].name] = ConfigSettings.servers[serversIndex].routingServers[j];
           }
