@@ -7,8 +7,10 @@ class Logger {
     }
 
     appendLine(line: string) {
-        fs.appendFile(`./logs/${this.fileName}`, `${new Date()}: ${line}\n`, function (err) {
-            console.log(`Logger Error: ${err}`);
+        fs.appendFile(`logs/${this.fileName}`, `${new Date()}: ${line}\n`, function (err) {
+            if (err !== null) {
+                console.log(`Logger Error: ${err}`);
+            }
         });
     }
 }
