@@ -2,17 +2,19 @@ process.env.NODE_PATH = __dirname;
 require('module').Module._initPaths();
 
 import Dimensions from "dimensions";
+import Logger from "logger";
 import * as fs from "fs";
 
- process.on('unhandledRejection', (reason, promise) => {
-        console.log('Reason: ' + reason);
-        console.log(promise);
-    });
+let logging = new Logger(Date.now().toString());
+let errorLogging = new Logger("error-log.txt");
 
-process.on('uncaughtException', function(e) {
-   fs.appendFile('../error-log.txt', `${new Date()}: ${e}\n`, function (err) {
-
-   });
+process.on('unhandledRejection', (reason, promise) => {
+    errorLogging.appendLine('Reason: ' + reason);
+    errorLogging.appendLine(promise);
 });
 
-var dimensions = new Dimensions();
+process.on('uncaughtException', function(e) {
+   errorLogging.appendLine(e);
+});
+
+var dimensions = new Dimensions(logging);

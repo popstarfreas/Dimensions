@@ -11,6 +11,7 @@ import Blacklist from 'blacklist';
 import PacketTypes from 'packettypes';
 import {PacketFactory} from 'utils';
 import GlobalTracking from 'globaltracking';
+import Logger from 'logger';
 
 class ListenServer {
   idCounter: number;
@@ -26,8 +27,9 @@ class ListenServer {
   ServerHandleStart: () => void;
   server: Net.Server;
   globalTracking: GlobalTracking;
+  logging: Logger;
 
-  constructor(info: ConfigServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions, globalTracking: GlobalTracking) {
+  constructor(info: ConfigServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions, globalTracking: GlobalTracking, logging: Logger) {
     this.idCounter = 0;
     this.clients = [];
     this.servers = servers;
@@ -37,6 +39,7 @@ class ListenServer {
     this.serversDetails = serversDetails;
     this.globalHandlers = globalHandlers;
     this.globalTracking = globalTracking;
+    this.logging = logging;
 
     for (var i = 0; i < this.routingServers.length; i++) {
       this.serversDetails[this.routingServers[i].name] = {
@@ -56,7 +59,10 @@ class ListenServer {
       this.handleSocket(socket)
         .catch((e) => {
           if (this.options.log.clientError) {
-            console.log(`Socket Error: ${e}`);
+            if (this.options.log.outputToConsole) {
+              console.log(`Socket Error: ${e}`);
+            }
+            this.logging.appendLine(e);
           }
         });
     });
@@ -108,7 +114,11 @@ class ListenServer {
   }
 
   shutdown(): void {
-    console.log("\u001b[33m[" + process.pid + "] Server on " + this.port + " is now shutting down.\u001b[0m");
+    if (this.options.log.outputToConsole) {
+      console.log(`\u001b[33m[${process.pid}] Server on ${this.port} is now shutting down.\u001b[0m`);
+    }
+    
+    this.logging.appendLine(`[${process.pid}] Server on ${this.port} is now shutting down.`);
     for (let i: number = 0; i < this.clients.length; i++) {
       this.clients[i].server.socket.removeListener('data', this.clients[i].ServerHandleData);
       this.clients[i].server.socket.removeListener('error', this.clients[i].ServerHandleError);
@@ -129,7 +139,11 @@ class ListenServer {
   }
 
   handleStart(): void {
-    console.log("\u001b[32m[" + process.pid + "] Server on " + this.port + " started.\u001b[0m");
+    if (this.options.log.outputToConsole) {
+      console.log(`\u001b[32m[${process.pid}] Server on ${this.port}started.\u001b[0m`);
+    }
+
+    this.logging.appendLine(`[${process.pid}] Server on ${this.port} started.`);
   }
 
   /* Gets a server to connect to for a new socket connection, sets up the appropriate handlers
@@ -138,12 +152,16 @@ class ListenServer {
     let i = 0;
     let chosenServer: RoutingServer | null = this.chooseServer();
     if (chosenServer === null) {
-      console.log(`No servers available for ListenServer[Port: ${this.port}]`)
+      if (this.options.log.outputToConsole) {
+        console.log(`No servers available for ListenServer[Port: ${this.port}]`)
+      }
+
+      this.logging.appendLine(`No servers available for ListenServer[Port: ${this.port}]`);
       socket.destroy();
       return;
     }
     
-    let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking);
+    let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking, this.logging);
     this.clients.push(client);
 
     socket.on('error', (e: Error) => {
@@ -151,20 +169,35 @@ class ListenServer {
         client.handleError(e);
       } catch (error) {
         if (this.options.log.clientError) {
-          console.log("handleError ERROR: " + e);
+          if (this.options.log.outputToConsole) {
+            console.log(`handleError ERROR: ${e}`);
+          }
+
+          this.logging.appendLine(`handleError Error: ${e}`)
         }
       }
     });
 
     // Close inactive sockets
     socket.on('timeout', () => {
+      if (this.options.log.clientTimeouts) {
+        if (this.options.log.outputToConsole) {
+          console.log(`Socket Timeout: ${client.getName()+client.ID}`);
+        }
+
+        this.logging.appendLine(`Socket Timeout: ${client.getName()+client.ID}`);
+      }
       socket.destroy();
     });
 
     socket.on('close', () => {
       try {
         if (this.options.log.clientDisconnect) {
-          console.log("[" + process.pid + "] Client: " + getProperIP(socket.remoteAddress) + " disconnected [" + client.server.name + ": " + (this.serversDetails[client.server.name].clientCount) + "]");
+          if (this.options.log.outputToConsole) {
+            console.log(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount}]`);
+          }
+
+          this.logging.appendLine(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount}]`);
         }
         client.handleClose();
         for (let i: number = 0; i < this.clients.length; i++) {
@@ -175,7 +208,11 @@ class ListenServer {
         }
       } catch (e) {
         if (this.options.log.clientError) {
-          console.log("SocketCloseEvent ERROR: " + e);
+          if (this.options.log.outputToConsole) {
+            console.log(`SocketCloseEvent ERROR: ${e}`);
+          }
+
+          this.logging.appendLine(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount}]`);
         }
       }
     });
@@ -206,18 +243,31 @@ class ListenServer {
           }, 1000);
 
           if (this.options.log.clientBlocked) {
-            console.log(`${process.pid}] Client: ${getProperIP(socket.remoteAddress)} was blocked from joining.`);
+            if (this.options.log.outputToConsole) {
+              console.log(`${process.pid}] Client: ${getProperIP(socket.remoteAddress)} was blocked from joining.`);
+            }
+
+            this.logging.appendLine(`${process.pid}] Client: ${getProperIP(socket.remoteAddress)} was blocked from joining.`);
           }
           return;
         }
       } catch (e) {
-        console.log("Blacklist check failed: ");
-        console.log(e);
+        if (this.options.log.outputToConsole) {
+          console.log("Blacklist check failed: ");
+          console.log(e);
+        }
+
+        this.logging.appendLine("Blacklist check failed: ");
+        this.logging.appendLine(e);
       }
     }
 
     if (this.options.log.clientConnect) {
-      console.log(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)}  connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
+      if (this.options.log.outputToConsole) {
+        console.log(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)}  connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
+      }
+
+      this.logging.appendLine(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)}  connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
     }
 
     socket.on('data', (data: Buffer) => {
@@ -225,7 +275,11 @@ class ListenServer {
         client.handleDataSend(data);
       } catch (e) {
         if (this.options.log.clientError) {
-          console.log("HandleDataSend ERROR: " + e);
+          if (this.options.log.outputToConsole) {
+            console.log(`HandleDataSend ERROR: ${e}`);
+          }
+
+          this.logging.appendLine(`HandleDataSend ERROR: ${e}`);
         }
       }
     });
@@ -234,7 +288,11 @@ class ListenServer {
   }
 
   handleError(error: Error) {
-    console.log(`\u001b[31m Server on ${this.port} encountered an error: ${error}.\u001b[0m`);
+    if (this.options.log.outputToConsole) {
+      console.log(`\u001b[31m Server on ${this.port} encountered an error: ${error}.\u001b[0m`);
+    }
+
+    this.logging.appendLine(`Server on ${this.port} encountered an error: ${error}.`);
   }
 }
 

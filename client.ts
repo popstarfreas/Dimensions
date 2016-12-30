@@ -15,6 +15,7 @@ import Packet from 'packet';
 import ChangeServerOptions from 'changeserveroptions';
 import GlobalTracking from 'globaltracking';
 import ClientStates from 'clientstates';
+import Logger from 'logger';
 
 class Client {
   ID: number;
@@ -42,8 +43,9 @@ class Client {
   ServerHandleClose: () => void;
   globalTracking: GlobalTracking;
   packetQueue: string;
+  logging: Logger;
 
-  constructor(id: number, socket: Net.Socket, server: RoutingServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions, globalTracking: GlobalTracking) {
+  constructor(id: number, socket: Net.Socket, server: RoutingServer, serversDetails: { [id: string]: ServerDetails }, globalHandlers: GlobalHandlers, servers: { [id: string]: RoutingServer }, options: ConfigOptions, globalTracking: GlobalTracking, logging: Logger) {
     this.ID = id;
 
     // Options from the config
@@ -67,6 +69,9 @@ class Client {
 
     // Global Handlers object whose contents may be updated (reloaded/refreshed)
     this.globalHandlers = globalHandlers;
+
+    // For logging errors/info
+    this.logging = logging;
 
     // TerrariaServer socket connection and packet handler
     this.server = new TerrariaServer(new Net.Socket(), this);
@@ -238,7 +243,11 @@ class Client {
       }
     } catch (e) {
       if (this.options.log.clientError) {
-        console.log("Client Handle Send Data Error: " + e);
+        if (this.options.log.outputToConsole) {
+          console.log(`Client Handle Send Data Error: ${e}`);
+        }
+
+        this.logging.appendLine(`Client Handle Send Data Error: ${e}`);
       }
     }
   }
@@ -332,7 +341,11 @@ class Client {
       // Create connection
       this.server.socket.connect(port, ip, () => {
         if (this.options.log.tServerConnect) {
-          console.log(`[${process.pid}] TerrariaServer Socket Connection [${ip}:${port}]`);
+          if (this.options.log.outputToConsole) {
+            console.log(`[${process.pid}] TerrariaServer Socket Connection [${ip}:${port}]`);
+          }
+
+          this.logging.appendLine(`[${process.pid}] TerrariaServer Socket Connection [${ip}:${port}]`);
         }
 
         // Increment server count

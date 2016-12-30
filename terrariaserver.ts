@@ -88,7 +88,11 @@ class TerrariaServer {
       }
     } catch (e) {
       if (this.client.options.log.tServerError) {
-        console.log("TS Handle Data Error: " + e.stack);
+        if (this.client.options.log.outputToConsole) {
+          console.log(`TS Handle Data Error: ${e.stack}`);
+        }
+
+        this.client.logging.appendLine(`TS Handle Data Error: ${e.stack}`);
       }
     }
   }
@@ -140,12 +144,20 @@ class TerrariaServer {
       }
     } catch (e) {
       if (this.client.options.log.tServerError) {
-        console.log("handleClose Err: " + e);
+        if (this.client.options.log.outputToConsole) {
+          console.log(`handleClose ERROR: ${e}`);
+        }
+
+        this.client.logging.appendLine(`handleClose ERROR: ${e}`);
       }
     }
     
     if (this.client.options.log.tServerDisconnect) {
-      console.log(`TerrariaServer socket closed. [${this.name}]`);
+      if (this.client.options.log.outputToConsole) {
+        console.log(`TerrariaServer socket closed. [${this.name}]`);
+      }
+
+      this.client.logging.appendLine(`TerrariaServer socket closed. [${this.name}]`);
     }
 
     if (this.handledByPreCloseHandlers()) {
@@ -177,7 +189,9 @@ class TerrariaServer {
 
   /* Checks the type of error, if it is because a server is down, the failed connection attempts
    * property is incremented until it reaches 3 at which point it is marked as closed and will not
-   * be used by clients. */
+   * be used by clients. 
+   * 
+   * TODO: Handle non-refused errors when the host itself is offline */
   handleError(error: Error): void {
     //console.log(this.ip + ":" + this.port + " " + this.name);
     //this.client.changeServer(Config.IP, Config.PORT);
@@ -194,7 +208,11 @@ class TerrariaServer {
     }
 
     if (this.client.options.log.tServerError) {
-      console.log("TerrariaServer Socket Error: " + error.message);
+      if (this.client.options.log.outputToConsole) {
+        console.log(`TerrariaServer Socket Error: ${error.message}`);
+      }
+
+      this.client.logging.appendLine(`TerrariaServer Socket Error: ${error.message}`);
     }
 
     if (this.socket !== null) {

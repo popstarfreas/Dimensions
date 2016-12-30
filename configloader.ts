@@ -15,6 +15,7 @@ export interface LogOptions {
   tServerError: boolean;
   clientBlocked: boolean;
   extensionLoad: boolean;
+  outputToConsole: boolean;
 }
 
 interface FakeVersion {
