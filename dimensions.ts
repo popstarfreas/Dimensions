@@ -62,7 +62,7 @@ class Dimensions {
 
     for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
       let listenKey = ConfigSettings.servers[i].listenPort;
-      this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logger);
+      this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logging);
 
       for (let j: number = 0; j < ConfigSettings.servers[i].routingServers.length; j++) {
         this.servers[ConfigSettings.servers[i].routingServers[j].name] = ConfigSettings.servers[i].routingServers[j];
@@ -207,7 +207,7 @@ class Dimensions {
 
         for (let i: number = 0; i < runAfterFinished.length; i++) {
           var serversIndex = runAfterFinished[i].index;
-          this.listenServers[runAfterFinished[i].key] = new ListenServer(ConfigSettings.servers[serversIndex], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logger);
+          this.listenServers[runAfterFinished[i].key] = new ListenServer(ConfigSettings.servers[serversIndex], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logging);
           for (let j: number = 0; j < ConfigSettings.servers[serversIndex].routingServers.length; j++) {
             this.servers[ConfigSettings.servers[serversIndex].routingServers[j].name] = ConfigSettings.servers[serversIndex].routingServers[j];
           }
