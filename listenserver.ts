@@ -182,10 +182,10 @@ class ListenServer {
     socket.on('timeout', () => {
       if (this.options.log.clientTimeouts) {
         if (this.options.log.outputToConsole) {
-          console.log(`Socket Timeout: ${client.getName()+client.ID}`);
+          console.log(`Socket Timeout: ${client.getName()} ${client.ID}`);
         }
 
-        this.logging.appendLine(`Socket Timeout: ${client.getName()+client.ID}`);
+        this.logging.appendLine(`Socket Timeout: ${client.getName()} ${client.ID}`);
       }
       socket.destroy();
     });
