@@ -194,10 +194,10 @@ class ListenServer {
       try {
         if (this.options.log.clientDisconnect) {
           if (this.options.log.outputToConsole) {
-            console.log(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount}]`);
+            console.log(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount-1}]`);
           }
 
-          this.logging.appendLine(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount}]`);
+          this.logging.appendLine(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount-1}]`);
         }
         client.handleClose();
         for (let i: number = 0; i < this.clients.length; i++) {
@@ -212,7 +212,7 @@ class ListenServer {
             console.log(`SocketCloseEvent ERROR: ${e}`);
           }
 
-          this.logging.appendLine(`[${process.pid}] Client: ${getProperIP(socket.remoteAddress)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount}]`);
+          this.logging.appendLine(`SocketCloseEvent ERROR: ${e}`);
         }
       }
     });
