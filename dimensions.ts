@@ -39,7 +39,7 @@ class Dimensions {
       extensions: []
     };
     
-    Extensions.loadExtensions(this.handlers.extensions, this.options.log.extensionLoad);
+    Extensions.loadExtensions(this.handlers.extensions, this.options.log, this.logging);
 
     this.redisClient = redis.createClient();
     this.redisClient.subscribe('dimensions_cli');
@@ -159,12 +159,19 @@ class Dimensions {
     if (this.options.log.extensionLoad) {
       for (let key in this.handlers.extensions) {
         let extension = this.handlers.extensions[key];
-        console.log(`\u001b[33m[Extension] ${extension.name} ${extension.version} unloaded.\u001b[0m`);
+
+        if (this.options.log.extensionLoad) {
+          if (this.options.log.outputToConsole) {
+            console.log(`\u001b[33m[Extension] ${extension.name} ${extension.version} unloaded.\u001b[0m`);
+          }
+
+          this.logging.appendLine(`[Extension] ${extension.name} ${extension.version} unloaded.`);
+        }
       } 
     }
 
     this.handlers.extensions = [];
-    Extensions.loadExtensions(this.handlers.extensions, this.options.log.extensionLoad);
+    Extensions.loadExtensions(this.handlers.extensions, this.options.log, this.logging);
   }
 
   /* Checks the config servers against the existing listen servers and updates any allocations
