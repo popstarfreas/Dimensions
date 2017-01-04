@@ -164,6 +164,14 @@ class ListenServer {
     let client = new Client(this.idCounter++, socket, chosenServer, this.serversDetails, this.globalHandlers, this.servers, this.options, this.globalTracking, this.logging);
     this.clients.push(client);
 
+    if (this.options.log.clientConnect) {
+      if (this.options.log.outputToConsole) {
+        console.log(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)} connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
+      }
+
+      this.logging.appendLine(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)} connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
+    }
+
     socket.on('error', (e: Error) => {
       try {
         client.handleError(e);
@@ -260,14 +268,6 @@ class ListenServer {
         this.logging.appendLine("Blacklist check failed: ");
         this.logging.appendLine(e);
       }
-    }
-
-    if (this.options.log.clientConnect) {
-      if (this.options.log.outputToConsole) {
-        console.log(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)}  connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
-      }
-
-      this.logging.appendLine(`[${process.pid} Client: ${getProperIP(socket.remoteAddress)}  connected [${chosenServer.name}: ${this.serversDetails[chosenServer.name].clientCount + 1}]`);
     }
 
     socket.on('data', (data: Buffer) => {
