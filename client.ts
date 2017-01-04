@@ -326,10 +326,17 @@ class Client {
       this.player.allowedNameChange = true;
 
       // Prevent Item problem
-      let webbed = (new PacketFactory())
+      let stoned = (new PacketFactory())
         .setType(PacketTypes.AddPlayerBuff)
         .packByte(this.player.id)
         .packByte(156)
+        .packInt32(300)
+        .data();
+      this.socket.write(new Buffer(stoned, 'hex'));
+      let webbed = (new PacketFactory())
+        .setType(PacketTypes.AddPlayerBuff)
+        .packByte(this.player.id)
+        .packByte(149)
         .packInt32(300)
         .data();
       this.socket.write(new Buffer(webbed, 'hex'));
