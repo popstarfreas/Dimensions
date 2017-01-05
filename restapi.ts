@@ -25,7 +25,7 @@ interface ApiResponse {
     world: string;
     uptime: string;
     serverpassword: boolean;
-    players: Array<string>;
+    players: Array<string> | string;
 }
 
 type ServersDetails = {
@@ -132,12 +132,17 @@ class RestApi {
                 ]
             };
 
-            let serverKeys: string[] = _.keys(this.servers);
-            for (let i: number = 0; i < serverKeys.length; i++) {
-                response.playercount += this.serversDetails[serverKeys[i]].clientCount;
-            }
+            let playerNames = _.keys(this.globalTracking.names);
 
-            response.players  =  _.keys(this.globalTracking.names);
+            // This is compatible with terraria-servers.com.
+            // When they fix their usage of old rest, this
+            // should be updated
+            response.players = playerNames.join(", ");
+
+            // New REST version
+            //response.players = playerNames;
+
+            response.playercount = playerNames.length;
             socket.write(JSON.stringify(response));
 
             resolve();
