@@ -25,12 +25,14 @@ Windows: https://github.com/MSOpenTech/redis/releases
 Linux: https://redis.io/topics/quickstart
 
 Setting up
+
  * Contents of the .7z should be extracted to a folder. `cd` into this folder.
  * Run `npm install`, it might take longer than expected
  * Copy "config.example.js" to "config.js" and edit to your specifications
  * In the folder run `npm run start`
 
-Notes 
+Notes
+
  * Redis is used for the Pub/Sub for detached reloading. If you do not care for this, it is possibleto remove the Redis requirement
  * To reload changes to the cmd handlers, packet handlers, config or extensions, without restarting Dimensions
    * Run `node dimensions_cli.js`
