@@ -33,7 +33,7 @@ Setting up
 
 Notes
 
- * Redis is used for the Pub/Sub for detached reloading. If you do not care for this, it is possibleto remove the Redis requirement
+ * Redis is used for the Pub/Sub for detached reloading. If you do not care for this, it is possible to remove the Redis requirement
  * To reload changes to the cmd handlers, packet handlers, config or extensions, without restarting Dimensions
    * Run `node dimensions_cli.js`
       * Reload Config: `reload`
@@ -43,3 +43,11 @@ Notes
  * For further help contact either:
    * http://steamcommunity.com/id/popstarfreas
    * popstarfreas2@gmail.com
+   
+# Supporters
+Thanks to all who have financially supported development:
+
+ * OFF (Teeria; http://teeria.eu/)
+ * Devi (TerraPix)
+ * Anzhelika (Novus; http://vk.com/terraria_novus_pc)
+ * Ricko (Red Bunny; https://steamcommunity.com/groups/redbunnybr)
