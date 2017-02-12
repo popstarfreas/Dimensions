@@ -35,14 +35,14 @@ Notes
 
  * Redis is used for the Pub/Sub for detached reloading. If you do not care for this, it is possible to remove the Redis requirement
  * To reload changes to the cmd handlers, packet handlers, config or extensions, without restarting Dimensions
-   * Run `node dimensions_cli.js`
-      * Reload Config: `reload`
-      * Reload Command Handlers: `reloadcmds`
-      * Reload Packet Handlers: `reloadhandlers`
-      * Reload Extensions: `reloadplugins`
+    * Run `node dimensions_cli.js`
+       * Reload Config: `reload`
+       * Reload Command Handlers: `reloadcmds`
+       * Reload Packet Handlers: `reloadhandlers`
+       * Reload Extensions: `reloadplugins`
  * For further help contact either:
-   * http://steamcommunity.com/id/popstarfreas
-   * popstarfreas2@gmail.com
+    * http://steamcommunity.com/id/popstarfreas
+    * popstarfreas2@gmail.com
    
 # Supporters
 Thanks to all who have financially supported development:
