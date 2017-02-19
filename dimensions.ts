@@ -41,6 +41,7 @@ class Dimensions {
     
     Extensions.loadExtensions(this.handlers.extensions, this.options.log, this.logging);
 
+    // Start a client listening on the dimensions_cli channel for commands, such as reload
     this.redisClient = redis.createClient();
     this.redisClient.subscribe('dimensions_cli');
     this.redisClient
@@ -60,15 +61,19 @@ class Dimensions {
       names: {}
     };
 
+    // Goes through each listen server object in the config
     for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
+      // Starts up a listen server on the specified port, and assigns the listed routing servers to this listen server
       let listenKey = ConfigSettings.servers[i].listenPort;
       this.listenServers[listenKey] = new ListenServer(ConfigSettings.servers[i], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logging);
 
+      // Adds each routing server to the shared servers object, used when a client wants to switch Dimension and needs the information for the socket
       for (let j: number = 0; j < ConfigSettings.servers[i].routingServers.length; j++) {
         this.servers[ConfigSettings.servers[i].routingServers[j].name] = ConfigSettings.servers[i].routingServers[j];
       }
     }
 
+    // Starts a new RestAPI server. This mimics the status output of tShock's RestAPI and puts in the total count and all player names from all Dimensions
     if (this.options.restApi.enabled) {
       this.restApi = new RestApi(this.options.restApi.port, this.globalTracking, this.serversDetails, this.servers);
     }
@@ -183,17 +188,25 @@ class Dimensions {
         if (ConfigSettings.options.restApi.enabled) {
           this.restApi.handleReload(ConfigSettings.options.restApi.port);
         }
-
+        
         let currentRoster = {};
         let runAfterFinished: Array<ReloadTask> = [];
+
+        // Goes through each listen server in the config
         for (let i: number = 0; i < ConfigSettings.servers.length; i++) {
           let listenKey: number = ConfigSettings.servers[i].listenPort;
+
+          // Checks if the listenServer for the specified port exists
           if (this.listenServers[listenKey]) {
+            // Ensures the listenServer has all the listed routing servers from the config for load-balancing/routing
             this.listenServers[listenKey].updateInfo(ConfigSettings.servers[i]);
+            
+            // Adds/updates each routing server (Dimension) to the shared servers object
             for (var j = 0; j < ConfigSettings.servers[i].routingServers.length; j++) {
               this.servers[ConfigSettings.servers[i].routingServers[j].name] = ConfigSettings.servers[i].routingServers[j];
             }
           } else {
+            // If the listen server does not exist, it is added to be created after any existing ones that no longer exist are closed
             runAfterFinished.push({
               key: listenKey,
               index: i
@@ -205,13 +218,14 @@ class Dimensions {
 
         let currentListenServers: string[] = _.keys(this.listenServers);
         for (let i: number = 0; i < currentListenServers.length; i++) {
+          // If the listen server is not in the config anymore, it is cleanly closed and removed
           if (!currentRoster[currentListenServers[i]]) {
-            // Close down
             this.listenServers[currentListenServers[i]].shutdown();
             delete this.listenServers[currentListenServers[i]];
           }
         }
 
+        // Sets up any new listen servers and assigns them their routing servers
         for (let i: number = 0; i < runAfterFinished.length; i++) {
           var serversIndex = runAfterFinished[i].index;
           this.listenServers[runAfterFinished[i].key] = new ListenServer(ConfigSettings.servers[serversIndex], this.serversDetails, this.handlers, this.servers, this.options, this.globalTracking, this.logging);
@@ -220,7 +234,7 @@ class Dimensions {
           }
         }
 
-        // Update options
+        // Update shared options object with new config options (logging options etc)
         let keys: string[] = _.keys(this.options);
         for (let i = 0; i < keys.length; i++) {
           this.options[keys[i]] = ConfigSettings.options[keys[i]];
