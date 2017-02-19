@@ -28,15 +28,19 @@ Notes
         * Reload Packet Handlers: `reloadhandlers`
         * Reload Extensions: `reloadplugins`
 
-### Setting up for development ###
+### Development ###
 
-* Clone repo
+If you intend to modify Dimensions in any way, be it for your own use or to make minor changes, it is recommended that you modify the original Typescript. This will not only provide you with more safety regarding changes, but the original source is likely to be more understandable and you can merge changes from this repo using git.
+
+* Clone this repo
+* `cd` into the new directory
 * run ```npm install```
 * There are a few scripts in the package.json
-    * to build ```npm run build```
-    * to build then run ```npm run bstart```
+    * to build ```npm run build``` this will put all output js files into a build directory
+    * to build then run ```npm run bstart``` this will build and then run the index.js in the build directory
+    * to start without building run `npm run start`
 
-Dimensions uses the latest Typescript (v2) and uses the strict null checking. When editing and building, it is important to use these features to ensure there are no potential problems that are missed.
+Dimensions uses the latest Typescript (v2) and uses the strict null checking. When editing and building, it is important to use these features when developing to avoid issues that would otherwise have been caught by the transpiler.
    
 # Supporters
 Thanks to all who have financially supported development:
