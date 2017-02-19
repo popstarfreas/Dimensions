@@ -19,8 +19,8 @@ class ClientPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.client !== 'undefined') {
-        handled = handler.priorPacketHandlers.client(client, packet);
+      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.clientHandler !== 'undefined') {
+        handled = handler.priorPacketHandlers.clientHandler.handlePacket(client, packet);
         if (handled) {
           break;
         }
@@ -36,8 +36,8 @@ class ClientPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.client !== 'undefined') {
-        handled = handler.postPacketHandlers.client(client, packet);
+      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.clientHandler !== 'undefined') {
+        handled = handler.postPacketHandlers.clientHandler.handlePacket(client, packet);
         if (handled) {
           break;
         }

@@ -22,8 +22,8 @@ class TerrariaServerPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.server !== 'undefined') {
-        handled = handler.priorPacketHandlers.server(server, packet);
+      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.serverHandler !== 'undefined') {
+        handled = handler.priorPacketHandlers.serverHandler.handlePacket(server, packet);
         if (handled) {
           break;
         }
@@ -39,8 +39,8 @@ class TerrariaServerPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.server !== 'undefined') {
-        handled = handler.postPacketHandlers.server(server, packet);
+      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.serverHandler !== 'undefined') {
+        handled = handler.postPacketHandlers.serverHandler.handlePacket(server, packet);
         if (handled) {
           break;
         }

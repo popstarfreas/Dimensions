@@ -1,13 +1,12 @@
-import Packet from 'packet';
-import Client from 'client';
-import TerrariaServer from 'terrariaserver';
-
-type ClientPacketHandler = (client: Client, packet: Packet) => boolean;
-type ServerPacketHandler = (server: TerrariaServer, packet: Packet) => boolean;
+import Packet from '../packet';
+import Client from '../client';
+import TerrariaServer from '../terrariaserver';
+import ClientPacketHandler from '../extension/clientpackethandler';
+import TerrariaServerPacketHandler from '../extension/terrariaserverpackethandler';
 
 export interface PacketHandlers {
-    client?: ClientPacketHandler;
-    server?: ServerPacketHandler;
+    clientHandler?: ClientPacketHandler;
+    serverHandler?: TerrariaServerPacketHandler;
 }
 
 type ClientErrorHandler = (client: Client, error: Error) => boolean;
