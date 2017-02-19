@@ -27,9 +27,6 @@ Notes
         * Reload Command Handlers: `reloadcmds`
         * Reload Packet Handlers: `reloadhandlers`
         * Reload Extensions: `reloadplugins`
- * For further help contact either:
-    * http://steamcommunity.com/id/popstarfreas
-    * popstarfreas2@gmail.com
 
 ### Setting up for development ###
 
