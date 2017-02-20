@@ -180,6 +180,7 @@ class TerrariaServerPacketHandler {
     reader.readInt16(); // RockLayer
     reader.readInt32(); // WorldID
     reader.readString(); // World Name
+    reader.readString(); // World Unique ID
     reader.readByte(); // Moon Type
     reader.readByte(); // Tree Background
     reader.readByte(); // Corruption Background
