@@ -109,6 +109,14 @@ enum PacketTypes {
   WiredCannonShot,
   MassWireOperation,
   MassWireOperationConsume,
+  ToggleBirthdayParty,
+  GrowFX,
+  CrystalInvasionStart,
+  CrystalInvasionWipeAll,
+  MinionAttackTargetUpdate,
+  CrystalInvasionSendWaitTime,
+  PlayerHurtV2,
+  PlayerDeathV2
 };
 
 export default PacketTypes;
