@@ -1,6 +1,3 @@
-process.env.NODE_PATH = __dirname;
-require('module').Module._initPaths();
-
 import Dimensions from "dimensions";
 import Logger from "dimensions/logger";
 import * as fs from "fs";
