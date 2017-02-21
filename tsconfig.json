@@ -7,8 +7,8 @@
 	    "outDir": "build",
         "strictNullChecks": true
     },
-    "exclude": [
-        "node_modules",
-        "build"
+    "include": [
+        "index.ts",
+        "node_modules/dimensions"
     ]
 }
