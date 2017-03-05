@@ -10,7 +10,7 @@ describe("hexwriter", () => {
         expect(hexWriter.data).toEqual("");
     });
 
-    describe("hexwriter-strings", () => {
+    describe("strings", () => {
         it("should correctly pack a short string of letters", () => {
             hexWriter.packString("abcdefghijklmnopqrstuvwxyz");
             expect(hexWriter.data).toEqual("1a6162636465666768696a6b6c6d6e6f707172737475767778797a");
