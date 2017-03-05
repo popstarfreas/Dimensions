@@ -79,6 +79,23 @@ describe("hexwriter", () => {
         });
     });
 
+    describe("uint16", () => {
+        it("should correctly pack a small uint16", () => {
+            hexWriter.packUInt16(50);
+            expect(hexWriter.data).toEqual("3200");
+        });
+
+        it("should correctly pack a maximum uint16", () => {
+            hexWriter.packUInt16(65535);
+            expect(hexWriter.data).toEqual("ffff");
+        });
+
+        it("should correctly pack zero uint16", () => {
+            hexWriter.packUInt16(0);
+            expect(hexWriter.data).toEqual("0000");
+        });
+    });
+
     describe("int16", () => {
         it("should correctly pack a small int16", () => {
             hexWriter.packInt16(50);
@@ -103,6 +120,28 @@ describe("hexwriter", () => {
         it("should correctly pack largest negative int16", () => {
             hexWriter.packInt16(-32768);
             expect(hexWriter.data).toEqual("0080");
+        });
+    });
+
+    describe("uint32", () => {
+        it("should correctly pack a small uint32", () => {
+            hexWriter.packUInt32(50);
+            expect(hexWriter.data).toEqual("32000000");
+        });
+
+        it("should correctly pack a medium uint32", () => {
+            hexWriter.packUInt32(32767);
+            expect(hexWriter.data).toEqual("ff7f0000");
+        });
+
+        it("should correctly pack maximum uint32", () => {
+            hexWriter.packUInt32(4294967295);
+            expect(hexWriter.data).toEqual("ffffffff");
+        });
+
+        it("should correctly pack zero uint32", () => {
+            hexWriter.packUInt32(0);
+            expect(hexWriter.data).toEqual("00000000");
         });
     });
 
