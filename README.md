@@ -10,8 +10,8 @@ Install NodeJS
 https://nodejs.org/en/
 
 Install Redis
-Windows: https://github.com/MSOpenTech/redis/releases
-Linux: https://redis.io/topics/quickstart
+ * Windows: https://github.com/MSOpenTech/redis/releases
+ * Linux: https://redis.io/topics/quickstart
 
 Setting up
 
