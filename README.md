@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/popstarfreas/Dimensions.svg?branch=master)](https://travis-ci.org/popstarfreas/Dimensions)
+
 # README #
 
 Dimensions is:
