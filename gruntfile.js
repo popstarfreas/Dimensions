@@ -27,6 +27,5 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-jasmine-node');
     grunt.loadNpmTasks("grunt-ts");
 
-    // Default task(s).
     grunt.registerTask('default', ['ts', 'jasmine_node']);
 };
