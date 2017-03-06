@@ -1,6 +1,7 @@
 import ClientCommandHandler from 'dimensions/clientcommandhandler';
 import TerrariaServer from 'dimensions/terrariaserver';
 import Client from 'dimensions/client';
+import ClientArgs from 'dimensions/clientargs';
 import * as Net from 'net';
 import RoutingServer from 'dimensions/routingserver';
 import ClientPacketHandler from 'dimensions/clientpackethandler';
@@ -122,8 +123,6 @@ describe("ClientCommandHandler", () => {
         client.globalHandlers.command.parseCommand("/idonotexist");
         expect(client.server.name).toEqual(serverA.name);
     });
-
-    /* TODO: test parseCommand */
 
     it("should properly convert a string into a command object", () => {
         let command = client.globalHandlers.command.parseCommand("/chips and gravy");
