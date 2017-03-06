@@ -10,8 +10,12 @@ Install NodeJS
 https://nodejs.org/en/
 
 Install Redis
-Windows: https://github.com/MSOpenTech/redis/releases
-Linux: https://redis.io/topics/quickstart
+ * Windows: https://github.com/MSOpenTech/redis/releases
+ * Linux: https://redis.io/topics/quickstart
+ 
+Get the plugin
+ * [Download](https://bitbucket.org/popstarfreas/dimensions-plugin/downloads/Dimensions.v1.4.0.zip)
+ * [Source](https://bitbucket.org/popstarfreas/dimensions-plugin)
 
 Setting up
 
