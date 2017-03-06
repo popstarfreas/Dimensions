@@ -111,7 +111,19 @@ describe("ClientCommandHandler", () => {
             names: {}
         };
 
-        client = new Client(0, socket, serverA, serversDetails, globalHandlers, servers, config, globalTracking, new Logger());
+        let clientArgs: ClientArgs = {
+            globalHandlers: globalHandlers,
+            globalTracking: globalTracking,
+            id: 0,
+            logging: new Logger(),
+            options: config,
+            server: serverA,
+            servers: servers,
+            serversDetails: serversDetails,
+            socket: socket
+        };
+
+        client = new Client(clientArgs);
         server = new TerrariaServer(socket, client);
     });
 
