@@ -6,11 +6,14 @@ import * as Net from 'net';
 import RoutingServer from 'dimensions/routingserver';
 import ClientPacketHandler from 'dimensions/clientpackethandler';
 import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
-import {ConfigOptions} from 'dimensions/configloader';
+import { ConfigOptions } from 'dimensions/configloader';
 import Logger from 'dimensions/logger';
+import PacketReader from 'dimensions/packets/packetreader';
+import PacketTypes from 'dimensions/packettypes';
+import GlobalTracking from 'dimensions/globaltracking';
 let Mitm = require('mitm');
 
-describe("ClientCommandHandler", () => {
+describe("client", () => {
     let mitm;
     let config: ConfigOptions;
     let serverA: RoutingServer;
@@ -19,7 +22,7 @@ describe("ClientCommandHandler", () => {
     let serversDetails;
     let globalHandlers;
     let servers;
-    let globalTracking;
+    let globalTracking: GlobalTracking;
     let client: Client;
     let server: TerrariaServer;
 
@@ -63,7 +66,7 @@ describe("ClientCommandHandler", () => {
             clientSocket = socket;
             clientSocket.on("data", (data) => {
                 for (let i = 0; i < clientSocketDataHandlers.length; i++) {
-                    clientSocketDataHandlers[i](data.toString());
+                    clientSocketDataHandlers[i](data.toString('hex'));
                 }
             });
         });
@@ -131,54 +134,63 @@ describe("ClientCommandHandler", () => {
         mitm.disable();
     });
 
-    it("should not handle a non-existant command", () => {
-        client.globalHandlers.command.parseCommand("/idonotexist");
+    it("should correctly set up the required properties", () => {
+        expect(client.ID).toEqual(0);
+        expect(client.options).toEqual(config);
         expect(client.server.name).toEqual(serverA.name);
+        expect(client.server.ip).toEqual(serverA.serverIP);
+        expect(client.server.port).toEqual(serverA.serverPort);
+        expect(client.servers).toEqual(servers);
+        expect(client.serversDetails).toEqual(serversDetails);
+        expect(client.logging).not.toBeNull();
     });
 
-    it("should properly convert a string into a command object", () => {
-        let command = client.globalHandlers.command.parseCommand("/chips and gravy");
-        expect(command.name).toBe("chips");
-        expect(command.args.length).toBe(2);
-        expect(command.args[0]).toBe("and");
-        expect(command.args[1]).toBe("gravy");
+    it("should correctly set the name of the client", () => {
+        let name = "test";
+        client.setName(name);
+        expect(client.getName()).toBe(name);
     });
 
-    describe("who", () => {
-        it("should not handle the who command", () => {
-            let command = client.globalHandlers.command.parseCommand("/who");
-            let handled = client.globalHandlers.command.handle(command, client);
-            expect(handled).toBe(false);
-        });
-
-        it("should send the user a user count", (done) => {
-            clientSocketDataHandlers.push((data: string) => {
-                expect(data).toContain("There are 0 players across all Dimensions");
-                done();
-            });
-            client.globalHandlers.command.parseCommand("/who");
-        });
+    it("should correctly deny changing the name to an existing one", () => {
+        let takenName = "thisnameistaken";
+        globalTracking.names[takenName] = true;
+        client.setName(takenName);
+        expect(client.getName()).not.toBe(takenName);
     });
 
-    describe("dimensionswitch", () => {
-        it("should not switch to a non-existing dimension", () => {
-            // Set to true to avoid callback waiting
-            client.server.socket.destroyed = true;
+    it("should correctly kick the player if they try to use an existing name", (done) => {
+        let takenName = "thisnameistaken";
+        globalTracking.names[takenName] = true;
 
-            let command = client.globalHandlers.command.parseCommand("/asdasdas");
-            let handled = client.globalHandlers.command.handle(command, client);
-            expect(handled).toBe(false);
-            expect(client.server.name).toBe(serverA.name);
+        clientSocketDataHandlers.push((data: string) => {
+            let reader = new PacketReader(data);
+            expect(reader.type).toEqual(PacketTypes.Disconnect);
+            done();
         });
 
-        it("should switch to an existing dimension", () => {
-            // Set to true to avoid callback waiting
-            client.server.socket.destroyed = true;
+        client.setName(takenName);
+    });
 
-            let command = client.globalHandlers.command.parseCommand("/serverb");
-            let handled = client.globalHandlers.command.handle(command, client);
-            expect(handled).toBe(true);
-            expect(client.server.name).toBe(serverB.name);
+    it("should correctly send a chat message to the client", (done) => {
+        let testMessage = "this is a test";
+
+        clientSocketDataHandlers.push((data: string) => {
+            let reader = new PacketReader(data);
+            expect(reader.type).toEqual(PacketTypes.ChatMessage);
+            reader.readByte();
+            reader.readColor();
+            expect(reader.readString()).toEqual(testMessage);
+            done();
         });
+
+        client.sendChatMessage(testMessage);
+    });
+
+    it("should correctly switch the client to another server", () => {
+        // Set to true to avoid callback waiting
+        client.server.socket.destroyed = true;
+        client.changeServer(serverB);
+
+        expect(client.server.name).toBe(serverB.name);
     });
 });
