@@ -1,6 +1,7 @@
 build
+!node_modules/
 node_modules/*
-!node_modules/dimensions
+!node_modules/dimensions/
 npm-debug.log
 config.js
 .vscode
