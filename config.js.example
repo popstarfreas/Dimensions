@@ -25,16 +25,19 @@ exports.ConfigSettings = {
     },
     ],
     options: {
-        // The number of millseconds of inactivity before a client socket is
-        // destroyed
+        /* The number of millseconds of inactivity before a client socket is
+         * destroyed */
         socketTimeout: 1000*15,
 
-        // The current Terraria version (used in switching, if incorrect
-        // players will not be able to switch)
+        // Whether or not to disable Nagle's Algorithm (https://en.wikipedia.org/wiki/Nagle's_algorithm)
+        socketNoDelay: true,
+
+        /* The current Terraria version (used in switching, if incorrect
+         * players will not be able to switch) */
         currentTerrariaVersion: 187,
 
-        // You can use this when small patches to Terraria are made
-        // that do not break compatibility with the server
+        /* You can use this when small patches to Terraria are made
+         * that do not break compatibility with the server */
         fakeVersion: {
             enabled: false,
             terrariaVersion: 173
@@ -46,8 +49,8 @@ exports.ConfigSettings = {
             port: 7880
         },
 
-        // Whether or not to block invisibility buff.
-        // This was added here because TShock's version is broken
+        /* Whether or not to block invisibility buff.
+         * This was added here because TShock's version is broken */
         blockInvis: false,
 
         // Whether or not to use a blacklist (http service) (for blocking vpn, etc)
