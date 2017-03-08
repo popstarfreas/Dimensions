@@ -32,6 +32,7 @@ describe("client", () => {
     beforeEach(() => {
         config = {
             socketTimeout: 0,
+            socketNoDelay: true,
             currentTerrariaVersion: 0,
             fakeVersion: {
                 enabled: false,
