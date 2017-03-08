@@ -29,6 +29,9 @@ exports.ConfigSettings = {
         // destroyed
         socketTimeout: 1000*15,
 
+        // Whether or not to disable Nagle's Algorithm (https://en.wikipedia.org/wiki/Nagle's_algorithm)
+        socketNoDelay: true,
+
         // The current Terraria version (used in switching, if incorrect
         // players will not be able to switch)
         currentTerrariaVersion: 187,
