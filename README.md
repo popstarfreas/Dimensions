@@ -20,7 +20,7 @@ Get the plugin
 Setting up
 
  * Contents of the .7z should be extracted to a folder. `cd` into this folder.
- * Run `npm install`, it might take longer than expected
+ * Run `npm install --only=production`, it might take longer than expected
  * Copy "config.example.js" to "config.js" and edit to your specifications
  * In the folder run `npm run start`
 
@@ -33,6 +33,7 @@ Notes
         * Reload Command Handlers: `reloadcmds`
         * Reload Packet Handlers: `reloadhandlers`
         * Reload Extensions: `reloadplugins`
+    * The responses for each command currently are only output by each Dimensions instance rather than in the CLI
 
 ### Development ###
 
