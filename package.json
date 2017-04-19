@@ -10,7 +10,7 @@
   "scripts": {
     "start": "cd ./build && node ./index.js",
     "build": "grunt",
-    "bstart": "grunt && node ./index.js && cd ../",
+    "bstart": "grunt && cd ./build && node ./index.js && cd ../",
     "bstart-debug": "grunt && cd ./build && node-debug ./index.js && cd ../",
     "test": "grunt"
   },
