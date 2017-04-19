@@ -174,16 +174,16 @@ class PostServerHandler extends TerrariaServerPacketHandler {
         let message = reader.readString();
         let messageLength = reader.readInt16();
 
-        let smartChatMessage = new PacketWriter()
-            .setType(PacketTypes.SmartChatMessage)
-            .packColor(messageColor);
+        let chatMessage = new PacketWriter()
+            .setType(PacketTypes.LoadNetModule)
+            .packUInt16(1)
+            .packByte(playerId)
 
         let text = new NetworkText(message, 0);
-        text.Serialize(smartChatMessage);
-        smartChatMessage.packInt16(messageLength)
+        text.Serialize(chatMessage);
+        chatMessage.packColor(messageColor)
 
-        let data = smartChatMessage.data;
-        packet.data = data;
+        packet.data = chatMessage.data;
         return false;
     }
 
