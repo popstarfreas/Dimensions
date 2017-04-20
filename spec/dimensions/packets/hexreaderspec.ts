@@ -92,6 +92,35 @@ describe("hexreader", () => {
         });
     });
 
+    
+    
+    describe("uint64", () => {
+        it("should correctly read a small uint64", () => {
+            let reader = new HexReader("3200000000000000");
+            expect(reader.readUInt64()).toEqual(50);
+        });
+
+        it("should correctly read maximum uint16", () => {
+            let reader = new HexReader("ffff000000000000");
+            expect(reader.readUInt64()).toEqual(65535);
+        });
+
+        it("should correctly read maximum uint32", () => {
+            let reader = new HexReader("ffffffff00000000");
+            expect(reader.readUInt64()).toEqual(4294967295);
+        });
+
+        it("should correctly read maximum uint64", () => {
+            let reader = new HexReader("ffffffffffffffff");
+            expect(reader.readUInt64()).toEqual(18446744073709551615);
+        });
+
+        it("should correctly read zero uint64", () => {
+            let reader = new HexReader("0000000000000000");
+            expect(reader.readUInt64()).toEqual(0);
+        });
+    });
+
     describe("int16", () => {
         it("should correctly read a small int16", () => {
             let reader = new HexReader("3200");
@@ -217,5 +246,12 @@ describe("hexreader", () => {
             let reader = new HexReader(data);
             expect(reader.readString()).toEqual(str);
         });
+    });
+
+    it("should correctly read network text", () => {
+        let data = "001a6162636465666768696a6b6c6d6e6f707172737475767778797a";
+        let str = "abcdefghijklmnopqrstuvwxyz";
+        let reader = new HexReader(data);
+        expect(reader.readNetworkText()).toEqual(str);
     });
 });

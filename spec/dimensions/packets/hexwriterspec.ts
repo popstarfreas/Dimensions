@@ -39,6 +39,11 @@ describe("hexwriter", () => {
         });
     });
 
+    it("should correctly pack network text", () => {
+        hexWriter.packNetworkText("abcdefghijklmnopqrstuvwxyz", 0);
+        expect(hexWriter.data).toEqual("001a6162636465666768696a6b6c6d6e6f707172737475767778797a");
+    });
+
     it("should correctly pack hex", () => {
         let hex = "a2a2";
         hexWriter.packHex(hex);
