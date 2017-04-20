@@ -10,7 +10,7 @@
   "scripts": {
     "start": "cd ./build && node ./index.js",
     "build": "grunt",
-    "bstart": "grunt && node ./index.js && cd ../",
+    "bstart": "grunt && cd ./build && node ./index.js && cd ../",
     "bstart-debug": "grunt && cd ./build && node-debug ./index.js && cd ../",
     "test": "grunt"
   },
@@ -29,6 +29,7 @@
     "@types/mitm": "^1.3.2",
     "@types/node": "^7.0.5",
     "@types/utf8": "^2.1.5",
+    "@types/redis": "^0.12.36",
     "grunt": "^1.0.1",
     "grunt-cli": "^1.2.0",
     "grunt-jasmine-node": "^0.3.1",

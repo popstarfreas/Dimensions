@@ -177,10 +177,11 @@ describe("client", () => {
 
         clientSocketDataHandlers.push((data: string) => {
             let reader = new PacketReader(data);
-            expect(reader.type).toEqual(PacketTypes.ChatMessage);
-            reader.readByte();
+            expect(reader.type).toEqual(PacketTypes.LoadNetModule);
+            expect(reader.readUInt16()).toEqual(1);
+            expect(reader.readByte()).toEqual(255);
+            expect(reader.readNetworkText()).toEqual(testMessage);
             reader.readColor();
-            expect(reader.readString()).toEqual(testMessage);
             done();
         });
 
