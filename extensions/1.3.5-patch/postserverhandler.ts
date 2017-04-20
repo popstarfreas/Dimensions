@@ -208,7 +208,7 @@ class PostServerHandler extends TerrariaServerPacketHandler {
         let y = reader.readSingle();
         let color = reader.readColor();
         let text = reader.readString();
-        let num = <any>parseInt(text) == text ? parseInt(text) : 0;
+        let num = parseInt(text).toString() === text ? parseInt(text) : 0;
 
         let combatText = new PacketWriter()
             .setType(PacketTypes.CreateCombatText)
