@@ -247,4 +247,11 @@ describe("hexreader", () => {
             expect(reader.readString()).toEqual(str);
         });
     });
+
+    it("should correctly read network text", () => {
+        let data = "001a6162636465666768696a6b6c6d6e6f707172737475767778797a";
+        let str = "abcdefghijklmnopqrstuvwxyz";
+        let reader = new HexReader(data);
+        expect(reader.readNetworkText()).toEqual(str);
+    });
 });
