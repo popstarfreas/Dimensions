@@ -43,7 +43,7 @@ If you intend to modify Dimensions in any way, be it for your own use or to make
 * `cd` into the new directory
 * run ```npm install```
 * There are a few scripts in the package.json
-    * to build ```npm run build``` this will put all output js files into a build directory
+    * to build (and test) ```npm run build``` this will transpile the ts files to js, run the tests and put all output js files into a build directory
     * to build then run ```npm run bstart``` this will build and then run the index.js in the build directory
     * to start without building run `npm run start`
 
