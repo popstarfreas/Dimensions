@@ -8,7 +8,8 @@ module.exports = function (grunt) {
                 outDir: 'build'
             },
             options: {
-                lib: ['es2015']
+                lib: ['es2015'],
+                strict: true
             }
         },
         jasmine_node: {
