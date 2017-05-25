@@ -54,5 +54,5 @@ Thanks to all who have financially supported development:
 
  * OFF (Teeria; http://teeria.eu/)
  * Devi (TerraPix)
- * Anzhelika (Novus; http://vk.com/terraria_novus_pc)
+ * Anzhelika (Novux; http://novux.ru)
  * Ricko (Red Bunny; https://steamcommunity.com/groups/redbunnybr)
