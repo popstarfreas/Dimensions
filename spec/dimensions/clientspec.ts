@@ -180,7 +180,7 @@ describe("client", () => {
             expect(reader.type).toEqual(PacketTypes.LoadNetModule);
             expect(reader.readUInt16()).toEqual(1);
             expect(reader.readByte()).toEqual(255);
-            expect(reader.readNetworkText()).toEqual(testMessage);
+            expect(reader.readNetworkText().text).toEqual(testMessage);
             reader.readColor();
             done();
         });
