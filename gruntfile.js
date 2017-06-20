@@ -9,7 +9,8 @@ module.exports = function (grunt) {
             },
             options: {
                 lib: ['es2015'],
-                strict: true
+                strict: true,
+                sourceMap: false,
             }
         },
         jasmine_node: {
