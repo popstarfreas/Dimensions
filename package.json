@@ -1,6 +1,6 @@
 {
   "name": "terrariadimensions",
-  "version": "4.9.1",
+  "version": "4.10.1",
   "repository": {
     "type": "git",
     "url": "git://github.com/popstarfreas/Dimensions.git"
@@ -29,14 +29,14 @@
     "@types/jasmine": "^1.3.0",
     "@types/mitm": "^1.3.2",
     "@types/node": "^7.0.5",
-    "@types/utf8": "^2.1.5",
     "@types/redis": "^0.12.36",
+    "@types/utf8": "^2.1.5",
     "grunt": "^1.0.1",
     "grunt-cli": "^1.2.0",
     "grunt-jasmine-node": "^0.3.1",
     "grunt-ts": "^6.0.0-beta.14",
     "jasmine": "^2.5.3",
     "mitm": "^1.3.2",
-    "typescript": "^2.1.0-dev.20160826"
+    "typescript": "^2.3.2"
   }
 }

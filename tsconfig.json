@@ -5,7 +5,7 @@
         "noImplicitAny": false,
         "sourceMap": false,
 	    "outDir": "build",
-        "strictNullChecks": true
+        "strict": true
     },
     "include": [
         "index.ts",

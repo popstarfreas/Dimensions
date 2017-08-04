@@ -252,6 +252,8 @@ describe("hexreader", () => {
         let data = "001a6162636465666768696a6b6c6d6e6f707172737475767778797a";
         let str = "abcdefghijklmnopqrstuvwxyz";
         let reader = new HexReader(data);
-        expect(reader.readNetworkText()).toEqual(str);
+        let networkText = reader.readNetworkText();
+        expect(networkText.mode).toEqual(0);
+        expect(networkText.text).toEqual(str);
     });
 });

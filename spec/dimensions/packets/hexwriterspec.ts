@@ -1,4 +1,6 @@
 import HexWriter from 'dimensions/packets/hexwriter';
+import NetworkText from 'dimensions/packets/networktext';
+
 describe("hexwriter", () => {
     let hexWriter: HexWriter;
 
@@ -40,7 +42,7 @@ describe("hexwriter", () => {
     });
 
     it("should correctly pack network text", () => {
-        hexWriter.packNetworkText("abcdefghijklmnopqrstuvwxyz", 0);
+        hexWriter.packNetworkText(new NetworkText(0, "abcdefghijklmnopqrstuvwxyz"));
         expect(hexWriter.data).toEqual("001a6162636465666768696a6b6c6d6e6f707172737475767778797a");
     });
 

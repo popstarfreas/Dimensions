@@ -4,12 +4,13 @@ module.exports = function (grunt) {
     grunt.initConfig({
         ts: {
             default: {
-                src: ["*.ts", "node_modules/dimensions/**/*.ts", "extensions/1.3.5-patch/**/*.ts", "spec/**/*.ts"],
+                src: ["*.ts", "node_modules/dimensions/**/*.ts", "spec/**/*.ts"],
                 outDir: 'build'
             },
             options: {
                 lib: ['es2015'],
-                sourceMap: false
+                strict: true,
+                sourceMap: false,
             }
         },
         jasmine_node: {
