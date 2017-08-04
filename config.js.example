@@ -1,28 +1,39 @@
 "use strict"
 exports.ConfigSettings = {
-    servers: [{
-        // The port to listen on for this ListenServer.
-        // You can add as many as you want, as long as they
-        // are on different ports.
-        // If you want to load balance one port among many processes
-        // use something like pm2
-        listenPort: 7777,
-        
-        // The list of servers to load-balance between. When someone uses the listenPort
-        // the server will use the routingServer with the lowest player count and route them
-        // to it. Domains in the serverIP section are also supported.
-        // The name of each routingServer must be unique! Even if they are on a different ListenServer.
-        routingServers: [{
-            name: "sharda",
-            serverIP: "127.0.0.1",
-            serverPort: 7778
-        },
+    servers: [
         {
-            name: "shardb",
-            serverIP: "127.0.0.1",
-            serverPort: 7779
-        }]
-    },
+            // The port to listen on for this ListenServer.
+            // You can add as many as you want, as long as they
+            // are on different ports.
+            // If you want to load balance one port among many processes
+            // use something like pm2
+            listenPort: 7777,
+            
+            // The list of servers to load-balance between. When someone uses the listenPort
+            // the server will use the routingServer with the lowest player count and route them
+            // to it. Domains in the serverIP section are also supported.
+            // The name of each routingServer must be unique! Even if they are on a different ListenServer.
+            routingServers: [{
+                name: "sharda",
+                serverIP: "127.0.0.1",
+                serverPort: 7780
+            },
+            {
+                name: "shardb",
+                serverIP: "127.0.0.1",
+                serverPort: 7781
+            }]
+        },
+        // This server listens on another port, and is not load balanced with the others
+        // You can switch to it at any time using `/oshard` or by joining 7778
+        {
+            listenPort: 7778,
+            routingServers: [{
+                name: "oshard",
+                serverIP: "127.0.0.1",
+                serverPort: 7782
+            }]
+        }
     ],
     options: {
         /* The number of millseconds of inactivity before a client socket is
