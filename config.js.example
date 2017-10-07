@@ -87,7 +87,7 @@ exports.ConfigSettings = {
         connectionLimit: {
             enabled: false,
             connectionLimitPerIP: 1,
-            kickReason: "You have exceeded the maximum limit of {0}"
+            kickReason: "You have exceeded the maximum connection limit of {0}"
         }
     }
 };
