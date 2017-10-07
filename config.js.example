@@ -81,6 +81,13 @@ exports.ConfigSettings = {
             tServerError: false,
             extensionLoad: true,
             outputToConsole: true
+        },
+
+        // Whether to limit connections and what the limit is
+        connectionLimit: {
+            enabled: false,
+            connectionLimitPerIP: 1,
+            kickReason: "You have exceeded the maximum limit of {0}"
         }
     }
 };
