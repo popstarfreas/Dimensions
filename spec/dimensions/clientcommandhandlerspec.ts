@@ -55,6 +55,11 @@ describe("ClientCommandHandler", () => {
             restApi: {
                 enabled: false,
                 port: 0
+            },
+            connectionLimit: {
+                enabled: false,
+                connectionLimitPerIP: 1,
+                kickReason: ""
             }
 
         };
