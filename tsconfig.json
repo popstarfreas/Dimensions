@@ -5,7 +5,8 @@
         "noImplicitAny": false,
         "sourceMap": false,
 	    "outDir": "build",
-        "strict": true
+        "strict": true,
+        "strictPropertyInitialization": false
     },
     "include": [
         "index.ts",
