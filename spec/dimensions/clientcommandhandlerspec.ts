@@ -8,6 +8,7 @@ import ClientPacketHandler from 'dimensions/clientpackethandler';
 import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
 import {ConfigOptions} from 'dimensions/configloader';
 import Logger from 'dimensions/logger';
+import ClientState from 'dimensions/clientstate';
 let Mitm = require('mitm');
 
 describe("ClientCommandHandler", () => {
@@ -180,6 +181,7 @@ describe("ClientCommandHandler", () => {
         it("should switch to an existing dimension", () => {
             // Set to true to avoid callback waiting
             client.server.socket.destroyed = true;
+            client.state = ClientState.FullyConnected;
 
             let command = client.globalHandlers.command.parseCommand("/serverb");
             let handled = client.globalHandlers.command.handle(command, client);
