@@ -17,7 +17,7 @@ Download and install Redis for your OS
 ### Step 3: Install the Plugin
 Download the plugin and put it in each Terraria Server for use with Dimensions
  * [Download](https://bitbucket.org/popstarfreas/dimensions-plugin/downloads/)
- * [Source](https://bitbucket.org/popstarfreas/dimensions-plugin)
+ * [Source](https://github.com/popstarfreas/Dimensions-TerrariaServer)
 
 ### Step 4: Setting Up and Running
  * Download the latest release and extract it to its own folder
