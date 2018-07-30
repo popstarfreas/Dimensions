@@ -4,11 +4,7 @@ describe("packetreader", () => {
     let reader: PacketReader;
     
     beforeEach(() => {
-        reader = new PacketReader("02000505");
-    });
-
-    it("should correctly remove the packet length and type", () => {
-        expect(reader.data).toEqual("05");
+        reader = new PacketReader(new Buffer("02000505", "hex"));
     });
 
     it("should correctly store the type of the packet", () => {

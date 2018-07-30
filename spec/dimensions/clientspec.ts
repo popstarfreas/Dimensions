@@ -169,7 +169,7 @@ describe("client", () => {
         globalTracking.names[takenName] = true;
 
         clientSocketDataHandlers.push((data: string) => {
-            let reader = new PacketReader(data);
+            let reader = new PacketReader(new Buffer(data, "hex"));
             expect(reader.type).toEqual(PacketTypes.Disconnect);
             done();
         });
@@ -181,7 +181,7 @@ describe("client", () => {
         let testMessage = "this is a test";
 
         clientSocketDataHandlers.push((data: string) => {
-            let reader = new PacketReader(data);
+            let reader = new PacketReader(new Buffer(data, "hex"));
             expect(reader.type).toEqual(PacketTypes.LoadNetModule);
             expect(reader.readUInt16()).toEqual(1);
             expect(reader.readByte()).toEqual(255);
