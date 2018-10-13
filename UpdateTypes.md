@@ -1,4 +1,6 @@
 # Dimension Packet Update Types
+If you use packet 67 with Dimensions, make sure the first data is an Int16 with a message type not already used to avoid it being misread as one of the below. If you publish a plugin or tool which uses this packet and that is used with Dimensions, add the type and information to this file.
+
 ## [0] Real IP Address
 Dimensions sends this to a Terraria Server to update the client's IP address from the IP of the machine Dimensions is running on to the real IP of the client.
 | Info        | Size | Datatype |
