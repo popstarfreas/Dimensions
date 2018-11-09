@@ -88,6 +88,12 @@ exports.ConfigSettings = {
             enabled: false,
             connectionLimitPerIP: 1,
             kickReason: "You have exceeded the maximum connection limit of {0}"
+        },
+
+        // Whether to limit creation of connections from
+        connectionRateLimit: {
+            enabled: false,
+            connectionRateLimitPerIP: 10 // num of new connections per second per ip
         }
     }
 };

@@ -12,6 +12,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 process.on('uncaughtException', function(e) {
    errorLogging.appendLine(e);
+   errorLogging.appendLine(e.stack);
 });
 
 var dimensions = new Dimensions(logging);

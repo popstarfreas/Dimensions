@@ -61,6 +61,10 @@ describe("ClientCommandHandler", () => {
                 enabled: false,
                 connectionLimitPerIP: 1,
                 kickReason: ""
+            },
+            connectionRateLimit: {
+                enabled: false,
+                connectionRateLimitPerIP: 5
             }
 
         };
