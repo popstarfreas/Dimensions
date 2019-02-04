@@ -65,8 +65,12 @@ describe("ClientCommandHandler", () => {
             connectionRateLimit: {
                 enabled: false,
                 connectionRateLimitPerIP: 5
-            }
-
+            },
+            redis: {
+                enabled: false,
+                host: "localhost",
+                port: 6379
+            },
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];
