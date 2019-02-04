@@ -94,6 +94,13 @@ exports.ConfigSettings = {
         connectionRateLimit: {
             enabled: false,
             connectionRateLimitPerIP: 10 // num of new connections per second per ip
-        }
+        },
+
+        // Whether to use redis for detached reloading
+        redis: {
+            enabled: false,
+            host: "localhost",
+            port: 6379
+        },
     }
 };
