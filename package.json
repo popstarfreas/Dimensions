@@ -1,5 +1,5 @@
 {
-  "name": "terrariadimensions",
+  "name": "@popstarfreas/dimensions",
   "version": "5.2.0",
   "repository": {
     "type": "git",
@@ -12,7 +12,8 @@
     "build": "grunt",
     "bstart": "grunt && cd ./build && node ./index.js && cd ../",
     "bstart-debug": "grunt && cd ./build && node-debug ./index.js && cd ../",
-    "test": "grunt"
+    "test": "grunt",
+    "makemodule": "rm -rf ./module/* && tsc --declaration -p ./ && mv -v build/node_modules/dimensions/* module && cp package.json module/package.json"
   },
   "author": "",
   "license": "ISC",
@@ -37,6 +38,6 @@
     "grunt-ts": "6.0.0-beta.14",
     "jasmine": "^2.5.3",
     "mitm": "^1.3.2",
-    "typescript": "2.9.2"
+    "typescript": "^2.9.2"
   }
 }
