@@ -5,12 +5,12 @@ import * as fs from "fs";
 let logging = new Logger();
 let errorLogging = new Logger("error-log.txt");
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason: any, promise: any) => {
     errorLogging.appendLine('Reason: ' + reason);
     errorLogging.appendLine(promise);
 });
 
-process.on('uncaughtException', function(e) {
+process.on('uncaughtException', function(e: any) {
    errorLogging.appendLine(e);
    errorLogging.appendLine(e.stack);
 });

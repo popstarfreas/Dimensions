@@ -1,12 +1,10 @@
 {
     "compilerOptions": {
         "module": "commonjs",
-        "target": "es2015",
-        "noImplicitAny": false,
+        "target": "es2017",
         "sourceMap": false,
-	    "outDir": "build",
-        "strict": true,
-        "strictPropertyInitialization": false
+        "outDir": "build",
+        "strict": true
     },
     "include": [
         "index.ts",
