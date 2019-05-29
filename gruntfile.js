@@ -8,7 +8,7 @@ module.exports = function (grunt) {
                 outDir: 'build'
             },
             options: {
-                lib: ['es2015'],
+                lib: ['es2017'],
                 strict: true,
                 sourceMap: false,
             }
