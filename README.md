@@ -48,6 +48,12 @@ If you intend to modify Dimensions in any way, be it for your own use or to make
     * to start without building run `npm run start`
 
 Dimensions uses the latest Typescript (v2) and uses the strict null checking. When editing and building, it is important to use these features when developing to avoid issues that would otherwise have been caught by the transpiler.
+
+### Extensions
+To build an extension:
+ * ``npm init`` in a new folder to initialise it
+ * ``npm i dimensions@npm:@popstarfreas/dimensions``, this installs dimensions as a dependency
+ * Have a look at [an existing extension](https://github.com/popstarfreas/Kickback/blob/master/index.ts) or [the abstract extension class](https://github.com/popstarfreas/Dimensions/blob/dev/node_modules/dimensions/extension/index.ts) to see a template for where to start
    
 # Supporters
 Thanks to all who have financially supported development:
