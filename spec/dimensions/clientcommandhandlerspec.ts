@@ -53,6 +53,7 @@ describe("ClientCommandHandler", () => {
                 tServerConnect: false,
                 tServerDisconnect: false,
                 tServerError: false,
+                extensionError: false,
             },
             restApi: {
                 enabled: false,
