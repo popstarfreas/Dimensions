@@ -11,17 +11,21 @@ import Logger from 'dimensions/logger';
 import PacketReader from 'dimensions/packets/packetreader';
 import PacketTypes from 'dimensions/packettypes';
 import GlobalTracking from 'dimensions/globaltracking';
+import GlobalHandlers from 'dimensions/globalhandlers';
+import ServerDetails from 'dimensions/serverdetails';
+import { Dictionary } from 'dimensions/dictionary';
 let Mitm = require('mitm');
+type DoneFn = () => void;
 
 describe("client", () => {
-    let mitm;
+    let mitm: any;
     let config: ConfigOptions;
     let serverA: RoutingServer;
     let serverB: RoutingServer;
     let socket: Net.Socket;
-    let serversDetails;
-    let globalHandlers;
-    let servers;
+    let serversDetails: Dictionary<ServerDetails>;
+    let globalHandlers: GlobalHandlers;
+    let servers: Dictionary<RoutingServer>;
     let globalTracking: GlobalTracking;
     let client: Client;
     let server: TerrariaServer;
@@ -54,6 +58,7 @@ describe("client", () => {
                 tServerConnect: false,
                 tServerDisconnect: false,
                 tServerError: false,
+                extensionError: false,
             },
             restApi: {
                 enabled: false,
@@ -63,12 +68,20 @@ describe("client", () => {
                 enabled: false,
                 connectionLimitPerIP: 1,
                 kickReason: ""
-            }
-
+            },
+            connectionRateLimit: {
+                enabled: false,
+                connectionRateLimitPerIP: 5
+            },
+            redis: {
+                enabled: false,
+                host: "localhost",
+                port: 6379
+            },
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];
-        mitm.on("connection", (socket) => {
+        mitm.on("connection", (socket: Net.Socket) => {
             clientSocket = socket;
             clientSocket.on("data", (data) => {
                 for (let i = 0; i < clientSocketDataHandlers.length; i++) {
@@ -108,7 +121,7 @@ describe("client", () => {
             command: new ClientCommandHandler(),
             clientPacketHandler: new ClientPacketHandler(),
             terrariaServerPacketHandler: new TerrariaServerPacketHandler(),
-            extensions: []
+            extensions: {} 
         };
 
         servers = {
@@ -164,7 +177,7 @@ describe("client", () => {
         expect(client.getName()).not.toBe(takenName);
     });
 
-    it("should correctly kick the player if they try to use an existing name", (done) => {
+    it("should correctly kick the player if they try to use an existing name", (done: DoneFn) => {
         let takenName = "thisnameistaken";
         globalTracking.names[takenName] = true;
 
@@ -177,7 +190,7 @@ describe("client", () => {
         client.setName(takenName);
     });
 
-    it("should correctly send a chat message to the client", (done) => {
+    it("should correctly send a chat message to the client", (done: DoneFn) => {
         let testMessage = "this is a test";
 
         clientSocketDataHandlers.push((data: string) => {

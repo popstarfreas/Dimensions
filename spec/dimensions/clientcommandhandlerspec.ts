@@ -10,9 +10,10 @@ import {ConfigOptions} from 'dimensions/configloader';
 import Logger from 'dimensions/logger';
 import ClientState from 'dimensions/clientstate';
 let Mitm = require('mitm');
+type DoneFn = () => void;
 
 describe("ClientCommandHandler", () => {
-    let mitm;
+    let mitm: any;
     let config: ConfigOptions;
     let serverA: RoutingServer;
     let serverB: RoutingServer;
@@ -52,6 +53,7 @@ describe("ClientCommandHandler", () => {
                 tServerConnect: false,
                 tServerDisconnect: false,
                 tServerError: false,
+                extensionError: false,
             },
             restApi: {
                 enabled: false,
@@ -61,12 +63,20 @@ describe("ClientCommandHandler", () => {
                 enabled: false,
                 connectionLimitPerIP: 1,
                 kickReason: ""
-            }
-
+            },
+            connectionRateLimit: {
+                enabled: false,
+                connectionRateLimitPerIP: 5
+            },
+            redis: {
+                enabled: false,
+                host: "localhost",
+                port: 6379
+            },
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];
-        mitm.on("connection", (socket) => {
+        mitm.on("connection", (socket: Net.Socket) => {
             clientSocket = socket;
             clientSocket.on("data", (data) => {
                 for (let i = 0; i < clientSocketDataHandlers.length; i++) {
@@ -106,7 +116,7 @@ describe("ClientCommandHandler", () => {
             command: new ClientCommandHandler(),
             clientPacketHandler: new ClientPacketHandler(),
             terrariaServerPacketHandler: new TerrariaServerPacketHandler(),
-            extensions: []
+            extensions: {}
         };
 
         servers = {
@@ -158,7 +168,7 @@ describe("ClientCommandHandler", () => {
             expect(handled).toBe(false);
         });
 
-        it("should send the user a user count", (done) => {
+        it("should send the user a user count", (done: DoneFn) => {
             clientSocketDataHandlers.push((data: string) => {
                 expect(data).toContain("There are 0 players across all Dimensions");
                 done();
