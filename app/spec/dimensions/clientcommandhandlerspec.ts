@@ -180,7 +180,7 @@ describe("ClientCommandHandler", () => {
     describe("dimensionswitch", () => {
         it("should not switch to a non-existing dimension", () => {
             // Set to true to avoid callback waiting
-            client.server.socket.destroyed = true;
+            (client.server.socket as any).destroyed = true;
 
             let command = client.globalHandlers.command.parseCommand("/asdasdas");
             let handled = client.globalHandlers.command.handle(command, client);
@@ -190,7 +190,7 @@ describe("ClientCommandHandler", () => {
 
         it("should switch to an existing dimension", () => {
             // Set to true to avoid callback waiting
-            client.server.socket.destroyed = true;
+            (client.server.socket as any).destroyed = true;
             client.state = ClientState.FullyConnected;
 
             let command = client.globalHandlers.command.parseCommand("/serverb");
