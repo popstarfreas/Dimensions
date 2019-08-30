@@ -208,7 +208,7 @@ describe("client", () => {
 
     it("should correctly switch the client to another server", () => {
         // Set to true to avoid callback waiting
-        client.server.socket.destroyed = true;
+        (client.server.socket as any).destroyed = true;
         client.changeServer(serverB);
 
         expect(client.server.name).toBe(serverB.name);
