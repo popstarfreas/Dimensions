@@ -4,7 +4,7 @@ module.exports = function (grunt) {
     grunt.initConfig({
         ts: {
             default: {
-                src: ["*.ts", "node_modules/dimensions/**/*.ts", "spec/**/*.ts"],
+                src: ["*.ts", "app/node_modules/dimensions/**/*.ts", "app/spec/**/*.ts"],
                 outDir: 'build'
             },
             options: {
