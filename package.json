@@ -9,10 +9,10 @@
   "main": "index.js",
   "scripts": {
     "start": "cd ./build && node ./index.js",
-    "build": "grunt",
+    "build": "tsc -p ./",
     "bstart": "grunt && cd ./build && node ./index.js && cd ../",
     "bstart-debug": "grunt && cd ./build && node-debug ./index.js && cd ../",
-    "test": "grunt",
+    "test": "npm run build && jasmine build/spec/**/*.js",
     "makemodule": "rm -rf ./module/* && tsc --declaration -p ./ && mv -v build/node_modules/dimensions/* module && cp package.json module/package.json"
   },
   "author": "",
@@ -35,10 +35,6 @@
     "@types/redis": "^0.12.36",
     "@types/utf8": "^2.1.5",
     "@types/uuid": "^3.4.4",
-    "grunt": "^1.0.4",
-    "grunt-cli": "^1.2.0",
-    "grunt-jasmine-node": "^0.3.1",
-    "grunt-ts": "^6.0.0-beta.22",
     "jasmine": "^3.4.0",
     "mitm": "^1.7.0",
     "typescript": "^3.6.2"

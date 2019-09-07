@@ -1,7 +1,5 @@
 language: node_js
 node_js:
   - "12"
-before_script:
-  - npm install grunt-cli -g
-script: grunt
+script: test
 install: npm install
