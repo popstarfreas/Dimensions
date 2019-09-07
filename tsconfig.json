@@ -8,6 +8,7 @@
     },
     "include": [
         "index.ts",
-        "app/node_modules/dimensions"
+        "app/node_modules/dimensions",
+        "app/spec"
     ]
 }

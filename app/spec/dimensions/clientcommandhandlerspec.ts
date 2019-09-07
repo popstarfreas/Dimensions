@@ -169,11 +169,13 @@ describe("ClientCommandHandler", () => {
         });
 
         it("should send the user a user count", (done: DoneFn) => {
-            clientSocketDataHandlers.push((data: string) => {
+            const handler = (data: string) => {
                 expect(data).toContain("There are 0 players across all Dimensions");
                 done();
-            });
-            client.globalHandlers.command.parseCommand("/who");
+            }
+            clientSocketDataHandlers.push(handler);
+            let command = client.globalHandlers.command.parseCommand("/who");
+            client.globalHandlers.command.handle(command, client);
         });
     });
 
