@@ -173,7 +173,8 @@ describe("ClientCommandHandler", () => {
                 expect(data).toContain("There are 0 players across all Dimensions");
                 done();
             });
-            client.globalHandlers.command.parseCommand("/who");
+            let command = client.globalHandlers.command.parseCommand("/who");
+            client.globalHandlers.command.handle(command, client);
         });
     });
 
