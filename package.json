@@ -10,8 +10,8 @@
   "scripts": {
     "start": "cd ./build && node ./index.js",
     "build": "tsc -p ./",
-    "bstart": "grunt && cd ./build && node ./index.js && cd ../",
-    "bstart-debug": "grunt && cd ./build && node-debug ./index.js && cd ../",
+    "bstart": "npm run build && npm run start",
+    "bstart-debug": "npm run build && cd ./build && node-debug ./index.js && cd ../",
     "test": "npm run build && jasmine --config=jasmine.json",
     "makemodule": "rm -rf ./module/* && tsc --declaration -p ./ && mv -v build/node_modules/dimensions/* module && cp package.json module/package.json",
     "makerelease": "./makerelease.sh"

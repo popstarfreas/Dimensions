@@ -7,7 +7,7 @@
         "strict": true
     },
     "include": [
-        "index.ts",
+        "app/index.ts",
         "app/node_modules/dimensions",
         "app/spec"
     ]
