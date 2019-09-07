@@ -18,8 +18,8 @@ regex="\"version\": \"(([0-9]+\.?){3})"
 if [[ $package =~ $regex ]]
 then
     version="${BASH_REMATCH[1]}"
-    zip -r "Dimensions-$version.zip" release
+    zip -r "Dimensions-v$version.zip" ./
 else
-    zip -r Dimensions.zip release
+    zip -r Dimensions.zip ./
 fi
 rm -rf release

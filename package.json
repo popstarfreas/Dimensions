@@ -14,7 +14,7 @@
     "bstart-debug": "grunt && cd ./build && node-debug ./index.js && cd ../",
     "test": "npm run build && jasmine --config=jasmine.json",
     "makemodule": "rm -rf ./module/* && tsc --declaration -p ./ && mv -v build/node_modules/dimensions/* module && cp package.json module/package.json",
-    "makerelease": "npm run build && rm -rf build/spec && mkdir release && mv ./build release/build && cp package.json release/package.json && package-lock.json release/package-lock.json"
+    "makerelease": "./makerelease.sh"
   },
   "author": "",
   "license": "ISC",
