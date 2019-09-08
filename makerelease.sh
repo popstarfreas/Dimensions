@@ -14,13 +14,15 @@ cp -r lib release/lib
 cp License.md release/License.md
 cp README.md release/README.md
 cd release
+name="Dimensions.zip"
 package=$(cat package.json)
 regex="\"version\": \"(([0-9]+\.?){3})"
 if [[ $package =~ $regex ]]
 then
     version="${BASH_REMATCH[1]}"
-    zip -r "Dimensions-v$version.zip" ./
-else
-    zip -r Dimensions.zip ./
+    name="Dimensions-v$version.zip" 
 fi
+zip -r "$name" ./
+cd ../
+mv "release/$name" "./$name"
 rm -rf release
