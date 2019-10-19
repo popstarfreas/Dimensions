@@ -6,3 +6,4 @@ config.js
 log.txt
 .tscache
 logs
+module/
