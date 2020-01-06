@@ -16,12 +16,14 @@ exports.ConfigSettings = {
             routingServers: [{
                 name: "sharda",
                 serverIP: "127.0.0.1",
-                serverPort: 7780
+                serverPort: 7780,
+                isVanilla: false,
             },
             {
                 name: "shardb",
                 serverIP: "127.0.0.1",
-                serverPort: 7781
+                serverPort: 7781,
+                isVanilla: false,
             }]
         },
         // This server listens on another port, and is not load balanced with the others
@@ -31,7 +33,8 @@ exports.ConfigSettings = {
             routingServers: [{
                 name: "oshard",
                 serverIP: "127.0.0.1",
-                serverPort: 7782
+                serverPort: 7782,
+                isVanilla: false,
             }]
         }
     ],

@@ -94,12 +94,14 @@ describe("client", () => {
         serverA = {
             name: "servera",
             serverIP: "localhost",
-            serverPort: 7777
+            serverPort: 7777,
+            isVanilla: false,
         };
         serverB = {
             name: "serverb",
             serverIP: "localhost",
-            serverPort: 7778
+            serverPort: 7778,
+            isVanilla: false,
         };
 
         serversDetails = {
