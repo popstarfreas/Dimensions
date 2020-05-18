@@ -8,7 +8,7 @@ exports.ConfigSettings = {
             // If you want to load balance one port among many processes
             // use something like pm2
             listenPort: 7777,
-            
+
             // The list of servers to load-balance between. When someone uses the listenPort
             // the server will use the routingServer with the lowest player count and route them
             // to it. Domains in the serverIP section are also supported.
@@ -45,16 +45,16 @@ exports.ConfigSettings = {
 
         /* The current Terraria version (used in switching, if incorrect
          * players will not be able to switch) */
-        currentTerrariaVersion: 194,
+        currentTerrariaVersion: 226,
 
         /* You can use this when small patches to Terraria are made
          * that do not break compatibility with the server */
         fakeVersion: {
             enabled: false,
-            terrariaVersion: 194
+            terrariaVersion: 226
         },
 
-        // Whether or not to enable a "/v2/status"-like http server 
+        // Whether or not to enable a "/v2/status"-like http server
         restApi: {
             enabled: false,
             port: 7880
