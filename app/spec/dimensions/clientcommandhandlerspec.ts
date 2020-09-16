@@ -73,6 +73,13 @@ describe("ClientCommandHandler", () => {
                 host: "localhost",
                 port: 6379
             },
+            synchronization: {
+                projectiles: {
+                    enabled: false,
+                    type: "keep",
+                    when: "always"
+                }
+            }
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];
