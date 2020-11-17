@@ -11,7 +11,7 @@ Follow the link and download either version. https://nodejs.org/en/
  
 ### Step 2: Install the Plugin
 Download the plugin and put it in each Terraria Server for use with Dimensions
- * [Download](https://bitbucket.org/popstarfreas/dimensions-plugin/downloads/)
+ * [Download](https://github.com/popstarfreas/Dimensions-TerrariaServer/releases)
  * [Source](https://github.com/popstarfreas/Dimensions-TerrariaServer)
 
 ### Step 3: Setting Up and Running
