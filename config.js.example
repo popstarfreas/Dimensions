@@ -45,13 +45,13 @@ exports.ConfigSettings = {
 
         /* The current Terraria version (used in switching, if incorrect
          * players will not be able to switch) */
-        currentTerrariaVersion: 226,
+        currentTerrariaVersion: 234,
 
         /* You can use this when small patches to Terraria are made
          * that do not break compatibility with the server */
         fakeVersion: {
             enabled: false,
-            terrariaVersion: 226
+            terrariaVersion: 234
         },
 
         // Whether or not to enable a "/v2/status"-like http server
