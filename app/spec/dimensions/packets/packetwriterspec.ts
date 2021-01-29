@@ -70,5 +70,19 @@ describe("packetwriter", () => {
             packetWriter.packString(str);
             expect(packetWriter.data.readInt16LE(0)).toEqual(677);
         });
+
+        it("Should not error out on creating differently lengths", () => {
+            for (let i = 0; i < 500; i++) {
+                let str = "";
+                for (let j = 0; j < i; j++) {
+                    str += "a";
+                }
+                new PacketWriter()
+                    .setType(0)
+                    .packString(str)
+                    .packByte(0)
+                    .data
+            }
+        });
     });
 });
