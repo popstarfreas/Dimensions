@@ -28,4 +28,6 @@ Terraria Servers use this to tell Dimensions to switch the clients Dimension
 | Type           | 2    | Int16    |
 | Server IP      | ?    | String   |
 | Server Port    | ?    | UInt16   |
+| Hidden         | ?    | Boolean  |
 Terraria Servers use this to tell Dimension to switch the client to a specific ip/port that is not in the Dimensions config.
+Note: Hidden setting is unused in switching servers but required while transfering.
