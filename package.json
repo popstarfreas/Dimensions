@@ -37,7 +37,7 @@
     "@types/utf8": "^2.1.5",
     "@types/uuid": "^3.4.4",
     "jasmine": "^3.4.0",
-    "mitm": "^1.7.0",
+    "mitm": "^1.7.2",
     "typescript": "^3.6.2"
   }
 }
