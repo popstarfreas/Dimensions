@@ -29,9 +29,9 @@ exports.ConfigSettings = {
         // This server listens on another port, and is not load balanced with the others
         // You can switch to it at any time using `/oshard` or by joining 7778
         // Hidden servers will not pop up in server list but players still can access
-	// using the server name as command.
-	// Example: `hshard` will not visible on server list but players can access
-	// by typing using `/hshard`
+        // using the server name as command.
+        // Example: `hshard` will not visible on server list but players can access
+        // by typing using `/hshard`
         {
             listenPort: 7778,
             routingServers: [{
