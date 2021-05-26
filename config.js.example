@@ -35,15 +35,9 @@ exports.ConfigSettings = {
         {
             listenPort: 7778,
             routingServers: [{
-                name: "oshard",
-                serverIP: "127.0.0.1",
-                serverPort: 7782,
-                hidden: false
-            },
-            {
                 name: "hshard",
                 serverIP: "127.0.0.1",
-                serverPort: 7783,
+                serverPort: 7782,
                 hidden: true
             }]
         }
