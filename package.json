@@ -21,7 +21,7 @@
   "dependencies": {
     "glob": "^7.1.0",
     "lodash": "^4.17.15",
-    "redis": "^2.6.2",
+    "redis": "^3.1.1",
     "require-nocache": "^1.0.0",
     "requirejs": "^2.2.0",
     "utf8": "^2.1.2",
