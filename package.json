@@ -20,7 +20,6 @@
   "license": "ISC",
   "dependencies": {
     "glob": "^7.1.0",
-    "lodash": "^4.17.15",
     "redis": "^3.1.1",
     "require-nocache": "^1.0.0",
     "requirejs": "^2.2.0",
@@ -30,7 +29,6 @@
   "devDependencies": {
     "@types/glob": "^7.1.1",
     "@types/jasmine": "^3.4.0",
-    "@types/lodash": "^4.14.132",
     "@types/mitm": "^1.3.2",
     "@types/node": "^12.7.3",
     "@types/redis": "^0.12.36",
