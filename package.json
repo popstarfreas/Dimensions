@@ -23,7 +23,7 @@
     "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
     "utf8": "^3.0.0",
-    "uuid": "^3.0.1"
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
@@ -32,7 +32,7 @@
     "@types/node": "^12.7.3",
     "@types/redis": "^2.8.32",
     "@types/utf8": "^3.0.0",
-    "@types/uuid": "^3.4.4",
+    "@types/uuid": "^8.3.1",
     "jasmine": "^3.4.0",
     "mitm": "^1.7.2",
     "typescript": "^4.4.4"
