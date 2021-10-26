@@ -64,7 +64,22 @@ exports.ConfigSettings = {
         // Whether or not to enable a "/v2/status"-like http server
         restApi: {
             enabled: false,
-            port: 7880
+            port: 7880,
+            /* optional */
+            response: {
+                /* optional */
+                name: "",
+                /* optional */
+                worldName: "Dimensions Generic",
+                /* optional */
+                terrariaServerPort: 7777,
+                /* optional */
+                hasServerPassword: false,
+                /* optional */
+                maxPlayers: 400,
+                /* optional */
+                version: "1.4.2.3",
+            }
         },
 
         /* Whether or not to block invisibility buff.
