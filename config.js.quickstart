@@ -85,5 +85,19 @@ exports.ConfigSettings = {
             host: "localhost",
             port: 6379
         },
+
+        nameChanges: {
+            // Prevents a server from changing client's name in dimensions
+            // modes:
+            //  * "legacy" - Behaviour of v5.9.1 and lower
+            //               1. Passes through player info packets from client and server even if they have
+            //                  a mismatched name.
+            //  * "rewrite" - 1. Never updates a client's name dimensions-side after it has been set,
+            //                   unless the packet is from the server and it is excluded from this rule.
+            //                2. Rewrites packets from the client and the server if they have a name mismatch.
+            mode: "legacy",
+            // A list of dimension names that are allowed (only the server itself, not client) to update a client's name
+            rewriteExclusions: [],
+        },
     }
 };
