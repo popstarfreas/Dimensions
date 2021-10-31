@@ -99,5 +99,12 @@ exports.ConfigSettings = {
             // A list of dimension names that are allowed (only the server itself, not client) to update a client's name
             rewriteExclusions: [],
         },
+
+        // Used when there is a proxy in front of dimensions that needs to forward
+        // the client's ip address
+        proxy: {
+            proxyType: "proxy_protocol_v1", // https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt
+            enabled: false,
+        }
     }
 };
