@@ -1,0 +1,89 @@
+"use strict"
+exports.ConfigSettings = {
+    servers: [
+        // ADD YOUR SERVERS HERE (steps: https://github.com/popstarfreas/Dimensions/wiki/Config#quick-start)
+    ],
+    options: {
+        /* The number of millseconds of inactivity before a client socket is
+         * destroyed */
+        socketTimeout: 1000*15,
+
+        // Whether or not to disable Nagle's Algorithm (https://en.wikipedia.org/wiki/Nagle's_algorithm)
+        socketNoDelay: true,
+
+        /* The current Terraria version (used in switching, if incorrect
+         * players will not be able to switch) */
+        currentTerrariaVersion: 238,
+
+        /* You can use this when small patches to Terraria are made
+         * that do not break compatibility with the server */
+        fakeVersion: {
+            enabled: false,
+            terrariaVersion: 238
+        },
+
+        // Whether or not to enable a "/v2/status"-like http server
+        restApi: {
+            enabled: false,
+            port: 7880,
+            /* optional */
+            response: {
+                /* optional */
+                name: "",
+                /* optional */
+                worldName: "Dimensions Generic",
+                /* optional */
+                terrariaServerPort: 7777,
+                /* optional */
+                hasServerPassword: false,
+                /* optional */
+                maxPlayers: 400,
+                /* optional */
+                version: "1.4.2.3",
+            }
+        },
+
+        /* Whether or not to block invisibility buff.
+         * This was added here because TShock's version is broken */
+        blockInvis: false,
+
+        // Whether or not to use a blacklist (http service) (for blocking vpn, etc)
+        blacklist: {
+            enabled: false,
+            apiKey: ""
+        },
+
+        // Logging options
+        log: {
+            clientTimeouts: false,
+            clientConnect: false,
+            clientDisconnect: false,
+            clientError: false,
+            tServerConnect: false,
+            tServerDisconnect: false,
+            tServerError: false,
+            extensionLoad: true,
+            outputToConsole: true
+        },
+
+        // Whether to limit connections and what the limit is
+        connectionLimit: {
+            enabled: false,
+            connectionLimitPerIP: 1,
+            kickReason: "You have exceeded the maximum connection limit of {0}"
+        },
+
+        // Whether to limit creation of connections from
+        connectionRateLimit: {
+            enabled: false,
+            connectionRateLimitPerIP: 10 // num of new connections per second per ip
+        },
+
+        // Whether to use redis for detached reloading
+        redis: {
+            enabled: false,
+            host: "localhost",
+            port: 6379
+        },
+    }
+};
