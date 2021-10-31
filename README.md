@@ -18,7 +18,8 @@ Download the plugin and put it in each Terraria Server for use with Dimensions
 ### Step 3: Setting Up and Running
  * Download the latest release and extract it to its own folder
  * Open a cmd prompt/terminal at the folder and execute the command `npm install --only=production` (it may take a bit to finish)
- * Copy the file "config.js.example" and rename it to "config.js" and edit it to your specifications ([Config Wiki](https://github.com/popstarfreas/Dimensions/wiki/Config))
+ * Copy the file "config.js.example" and rename it to "config.js" and edit it to your specifications
+ * OR follow the quickstart guide in the [Config Wiki](https://github.com/popstarfreas/Dimensions/wiki/Config)
  * To start Dimensions execute `npm run start`
 
 ### Step 4 (Optional): Install Redis
