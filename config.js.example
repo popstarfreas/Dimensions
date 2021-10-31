@@ -14,31 +14,41 @@ exports.ConfigSettings = {
             // to it. Domains in the serverIP section are also supported.
             // The name of each routingServer must be unique! Even if they are on a different ListenServer.
             routingServers: [{
-                name: "sharda",
+                name: "lobby",
                 serverIP: "127.0.0.1",
                 serverPort: 7780,
                 hidden: false
             },
             {
-                name: "shardb",
+                name: "lobby-mirror",
                 serverIP: "127.0.0.1",
                 serverPort: 7781,
                 hidden: false
             }]
         },
         // This server listens on another port, and is not load balanced with the others
-        // You can switch to it at any time using `/oshard` or by joining 7778
+        // You can switch to it at any time using `/build` or by joining 7778
         // Hidden servers will not pop up in server list but players still can access
         // using the server name as command.
-        // Example: `hshard` will not visible on server list but players can access
-        // by typing using `/hshard`
+        // Example: `build` will not visible on server list but players can access
+        // by typing using `/build`
         {
             listenPort: 7778,
             routingServers: [{
-                name: "hshard",
+                name: "build",
                 serverIP: "127.0.0.1",
                 serverPort: 7782,
                 hidden: true
+            }]
+        },
+        // There's also no need to specify a listenPort.
+        // A server without a listen port will only be accessible via command-based switching (`/pvp`),
+        {
+            routingServers: [{
+                name: "pvp",
+                serverIP: "127.0.0.1",
+                serverPort: 7782,
+                hidden: false
             }]
         }
     ],
