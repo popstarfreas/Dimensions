@@ -1,0 +1,8 @@
+./node_modules/
+./logs/
+.github/
+module/
+config.js.example
+config.js.quickstart
+*.zip
+build/
