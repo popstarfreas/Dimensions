@@ -1,10 +1,12 @@
 class NetworkText {
     private _mode: number;
     private _text: string;
+    private _substitutionList: NetworkText[] | undefined;
 
-    constructor(mode: number, text: string) {
+    constructor(mode: number, text: string, substitutionList: NetworkText[] | undefined = undefined) {
         this._mode = mode;
         this._text = text;
+        this._substitutionList = substitutionList;
     }
 
     public get mode(): number {
@@ -13,6 +15,10 @@ class NetworkText {
 
     public get text(): string {
         return this._text;
+    }
+
+    public get substitutionList(): NetworkText[] | undefined {
+        return this._substitutionList;
     }
 
     public toString(): string {
