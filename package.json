@@ -1,6 +1,6 @@
 {
   "name": "@popstarfreas/dimensions",
-  "version": "5.7.0",
+  "version": "5.9.1",
   "repository": {
     "type": "git",
     "url": "git://github.com/popstarfreas/Dimensions.git"
@@ -19,25 +19,22 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "glob": "^7.1.0",
-    "lodash": "^4.17.15",
-    "redis": "^2.6.2",
+    "glob": "^7.2.0",
+    "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
-    "requirejs": "^2.2.0",
-    "utf8": "^2.1.2",
-    "uuid": "^3.0.1"
+    "utf8": "^3.0.0",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@types/glob": "^7.1.1",
+    "@types/glob": "^7.2.0",
     "@types/jasmine": "^3.4.0",
-    "@types/lodash": "^4.14.132",
     "@types/mitm": "^1.3.2",
-    "@types/node": "^12.7.3",
-    "@types/redis": "^0.12.36",
-    "@types/utf8": "^2.1.5",
-    "@types/uuid": "^3.4.4",
+    "@types/node": "^16.11.6",
+    "@types/redis": "^2.8.32",
+    "@types/utf8": "^3.0.0",
+    "@types/uuid": "^8.3.1",
     "jasmine": "^3.4.0",
-    "mitm": "^1.7.0",
-    "typescript": "^3.6.2"
+    "mitm": "^1.7.2",
+    "typescript": "^4.4.4"
   }
 }
