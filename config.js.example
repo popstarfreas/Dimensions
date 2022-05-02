@@ -17,14 +17,14 @@ exports.ConfigSettings = {
                 name: "lobby",
                 serverIP: "127.0.0.1",
                 serverPort: 7780,
-                hidden: false
+                hidden: false,
                 isVanilla: false,
             },
             {
                 name: "lobby-mirror",
                 serverIP: "127.0.0.1",
                 serverPort: 7781,
-                hidden: false
+                hidden: false,
                 isVanilla: false,
             }]
         },
@@ -40,7 +40,7 @@ exports.ConfigSettings = {
                 name: "build",
                 serverIP: "127.0.0.1",
                 serverPort: 7782,
-                hidden: true
+                hidden: true,
             }]
         },
         // There's also no need to specify a listenPort.
@@ -50,7 +50,7 @@ exports.ConfigSettings = {
                 name: "pvp",
                 serverIP: "127.0.0.1",
                 serverPort: 7782,
-                hidden: false
+                hidden: false,
                 isVanilla: false,
             }]
         }
