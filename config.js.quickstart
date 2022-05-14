@@ -95,5 +95,13 @@ exports.ConfigSettings = {
             // A list of dimension names that are allowed (only the server itself, not client) to update a client's name
             rewriteExclusions: [],
         },
+
+        // Controls which language is used for chat/disconnect messages.
+        // Options:
+        // * english
+        // * en
+        // * 汉语
+        // * zn
+        language: "english",
     }
 };

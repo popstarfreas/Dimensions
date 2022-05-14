@@ -9,6 +9,7 @@ import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler'
 import {ConfigOptions} from 'dimensions/configloader';
 import Logger from 'dimensions/logger';
 import ClientState from 'dimensions/clientstate';
+import * as Language from 'dimensions/language';
 let Mitm = require('mitm');
 type DoneFn = () => void;
 
@@ -72,6 +73,7 @@ describe("ClientCommandHandler", () => {
                 host: "localhost",
                 port: 6379
             },
+            language: Language.english,
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];

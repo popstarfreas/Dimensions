@@ -14,6 +14,7 @@ import GlobalTracking from 'dimensions/globaltracking';
 import GlobalHandlers from 'dimensions/globalhandlers';
 import ServerDetails from 'dimensions/serverdetails';
 import { Dictionary } from 'dimensions/dictionary';
+import * as Language from 'dimensions/language';
 let Mitm = require('mitm');
 type DoneFn = () => void;
 
@@ -77,6 +78,7 @@ describe("client", () => {
                 host: "localhost",
                 port: 6379
             },
+            language: Language.english,
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];
