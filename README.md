@@ -1,10 +1,11 @@
+# Maintenance Status
+Be aware that I am currently behind on some updates to Dimensions. Since the server I use this for (Dark Gaming) is not currently updated to run on the latest version, this means I don't get much real-world testing of the latest version of Dimensions. If you find an issue and would like to fix it, make a PR so it can be included for others. Once the server I use this for is updated to run on the latest version, then any remaining issues that arrived since 1.4.2+ will be resolved.
+
 [![Build Status](https://travis-ci.org/popstarfreas/Dimensions.svg?branch=master)](https://travis-ci.org/popstarfreas/Dimensions)
 
 # README #
 
-Dimensions is:
-
-A routing service that can also load balance connections. For use with Terraria Servers.
+Dimensions is: A routing service that can also load balance connections. For use with Terraria Servers.
 
 ## Installation
 ### Step 1: Install NodeJS
