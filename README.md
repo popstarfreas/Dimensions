@@ -1,7 +1,7 @@
-# Maintenance Status
-Be aware that I am currently behind on some updates to Dimensions. Since the server I use this for (Dark Gaming) is not currently updated to run on the latest version, this means I don't get much real-world testing of the latest version of Dimensions. If you find an issue and would like to fix it, make a PR so it can be included for others. Once the server I use this for is updated to run on the latest version, then any remaining issues that arrived since 1.4.2+ will be resolved.
+# Maintenance Status (as of 2023-06-09)
+The server that I develop and use this for (Dark Gaming) is currently still transitioning to 1.4.4.9. When we finish this transition we will be able to update to the latest version of Dimensions, which means that proper maintenance and new features will resume.
 
-[![Build Status](https://travis-ci.org/popstarfreas/Dimensions.svg?branch=master)](https://travis-ci.org/popstarfreas/Dimensions)
+In the meantime, if you find an issue and would like to fix it, make a PR so it can be included for others.
 
 # README #
 
@@ -25,6 +25,8 @@ Download the plugin and put it in each Terraria Server for use with Dimensions
 
 ### Step 4 (Optional): Install Redis
 **If you do not need to have live reloading of modules / the configuration file then you do not need to do this step.**
+
+Redis is used to communicate with the dimensions process via the `dimensions_cli.js` file. It will allow you to reload the config and/or reload things like extensions or modules without the need to manually restart dimensions, reducing downtime.
 
 Download and install Redis for your OS
  * Windows: https://github.com/MSOpenTech/redis/releases
