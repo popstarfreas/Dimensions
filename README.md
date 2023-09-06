@@ -1,7 +1,7 @@
-# Maintenance Status (as of 2023-06-09)
-The server that I develop and use this for (Dark Gaming) is currently still transitioning to 1.4.4.9. When we finish this transition we will be able to update to the latest version of Dimensions, which means that proper maintenance and new features will resume.
+# Maintenance Status (as of 2023-09-06)
+The server that I develop and use this for (Dark Gaming) is currently updating to the latest version of Dimensions, this means that some bugs introduced by the latest versions will be begin to be fixed over time as our deployment of the latest version is tested to replace our current version.
 
-If you are looking for the latest version of Dimensions then look at the [pre-releases](https://github.com/popstarfreas/Dimensions/releases). Alternatively you can build dimensions yourself from the dev branch. The pre-release is marked as such because it is not currently running on Dark Gaming. Once Dark gaming has updated to 1.4.4.9, the latest version will get proper testing and will be marked as a proper release when that happens.
+If you are looking for the latest version of Dimensions then look at the [pre-releases](https://github.com/popstarfreas/Dimensions/releases). Alternatively you can build dimensions yourself from the dev branch. The pre-release is marked as such because it is not currently running on Dark Gaming. Once Dark Gaming has properly tested the 1.4.4.9 compatible version, a proper release will be made.
 
 In the meantime, if you find an issue and would like to fix it, make a PR so it can be included for others.
 
