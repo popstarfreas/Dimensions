@@ -23,7 +23,8 @@
     "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
     "utf8": "^3.0.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "rescript-terrariapacket": "github:popstarfreas/rescript-terrariapacket#8488287"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
