@@ -1,10 +1,13 @@
-[![Build Status](https://travis-ci.org/popstarfreas/Dimensions.svg?branch=master)](https://travis-ci.org/popstarfreas/Dimensions)
+# Maintenance Status (as of 2023-09-06)
+The server that I develop and use this for (Dark Gaming) is currently updating to the latest version of Dimensions, this means that some bugs introduced by the latest versions will be begin to be fixed over time as our deployment of the latest version is tested to replace our current version.
+
+If you are looking for the latest version of Dimensions then look at the [pre-releases](https://github.com/popstarfreas/Dimensions/releases). Alternatively you can build dimensions yourself from the dev branch. The pre-release is marked as such because it is not currently running on Dark Gaming. Once Dark Gaming has properly tested the 1.4.4.9 compatible version, a proper release will be made.
+
+In the meantime, if you find an issue and would like to fix it, make a PR so it can be included for others.
 
 # README #
 
-Dimensions is:
-
-A routing service that can also load balance connections. For use with Terraria Servers.
+Dimensions is: A routing service that can also load balance connections. For use with Terraria Servers.
 
 ## Installation
 ### Step 1: Install NodeJS
@@ -24,6 +27,8 @@ Download the plugin and put it in each Terraria Server for use with Dimensions
 
 ### Step 4 (Optional): Install Redis
 **If you do not need to have live reloading of modules / the configuration file then you do not need to do this step.**
+
+Redis is used to communicate with the dimensions process via the `dimensions_cli.js` file. It will allow you to reload the config and/or reload things like extensions or modules without the need to manually restart dimensions, reducing downtime.
 
 Download and install Redis for your OS
  * Windows: https://github.com/MSOpenTech/redis/releases
