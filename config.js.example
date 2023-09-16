@@ -155,5 +155,30 @@ exports.ConfigSettings = {
         // * 汉语
         // * zn
         language: "english",
+
+
+        // Override specific messages from the chosen language
+        //
+        // Fields:
+        // nameAlreadyOnServer
+        // characterNameLengthOutOfRange
+        // areYouEvenConnected
+        // youAreAlreadyInthatDimension
+        // shiftingToDimension
+        // youNeedToWaitUntilConnected
+        // playerCount
+        // availableDimensions
+        // youEnteredTheVoid
+        // dimensionDisconnectedYou
+        // reason
+        // dimensionsCommandName
+        // specifyADimensionToTravel
+        // dimensionDropped
+        //
+        // e.g:
+        // languageOverrides: {
+        //   playerCount: "We currently have ${total} players on our server."
+        // }
+        languageOverrides: {},
     }
 };
