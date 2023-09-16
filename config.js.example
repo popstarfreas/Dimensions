@@ -145,7 +145,7 @@ exports.ConfigSettings = {
             //                2. Rewrites packets from the client and the server if they have a name mismatch.
             mode: "legacy",
             // A list of dimension names that are allowed (only the server itself, not client) to update a client's name
-            rewriteExclusions: [],
+            exclusions: [],
         },
 
         // Controls which language is used for chat/disconnect messages.
