@@ -180,5 +180,26 @@ exports.ConfigSettings = {
         //   playerCount: "We currently have ${total} players on our server."
         // }
         languageOverrides: {},
+
+        // When specified, allows you to override the default settings for debuffing when switching dimensions.
+        //
+        // Examples:
+        // debuffOnSwitch: {
+        //   enabled: false
+        // }
+        //
+        // debuffOnSwitch: {
+        //   enabled: true,
+        //   debuffTimeInSeconds: 5
+        // }
+
+        // debuffOnSwitch: {
+        //   enabled: true,
+        //   buffTypes: [156],
+        //   debuffTimeInSeconds: 5
+        // }
+        debuffOnSwitch: {
+          enabled: true,
+        }
     }
 };

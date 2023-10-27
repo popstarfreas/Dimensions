@@ -6,7 +6,7 @@ import * as Net from 'net';
 import RoutingServer from 'dimensions/routingserver';
 import ClientPacketHandler from 'dimensions/clientpackethandler';
 import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
-import {ConfigOptions} from 'dimensions/configloader';
+import { ConfigOptions } from 'dimensions/configloader';
 import Logger from 'dimensions/logger';
 import ClientState from 'dimensions/clientstate';
 import * as Language from 'dimensions/language';
@@ -74,6 +74,7 @@ describe("ClientCommandHandler", () => {
                 port: 6379
             },
             language: Language.english,
+            debuffOnSwitch: { enabled: false },
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];

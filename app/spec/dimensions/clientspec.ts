@@ -79,6 +79,7 @@ describe("client", () => {
                 port: 6379
             },
             language: Language.english,
+            debuffOnSwitch: { enabled: false },
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];
