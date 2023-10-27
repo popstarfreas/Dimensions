@@ -8,8 +8,6 @@ import ClientPacketHandler from 'dimensions/clientpackethandler';
 import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
 import { ConfigOptions } from 'dimensions/configloader';
 import Logger from 'dimensions/logger';
-import PacketReader from 'dimensions/packets/packetreader';
-import PacketTypes from 'dimensions/packettypes';
 import GlobalTracking from 'dimensions/globaltracking';
 import GlobalHandlers from 'dimensions/globalhandlers';
 import ServerDetails from 'dimensions/serverdetails';
@@ -127,7 +125,7 @@ describe("client", () => {
             command: new ClientCommandHandler(),
             clientPacketHandler: new ClientPacketHandler(),
             terrariaServerPacketHandler: new TerrariaServerPacketHandler(),
-            extensions: {} 
+            extensions: {}
         };
 
         servers = {
