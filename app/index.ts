@@ -6,8 +6,8 @@ let logging = new Logger();
 let errorLogging = new Logger("error-log.txt");
 
 process.on('unhandledRejection', (reason: any, promise: any) => {
-    errorLogging.appendLine('Reason: ' + reason);
-    errorLogging.appendLine(promise);
+   errorLogging.appendLine('Reason: ' + reason);
+   errorLogging.appendLine(promise);
 });
 
 process.on('uncaughtException', function(e: any) {
