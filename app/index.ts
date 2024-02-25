@@ -16,3 +16,9 @@ process.on('uncaughtException', function(e: any) {
 });
 
 var dimensions = new Dimensions(logging);
+process.once('SIGTERM', () => {
+   dimensions.close();
+})
+process.once('SIGINT', () => {
+   dimensions.close();
+})
