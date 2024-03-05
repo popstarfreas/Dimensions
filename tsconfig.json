@@ -5,7 +5,8 @@
         "sourceMap": false,
         "outDir": "build",
         "strict": true,
-        "noUnusedLocals": true
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
     },
     "include": [
         "app/index.ts",

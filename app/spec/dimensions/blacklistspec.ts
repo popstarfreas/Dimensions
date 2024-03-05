@@ -5,7 +5,7 @@ type DoneFn = () => void;
 describe("blacklist", () => {
     let mitm: any;
     let blacklist = new BlackList();
-    
+
     beforeEach(() => {
         mitm = Mitm();
         blacklist = new BlackList();
@@ -16,7 +16,7 @@ describe("blacklist", () => {
     });
 
     it("should return false when an ip is not blocked", (done: DoneFn) => {
-        mitm.on("request", (req: any, res: any) => {
+        mitm.on("request", (_req: any, res: any) => {
             let response = JSON.stringify({
                 status: "success",
                 "host-ip": false
@@ -35,7 +35,7 @@ describe("blacklist", () => {
     });
 
     it("should return true when an ip not blocked", (done: DoneFn) => {
-        mitm.on("request", (req: any, res: any) => {
+        mitm.on("request", (_req: any, res: any) => {
             let response = JSON.stringify({
                 status: "success",
                 "host-ip": true
@@ -54,7 +54,7 @@ describe("blacklist", () => {
     });
 
     it("should error when the request was not successful", (done: DoneFn) => {
-        mitm.on("request", (req: any, res: any) => {
+        mitm.on("request", (_req: any, res: any) => {
             let response = JSON.stringify({
                 status: "failure",
                 "host-ip": false
@@ -73,7 +73,7 @@ describe("blacklist", () => {
     });
 
     it("should error when the request response is malformed", (done: DoneFn) => {
-        mitm.on("request", (req: any, res: any) => {
+        mitm.on("request", (_req: any, res: any) => {
             res.statusCode = 200;
             res.end("{asda;g.pdg,");
         });
