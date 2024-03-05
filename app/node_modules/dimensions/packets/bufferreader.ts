@@ -148,7 +148,6 @@ class BufferReader {
      * @return The unsigned int64 removed from the data
      */
     public readUInt64(): number {
-        const str = this._data.toString("hex");
         const low = this.readUInt32();
         const high = this.readUInt32();
 

@@ -24,6 +24,7 @@ describe("ClientCommandHandler", () => {
     let servers;
     let globalTracking;
     let client: Client;
+    // @ts-ignore
     let server: TerrariaServer;
 
     let clientSocket: Net.Socket;

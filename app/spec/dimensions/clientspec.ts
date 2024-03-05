@@ -14,7 +14,7 @@ import ServerDetails from 'dimensions/serverdetails';
 import { Dictionary } from 'dimensions/dictionary';
 import * as Language from 'dimensions/language';
 let Mitm = require('mitm');
-type DoneFn = () => void;
+//type DoneFn = () => void;
 
 describe("client", () => {
     let mitm: any;
@@ -27,6 +27,7 @@ describe("client", () => {
     let servers: Dictionary<RoutingServer>;
     let globalTracking: GlobalTracking;
     let client: Client;
+    // @ts-ignore
     let server: TerrariaServer;
 
     let clientSocket: Net.Socket;

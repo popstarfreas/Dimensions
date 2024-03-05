@@ -1,6 +1,5 @@
 import Dimensions from "dimensions";
 import Logger from "dimensions/logger";
-import * as fs from "fs";
 
 let logging = new Logger();
 let errorLogging = new Logger("error-log.txt");

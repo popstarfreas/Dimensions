@@ -4,7 +4,8 @@
         "target": "es2017",
         "sourceMap": false,
         "outDir": "build",
-        "strict": true
+        "strict": true,
+        "noUnusedLocals": true
     },
     "include": [
         "app/index.ts",
