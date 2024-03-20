@@ -148,5 +148,21 @@ exports.ConfigSettings = {
         debuffOnSwitch: {
           enabled: true,
         }
+
+        // Decides what happens when a terraria server kicks a client
+        //
+        // Examples:
+        //
+        // disconnectOnKick: {
+        //   type: "always",
+        // }
+        //
+        // disconnectOnKick  {
+        //  type: "onKickReasonPrefix",
+        //  kickReasonPrefixes: ["Kicked: !disconnect"],
+        // }
+        disconnectOnKick: {
+          type: "never",
+        }
     }
 };
