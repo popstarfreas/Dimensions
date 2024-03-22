@@ -4,11 +4,25 @@ let Mitm = require('mitm');
 type DoneFn = () => void;
 describe("blacklist", () => {
     let mitm: any;
-    let blacklist = new BlackList();
+    let blacklist = new BlackList({
+        enabled: true,
+        hostname: "localhost",
+        path: "/api/blacklist",
+        port: 80,
+        apiKey: "token",
+        errorPolicy: "AllowJoining"
+    });
 
     beforeEach(() => {
         mitm = Mitm();
-        blacklist = new BlackList();
+        blacklist = new BlackList({
+            enabled: true,
+            hostname: "localhost",
+            path: "/api/blacklist",
+            port: 80,
+            apiKey: "token",
+            errorPolicy: "AllowJoining"
+        });
     });
 
     afterEach(() => {
@@ -25,8 +39,8 @@ describe("blacklist", () => {
             res.end(response);
         });
 
-        blacklist.checkIP("127.0.0.1", "").then((isHostIp) => {
-            expect(isHostIp).toBe(false);
+        blacklist.checkInformation("name", "127.0.0.1", "uuid").then((isBlacklisted) => {
+            expect(isBlacklisted).toBe(false);
             done();
         }).catch((e) => {
             expect(e).toBeNull();
@@ -44,8 +58,8 @@ describe("blacklist", () => {
             res.end(response);
         });
 
-        blacklist.checkIP("127.0.0.1", "").then((isHostIp) => {
-            expect(isHostIp).toBe(true);
+        blacklist.checkInformation("name", "127.0.0.1", "uuid").then((isBlacklisted) => {
+            expect(isBlacklisted).toBe(true);
             done();
         }).catch((e) => {
             expect(e).toBeNull();
@@ -63,8 +77,8 @@ describe("blacklist", () => {
             res.end(response);
         });
 
-        blacklist.checkIP("127.0.0.1", "").then((isHostIp) => {
-            expect(isHostIp).toBeNull();
+        blacklist.checkInformation("name", "127.0.0.1", "uuid").then((isBlacklisted) => {
+            expect(isBlacklisted).toBeNull();
             done();
         }).catch((e) => {
             expect(e).toEqual(jasmine.any(Error));
@@ -78,8 +92,8 @@ describe("blacklist", () => {
             res.end("{asda;g.pdg,");
         });
 
-        blacklist.checkIP("127.0.0.1", "").then((isHostIp) => {
-            expect(isHostIp).toBeNull();
+        blacklist.checkInformation("name", "127.0.0.1", "uuid").then((isBlacklisted) => {
+            expect(isBlacklisted).toBeNull();
             done();
         }).catch((e) => {
             expect(e).toEqual(jasmine.any(Error));

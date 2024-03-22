@@ -40,7 +40,6 @@ describe("ClientCommandHandler", () => {
             },
             blacklist: {
                 enabled: false,
-                apiKey: ""
             },
             blockInvis: false,
             log: {
@@ -49,6 +48,10 @@ describe("ClientCommandHandler", () => {
                 clientDisconnect: false,
                 clientError: false,
                 clientTimeouts: false,
+                checkingClientConnect: false,
+                checkingClientDisconnect: false,
+                checkingClientError: false,
+                checkingClientTimeouts: false,
                 extensionLoad: false,
                 outputToConsole: false,
                 tServerConnect: false,

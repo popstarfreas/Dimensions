@@ -10,6 +10,7 @@
   "scripts": {
     "start": "cd ./build && node ./index.js",
     "build": "tsc -p ./",
+    "fixrescript": "rescript",
     "bstart": "npm run build && npm run start",
     "bstart-debug": "npm run build && cd ./build && node-debug ./index.js && cd ../",
     "test": "npm run build && jasmine --config=jasmine.json",
@@ -22,9 +23,10 @@
     "glob": "^7.2.0",
     "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
-    "rescript-terrariapacket": "github:popstarfreas/rescript-terrariapacket#8488287",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#e99278a",
     "utf8": "^3.0.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "winston": "^3.12.0"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
@@ -36,6 +38,7 @@
     "@types/uuid": "^8.3.1",
     "jasmine": "^3.4.0",
     "mitm": "^1.7.2",
+    "rescript": "^11.0.0",
     "typescript": "^4.6.3"
   }
 }

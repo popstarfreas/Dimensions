@@ -98,7 +98,11 @@ exports.ConfigSettings = {
         // Whether or not to use a blacklist (http service) (for blocking vpn, etc)
         blacklist: {
             enabled: false,
-            apiKey: ""
+            hostname: "127.0.0.1",
+            port: 19222,
+            apiKey: "",
+            path: "/blacklisted",
+            errorPolicy: "AllowJoining"
         },
 
         // Logging options
