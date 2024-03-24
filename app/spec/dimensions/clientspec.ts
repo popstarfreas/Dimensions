@@ -7,7 +7,7 @@ import RoutingServer from 'dimensions/routingserver';
 import ClientPacketHandler from 'dimensions/clientpackethandler';
 import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
 import { ConfigOptions } from 'dimensions/configloader';
-import Logger from 'dimensions/logger';
+import * as winston from 'winston';
 import GlobalTracking from 'dimensions/globaltracking';
 import GlobalHandlers from 'dimensions/globalhandlers';
 import ServerDetails from 'dimensions/serverdetails';
@@ -146,7 +146,7 @@ describe("client", () => {
             globalHandlers: globalHandlers,
             globalTracking: globalTracking,
             id: 0,
-            logging: new Logger(),
+            logging: winston.createLogger(),
             options: config,
             server: serverA,
             servers: servers,

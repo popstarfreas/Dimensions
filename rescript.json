@@ -1,0 +1,24 @@
+{
+  "name": "@popstarfreas/dimensions",
+  "namespace": true,
+  "version": "0.1.0",
+  "sources": [
+    {
+      "dir": "app",
+      "subdirs": true
+    }
+  ],
+  "package-specs": {
+    "module": "commonjs",
+    "in-source": false,
+    "suffix": ".js"
+  },
+  "bsc-flags": [
+    "-open RescriptCore"
+  ],
+  "bs-dependencies": [
+    "terraria-packet",
+    "@rescript/core",
+    "@popstarfreas/rescript-nodejs"
+  ]
+}

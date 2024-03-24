@@ -1,17 +1,33 @@
 import Dimensions from "dimensions";
-import Logger from "dimensions/logger";
+import { ConfigSettings } from 'dimensions/configloader';
+import * as winston from "winston";
 
-let logging = new Logger();
-let errorLogging = new Logger("error-log.txt");
+let logging = winston.createLogger({
+   level: 'info',
+   format: winston.format.json(),
+   transports: [
+      new winston.transports.File({ filename: 'dimensions.log', level: 'info' }),
+      new winston.transports.File({ filename: 'error.log', level: 'error' }),
+   ]
+})
+
+if (ConfigSettings.options.log.outputToConsole) {
+   logging.add(new winston.transports.Console({
+      format: winston.format.combine(
+         winston.format.colorize(),
+         winston.format.printf(info => {
+            return `${info.message}`;
+         })
+      )
+   }));
+}
 
 process.on('unhandledRejection', (reason: any, promise: any) => {
-   errorLogging.appendLine('Reason: ' + reason);
-   errorLogging.appendLine(promise);
+   logging.error('Reason: ' + reason, promise);
 });
 
 process.on('uncaughtException', function(e: any) {
-   errorLogging.appendLine(e);
-   errorLogging.appendLine(e.stack);
+   logging.error(e, e.stack);
 });
 
 var dimensions = new Dimensions(logging);

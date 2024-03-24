@@ -7,7 +7,7 @@ import RoutingServer from 'dimensions/routingserver';
 import ClientPacketHandler from 'dimensions/clientpackethandler';
 import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
 import { ConfigOptions } from 'dimensions/configloader';
-import Logger from 'dimensions/logger';
+import * as winston from 'winston';
 import ClientState from 'dimensions/clientstate';
 import * as Language from 'dimensions/language';
 let Mitm = require('mitm');
@@ -143,7 +143,7 @@ describe("ClientCommandHandler", () => {
             globalHandlers: globalHandlers,
             globalTracking: globalTracking,
             id: 0,
-            logging: new Logger(),
+            logging: winston.createLogger(),
             options: config,
             server: serverA,
             servers: servers,
