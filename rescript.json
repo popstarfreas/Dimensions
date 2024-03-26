@@ -10,15 +10,10 @@
   ],
   "package-specs": {
     "module": "commonjs",
-    "in-source": false,
-    "suffix": ".js"
+    "in-source": true,
+    "suffix": ".bs.js"
   },
-  "bsc-flags": [
-    "-open RescriptCore"
-  ],
   "bs-dependencies": [
-    "terraria-packet",
-    "@rescript/core",
-    "@popstarfreas/rescript-nodejs"
+    "terraria-packet"
   ]
 }

@@ -56,6 +56,7 @@ describe("client", () => {
                 checkingClientError: false,
                 checkingClientTimeouts: false,
                 extensionLoad: false,
+                outputToFile: false,
                 outputToConsole: false,
                 tServerConnect: false,
                 tServerDisconnect: false,

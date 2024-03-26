@@ -115,7 +115,12 @@ exports.ConfigSettings = {
             tServerDisconnect: false,
             tServerError: false,
             extensionLoad: true,
-            outputToConsole: true
+            outputToConsole: true,
+            outputToFile: true,
+            format: {
+              console: "PlainText",
+              file: "JSON"
+            }
         },
 
         // Whether to limit connections and what the limit is

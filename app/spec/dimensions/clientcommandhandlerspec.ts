@@ -54,6 +54,7 @@ describe("ClientCommandHandler", () => {
                 checkingClientTimeouts: false,
                 extensionLoad: false,
                 outputToConsole: false,
+                outputToFile: false,
                 tServerConnect: false,
                 tServerDisconnect: false,
                 tServerError: false,
