@@ -367,9 +367,9 @@ string_decoder@^1.1.1:
   dependencies:
     safe-buffer "~5.2.0"
 
-"terraria-packet@github:popstarfreas/rescript-terrariapacket#e99278a":
+"terraria-packet@github:popstarfreas/rescript-terrariapacket#de1430cc225f1188106a58661504975b28ac9dcc":
   version "1.2.0"
-  resolved "https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/e99278a5b31ed17644d59cd24260443a9a7209e7"
+  resolved "https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/de1430cc225f1188106a58661504975b28ac9dcc"
   dependencies:
     "@popstarfreas/packetfactory" "^6.0.1"
     "@popstarfreas/rescript-nodejs" "git+https://github.com/popstarfreas/rescript-nodejs.git#f3bd284"
