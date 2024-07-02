@@ -1,4 +1,5 @@
 #!/bin/bash
+npm run fixrescript
 rm -rf release
 npm run build
 rm -rf build/spec
