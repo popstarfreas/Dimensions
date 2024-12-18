@@ -1,5 +1,3 @@
-The latest version is currently in testing at Dark Gaming pending approval. You can find this version (v6.0.0-beta.0) marked as [pre-release](https://github.com/popstarfreas/Dimensions/releases).
-
 # README #
 
 Dimensions is: A routing service that can also load balance connections. For use with Terraria Servers.
