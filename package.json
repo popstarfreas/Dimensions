@@ -23,7 +23,7 @@
     "glob": "^7.2.0",
     "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
-    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#697063f965b9052522b759343ebd9e8916a3f65d",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#f3ae36d560b50cb8a61a7a6f89f9813c4edcae04",
     "utf8": "^3.0.0",
     "uuid": "^8.3.2",
     "winston": "^3.12.0",
