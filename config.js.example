@@ -213,7 +213,7 @@ exports.ConfigSettings = {
         // }
         debuffOnSwitch: {
           enabled: true,
-        }
+        },
 
         // Decides what happens when a terraria server kicks a client
         //

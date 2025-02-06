@@ -1,5 +1,4 @@
 #!/bin/bash
-npm run fixrescript
 rm -rf release
 npm run build
 rm -rf build/spec
@@ -12,7 +11,6 @@ mkdir release/logs
 cp dimensions_cli.js release/dimensions_cli.js
 cp License.md release/License.md
 cp README.md release/README.md
-cd release
 name="Dimensions.zip"
 package=$(cat package.json)
 regex="\"version\": \"(([0-9]+\.?){3})"
@@ -21,7 +19,6 @@ then
     version="${BASH_REMATCH[1]}"
     name="Dimensions-v$version.zip" 
 fi
-zip -r "$name" ./
-cd ../
-mv "release/$name" "./$name"
-rm -rf release
+mv release Dimensions
+zip -r "$name" Dimensions
+rm -rf Dimensions

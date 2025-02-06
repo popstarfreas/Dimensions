@@ -15,5 +15,6 @@
   },
   "bs-dependencies": [
     "terraria-packet"
-  ]
+  ],
+  "external-stdlib": "@rescript/std"
 }
