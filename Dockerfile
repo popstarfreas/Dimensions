@@ -1,6 +1,6 @@
 FROM node:lts-bullseye as build
 WORKDIR /app
-COPY yarn.lock /app
+COPY package-lock.json /app
 COPY package.json /app
 RUN yarn install
 COPY rescript.json /app
