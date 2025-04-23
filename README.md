@@ -5,20 +5,27 @@ Dimensions is: A routing service that can also load balance connections. For use
 ## Installation
 ### Step 1: Install NodeJS
 Follow the link and download either version. Later releases may offer better performance. https://nodejs.org/en/
+
+### Step 2: Install Git
+Follow the link and download and install git: https://git-scm.com/downloads
+
+This is needed to install one of the dependencies.
  
-### Step 2: Install the Plugin
+### Step 3: Install the Plugin
 Download the plugin and put it in each Terraria Server for use with Dimensions
  * [Download](https://github.com/popstarfreas/Dimensions-TerrariaServer/releases)
  * [Source](https://github.com/popstarfreas/Dimensions-TerrariaServer)
 
-### Step 3: Setting Up and Running
+The plugin is necessary to fix IP addresses of players connecting through Dimensions.
+
+### Step 4: Setting Up and Running
  * Download the latest release and extract it to its own folder
  * Open a cmd prompt/terminal at the folder and execute the command `npm install --only=production` (it may take a bit to finish)
  * Copy the file "config.js.example" and rename it to "config.js" and edit it to your specifications
  * OR follow the quickstart guide in the [Config Wiki](https://github.com/popstarfreas/Dimensions/wiki/Config)
  * To start Dimensions execute `npm run start`
 
-### Step 4 (Optional): Install Redis
+### Step 5 (Optional): Install Redis
 **If you do not need to have live reloading of modules / the configuration file then you do not need to do this step.**
 
 Redis is used to communicate with the dimensions process via the `dimensions_cli.js` file. It will allow you to reload the config and/or reload things like extensions or modules without the need to manually restart dimensions, reducing downtime.
