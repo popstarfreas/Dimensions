@@ -1,6 +1,6 @@
 {
   "name": "@popstarfreas/dimensions",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "repository": {
     "type": "git",
     "url": "git://github.com/popstarfreas/Dimensions.git"
@@ -20,14 +20,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@rescript/std": "^11.0.0",
     "glob": "^7.2.0",
     "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
     "terraria-packet": "github:popstarfreas/rescript-terrariapacket#28e9669eed6a57b011e0bca010a6e14348487db0",
     "utf8": "^3.0.0",
     "uuid": "^8.3.2",
-    "winston": "^3.12.0",
-    "@rescript/std": "^11.0.0"
+    "winston": "^3.12.0"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
