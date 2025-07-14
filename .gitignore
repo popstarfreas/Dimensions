@@ -8,3 +8,4 @@ log.txt
 logs
 module/
 lib
+.aider*

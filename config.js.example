@@ -147,6 +147,9 @@ exports.ConfigSettings = {
             port: 6379
         },
 
+        // Whether to automatically reload servers when config.js is changed
+        hotReload: false,
+
         nameChanges: {
             // Prevents a server from changing client's name in dimensions
             // modes:
