@@ -11,7 +11,7 @@
   "package-specs": {
     "module": "commonjs",
     "in-source": true,
-    "suffix": ".bs.js"
+    "suffix": ".js"
   },
   "bs-dependencies": [
     "terraria-packet"
