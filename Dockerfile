@@ -5,9 +5,6 @@ COPY package.json /app
 RUN yarn install
 COPY rescript.json /app
 RUN mkdir /app/app
-# This is used to make sure that all rescript-based deps
-# have the right js extension
-RUN npm run fixrescript
 COPY app /app/app
 COPY tsconfig.json /app
 RUN npm run build
