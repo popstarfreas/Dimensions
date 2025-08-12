@@ -10,7 +10,6 @@
   "scripts": {
     "start": "cd ./build && node ./index.js",
     "build": "tsc -p ./",
-    "fixrescript": "rescript",
     "bstart": "npm run build && npm run start",
     "bstart-debug": "npm run build && cd ./build && node-debug ./index.js && cd ../",
     "test": "npm run build && jasmine --config=jasmine.json",
@@ -21,25 +20,25 @@
   "license": "ISC",
   "dependencies": {
     "@rescript/std": "^11.0.0",
-    "glob": "^7.2.0",
+    "glob": "^11.0.3",
     "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
-    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#80f1dd6d5854bed51efd3bff2c0492205ab759c4",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#834140c1097e1110a5cc3fc7a6f74fa3241d62e3",
     "utf8": "^3.0.0",
-    "uuid": "^8.3.2",
-    "winston": "^3.12.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
-    "@types/glob": "^7.2.0",
+    "@types/glob": "^9.0.0",
     "@types/jasmine": "^3.4.0",
     "@types/mitm": "^1.3.2",
-    "@types/node": "^16.11.6",
+    "@types/node": "^24.0.14",
     "@types/redis": "^2.8.32",
     "@types/utf8": "^3.0.0",
-    "@types/uuid": "^8.3.1",
+    "@types/uuid": "^10.0.0",
     "jasmine": "^3.4.0",
-    "mitm": "^1.7.2",
+    "mitm": "^1.7.3",
     "rescript": "^11.0.0",
-    "typescript": "^4.6.3"
+    "typescript": "^5.8.3"
   }
 }

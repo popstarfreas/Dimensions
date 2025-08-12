@@ -81,6 +81,7 @@ describe("ClientCommandHandler", () => {
             language: Language.english,
             debuffOnSwitch: { enabled: false },
             disconnectOnKick: { type: "never" },
+            hotReload: false
         };
         mitm = Mitm();
         clientSocketDataHandlers = [];
