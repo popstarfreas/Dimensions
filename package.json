@@ -26,7 +26,8 @@
     "terraria-packet": "github:popstarfreas/rescript-terrariapacket#834140c1097e1110a5cc3fc7a6f74fa3241d62e3",
     "utf8": "^3.0.0",
     "uuid": "^11.1.0",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@types/glob": "^9.0.0",
