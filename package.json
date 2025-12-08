@@ -19,11 +19,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@rescript/std": "^11.0.0",
+    "@rescript/runtime": "^12.0.0",
     "glob": "^11.0.3",
     "redis": "^3.1.2",
     "require-nocache": "^1.0.0",
-    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#834140c1097e1110a5cc3fc7a6f74fa3241d62e3",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#1ec94666959f72d815b50d4094222f15975ea223",
     "utf8": "^3.0.0",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
