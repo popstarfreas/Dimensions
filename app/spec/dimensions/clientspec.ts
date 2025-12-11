@@ -164,6 +164,16 @@ describe("client", () => {
         mitm.disable();
     });
 
+    it("should decrement client counts when disconnecting from a server", () => {
+        client.serversDetails[serverA.name].clientCount = 1;
+        client.countIncremented = true;
+
+        client.disconnectFromServer();
+
+        expect(client.serversDetails[serverA.name].clientCount).toBe(0);
+        expect(client.countIncremented).toBe(false);
+    });
+
     it("should correctly set up the required properties", () => {
         expect(client.ID).toEqual(0);
         expect(client.options).toEqual(config);
