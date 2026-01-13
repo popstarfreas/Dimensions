@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@popstarfreas/packetfactory':
+        specifier: ^7.1.1
+        version: 7.1.1
       '@rescript/runtime':
         specifier: ^12.0.0
         version: 12.0.0
@@ -22,7 +25,7 @@ importers:
         version: 1.0.0
       terraria-packet:
         specifier: github:popstarfreas/rescript-terrariapacket#b7f932c3a578f34e2461145fed2d97e5fc58da93
-        version: https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/b7f932c3a578f34e2461145fed2d97e5fc58da93(rescript@11.1.4)
+        version: https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/b7f932c3a578f34e2461145fed2d97e5fc58da93(rescript@12.0.0)
       utf8:
         specifier: ^3.0.0
         version: 3.0.0
@@ -63,9 +66,6 @@ importers:
       mitm:
         specifier: ^1.7.3
         version: 1.7.3
-      rescript:
-        specifier: ^11.0.0
-        version: 11.1.4
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
@@ -360,11 +360,6 @@ packages:
   require-nocache@1.0.0:
     resolution: {integrity: sha512-nemgZOwvrnGtMH6DQ7n17RQNrQ779BBUiPJTeqrdXNE4ytaoX+HTflXvNlyKooJoFbNUJEtZmm9FlbmjxUXDgA==}
 
-  rescript@11.1.4:
-    resolution: {integrity: sha512-0bGU0bocihjSC6MsE3TMjHjY0EUpchyrREquLS8VsZ3ohSMD+VHUEwimEfB3kpBI1vYkw3UFZ3WD8R28guz/Vw==}
-    engines: {node: '>=10'}
-    hasBin: true
-
   rescript@12.0.0:
     resolution: {integrity: sha512-DGcZI2L5W0c6FuEnspLE0MIe1UtTt1VsW/vQfzBFCEBxSsQtoA6YRHUB8Puwnb30PHqZiFK1ADhn6UgA8LWK0A==}
     engines: {node: '>=20.11.0'}
@@ -509,9 +504,9 @@ snapshots:
 
   '@popstarfreas/rescript-nodejs@https://codeload.github.com/popstarfreas/rescript-nodejs/tar.gz/f3bd284a3ef17a3fc7cc81ccb7c362b278ea66c7': {}
 
-  '@rescript/core@1.6.1(rescript@11.1.4)':
+  '@rescript/core@1.6.1(rescript@12.0.0)':
     dependencies:
-      rescript: 11.1.4
+      rescript: 12.0.0
 
   '@rescript/darwin-arm64@12.0.0':
     optional: true
@@ -746,8 +741,6 @@ snapshots:
 
   require-nocache@1.0.0: {}
 
-  rescript@11.1.4: {}
-
   rescript@12.0.0:
     dependencies:
       '@rescript/runtime': 12.0.0
@@ -757,7 +750,6 @@ snapshots:
       '@rescript/linux-arm64': 12.0.0
       '@rescript/linux-x64': 12.0.0
       '@rescript/win32-x64': 12.0.0
-    optional: true
 
   safe-buffer@5.2.1: {}
 
@@ -803,10 +795,10 @@ snapshots:
     dependencies:
       ansi-regex: 6.2.2
 
-  terraria-packet@https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/b7f932c3a578f34e2461145fed2d97e5fc58da93(rescript@11.1.4):
+  terraria-packet@https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/b7f932c3a578f34e2461145fed2d97e5fc58da93(rescript@12.0.0):
     dependencies:
       '@popstarfreas/packetfactory': 7.1.1
-      '@rescript/core': 1.6.1(rescript@11.1.4)
+      '@rescript/core': 1.6.1(rescript@12.0.0)
       '@rescript/runtime': 12.0.1
     transitivePeerDependencies:
       - rescript
