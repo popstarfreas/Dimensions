@@ -1,13 +1,13 @@
 import * as Net from 'net';
-import RoutingServer from 'dimensions/routingserver';
-import ServerDetails from 'dimensions/serverdetails';
-import GlobalHandlers from 'dimensions/globalhandlers';
-import { ConfigOptions } from 'dimensions/configloader';
-import GlobalTracking from 'dimensions/globaltracking';
+import RoutingServer from './routingserver.js';
+import ServerDetails from './serverdetails.js';
+import GlobalHandlers from './globalhandlers.js';
+import { ConfigOptions } from './configloader.js';
+import GlobalTracking from './globaltracking.js';
 import * as winston from 'winston';
 
 export interface ClientArgs {
-    id: number,
+    id: string,
     socket: Net.Socket,
     server: RoutingServer,
     serversDetails: { [id: string]: ServerDetails },

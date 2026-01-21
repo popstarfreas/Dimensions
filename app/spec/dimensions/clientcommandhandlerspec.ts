@@ -1,24 +1,24 @@
-import ClientCommandHandler from 'dimensions/clientcommandhandler';
-import TerrariaServer from 'dimensions/terrariaserver';
-import Client from 'dimensions/client';
-import ClientArgs from 'dimensions/clientargs';
+import { v4 as uuidv4 } from 'uuid';
+import ClientCommandHandler from '../../dimensions/clientcommandhandler.js';
+import TerrariaServer from '../../dimensions/terrariaserver.js';
+import Client from '../../dimensions/client.js';
+import ClientArgs from '../../dimensions/clientargs.js';
 import * as Net from 'net';
-import RoutingServer from 'dimensions/routingserver';
-import ClientPacketHandler from 'dimensions/clientpackethandler';
-import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
-import { ConfigOptions } from 'dimensions/configloader';
+import RoutingServer from '../../dimensions/routingserver.js';
+import ClientPacketHandler from '../../dimensions/clientpackethandler.js';
+import TerrariaServerPacketHandler from '../../dimensions/terrariaserverpackethandler.js';
+import { ConfigOptions } from '../../dimensions/configloader.js';
 import * as winston from 'winston';
-import ClientState from 'dimensions/clientstate';
-import * as Language from 'dimensions/language';
-let Mitm = require('mitm');
-type DoneFn = () => void;
+import ClientState from '../../dimensions/clientstate.js';
+import * as Language from '../../dimensions/language.js';
+type DoneFn = (err?: unknown) => void;
 
 describe("ClientCommandHandler", () => {
-    let mitm: any;
     let config: ConfigOptions;
     let serverA: RoutingServer;
     let serverB: RoutingServer;
     let socket: Net.Socket;
+    let tcpServer: Net.Server;
     let serversDetails;
     let globalHandlers;
     let servers;
@@ -30,7 +30,7 @@ describe("ClientCommandHandler", () => {
     let clientSocket: Net.Socket;
     let clientSocketDataHandlers: ((data: string) => void)[];
 
-    beforeEach(() => {
+    beforeEach((done: DoneFn) => {
         config = {
             socketTimeout: 0,
             socketNoDelay: true,
@@ -83,18 +83,15 @@ describe("ClientCommandHandler", () => {
             disconnectOnKick: { type: "never" },
             hotReload: false
         };
-        mitm = Mitm();
         clientSocketDataHandlers = [];
-        mitm.on("connection", (socket: Net.Socket) => {
-            clientSocket = socket;
+        tcpServer = Net.createServer((incomingSocket: Net.Socket) => {
+            clientSocket = incomingSocket;
             clientSocket.on("data", (data) => {
                 for (let i = 0; i < clientSocketDataHandlers.length; i++) {
                     clientSocketDataHandlers[i](data.toString());
                 }
             });
         });
-
-        socket = Net.connect(22, "example.org");
         serverA = {
             name: "servera",
             serverIP: "localhost",
@@ -144,7 +141,7 @@ describe("ClientCommandHandler", () => {
         let clientArgs: ClientArgs = {
             globalHandlers: globalHandlers,
             globalTracking: globalTracking,
-            id: 0,
+            id: uuidv4(),
             logging: winston.createLogger(),
             options: config,
             server: serverA,
@@ -153,12 +150,38 @@ describe("ClientCommandHandler", () => {
             socket: socket
         };
 
-        client = new Client(clientArgs);
-        server = new TerrariaServer(socket, client);
+        tcpServer.listen(0, "127.0.0.1", () => {
+            const address = tcpServer.address();
+            if (!address || typeof address === "string") {
+                done(new Error("Failed to start local test server"));
+                return;
+            }
+
+            socket = Net.connect(address.port, "127.0.0.1");
+            const onError = (err: Error) => done(err);
+            socket.once("error", onError);
+            socket.once("connect", () => {
+                socket.off("error", onError);
+                clientArgs.socket = socket;
+                client = new Client(clientArgs);
+                server = new TerrariaServer(socket, client);
+                done();
+            });
+        });
     });
 
-    afterEach(() => {
-        mitm.disable();
+    afterEach((done: DoneFn) => {
+        if (clientSocket && !clientSocket.destroyed) {
+            clientSocket.destroy();
+        }
+        if (socket && !socket.destroyed) {
+            socket.destroy();
+        }
+        if (tcpServer) {
+            tcpServer.close(() => done());
+        } else {
+            done();
+        }
     });
 
     it("should not handle a non-existant command", () => {

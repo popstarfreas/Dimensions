@@ -1,8 +1,8 @@
-import Item from 'dimensions/item';
-import Client from 'dimensions/client';
-import RawPacket from 'dimensions/packets/rawpacket';
-import { Command } from 'dimensions/clientcommandhandler';
-import ClientState from 'dimensions/clientstate';
+import Item from './item.js';
+import Client from './client.js';
+import RawPacket from './packets/rawpacket.js';
+import { Command } from './clientcommandhandler.js';
+import ClientState from './clientstate.js';
 
 import { ConnectRequestPacket, PlayerInfoPacket, PlayerBuffsSetPacket, PlayerBuffAddPacket, PlayerInventorySlotPacket, PlayerManaPacket, PlayerHealthPacket, PlayerUpdatePacket, ClientUuidPacket, NetModuleLoadPacket, ItemDropUpdatePacket, ItemOwnerPacket, PlayerSpawnPacket, Parser } from "terraria-packet";
 

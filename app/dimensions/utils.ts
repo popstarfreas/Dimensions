@@ -1,5 +1,5 @@
 import * as path from 'path';
-import RawPacket from 'dimensions/packets/rawpacket';
+import RawPacket from './packets/rawpacket.js';
 import * as utf8 from 'utf8';
 import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 import BufferWriter from '@popstarfreas/packetfactory/bufferwriter';

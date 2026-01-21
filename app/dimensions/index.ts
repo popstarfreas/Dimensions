@@ -1,23 +1,28 @@
 import * as fs from 'fs';
 import * as redis from 'redis';
-import ErrorHelper from 'dimensions/errorhelper';
-import RoutingServer from 'dimensions/routingserver';
-import ListenServerArgs from 'dimensions/listenserverargs';
-import ListenServer from 'dimensions/listenserver';
-import { ConfigSettings, ConfigOptions, reloadConfig, usingOldConfig, oldConfigFilePath, configurationDirectory } from 'dimensions/configloader';
-import ClientCommandHandler from 'dimensions/clientcommandhandler';
-import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
-import ServerDetails from 'dimensions/serverdetails';
-import GlobalHandlers from 'dimensions/globalhandlers';
-import ReloadTask from 'dimensions/reloadtask';
-import GlobalTracking from 'dimensions/globaltracking';
-import Extensions from 'dimensions/extensions';
-import ClientPacketHandler from 'dimensions/clientpackethandler';
-import RestApi from 'dimensions/restapi';
-import Blacklist from 'dimensions/blacklist';
-import { Dictionary } from 'dimensions/dictionary';
+import ErrorHelper from './errorhelper.js';
+import RoutingServer from './routingserver.js';
+import ListenServerArgs from './listenserverargs.js';
+import ListenServer from './listenserver.js';
+import { ConfigSettings, ConfigOptions, reloadConfig, usingOldConfig, oldConfigFilePath, configurationDirectory } from './configloader.js';
+import ClientCommandHandler from './clientcommandhandler.js';
+import TerrariaServerPacketHandler from './terrariaserverpackethandler.js';
+import ServerDetails from './serverdetails.js';
+import GlobalHandlers from './globalhandlers.js';
+import ReloadTask from './reloadtask.js';
+import GlobalTracking from './globaltracking.js';
+import Extensions from './extensions.js';
+import ClientPacketHandler from './clientpackethandler.js';
+import RestApi from './restapi.js';
+import Blacklist from './blacklist.js';
+import { Dictionary } from './dictionary.js';
 import * as winston from 'winston';
-const reload = require("require-nocache");
+import { pathToFileURL } from 'url';
+
+async function importFresh(modulePath: string): Promise<any> {
+  const url = pathToFileURL(modulePath).href;
+  return import(`${url}?t=${Date.now()}`);
+}
 
 /* The core that sets up the listen servers, rest api and handles reloading */
 class Dimensions {
@@ -36,7 +41,7 @@ class Dimensions {
   private extensionStorage: Map<string, any> = new Map();
   private hotReloadTimeout: NodeJS.Timeout | null = null;
 
-  constructor(logging: winston.Logger) {
+  private constructor(logging: winston.Logger) {
     this.options = ConfigSettings.options;
     this.logging = logging;
     if (this.options.blacklist.enabled) {
@@ -51,25 +56,32 @@ class Dimensions {
       extensions: {}
     };
 
-    Extensions.loadExtensions(this.handlers.extensions, this.listenServers, this.options.log, this.logging, this.extensionStorage);
-    if (typeof this.options.redis !== "undefined" && this.options.redis.enabled) {
-      this.setupRedis();
-    }
-
     this.globalTracking = {
       names: {}
     };
+  }
 
-    this.setupRoutes();
+  public static async create(logging: winston.Logger): Promise<Dimensions> {
+    const instance = new Dimensions(logging);
+
+    await Extensions.loadExtensions(instance.handlers.extensions, instance.listenServers, instance.options.log, instance.logging, instance.extensionStorage);
+
+    if (typeof instance.options.redis !== "undefined" && instance.options.redis.enabled) {
+      instance.setupRedis();
+    }
+
+    instance.setupRoutes();
 
     // Starts a new RestAPI server. This mimics the status output of tShock's RestAPI and puts in the total count and all player names from all Dimensions
-    if (this.options.restApi.enabled) {
-      this.restApi = new RestApi(this.options.restApi.port, this.globalTracking, this.serversDetails, this.servers, this.options.restApi.response, this.logging);
+    if (instance.options.restApi.enabled) {
+      instance.restApi = new RestApi(instance.options.restApi.port, instance.globalTracking, instance.serversDetails, instance.servers, instance.options.restApi.response, instance.logging);
     }
 
-    if (this.options.hotReload) {
-      this.setupHotReload();
+    if (instance.options.hotReload) {
+      instance.setupHotReload();
     }
+
+    return instance;
   }
 
   private setupHotReload(): void {
@@ -175,14 +187,7 @@ class Dimensions {
         this.logging.info("Reloaded Packet Handlers.");
         break;
       case "reloadcmds":
-        try {
-          let ClientCommandHandler = reload(module)('./clientcommandhandler.js', require).default;
-          this.handlers.command = new ClientCommandHandler();
-        } catch (e) {
-          this.logging.error("Error loading Command Handler: " + ErrorHelper.toMessage(e));
-        }
-
-        this.logging.info("Reloaded Command Handler.");
+        this.reloadCommandHandler();
         break;
       case "reloadextensions":
       case "reloadplugins":
@@ -194,6 +199,18 @@ class Dimensions {
     }
   }
 
+  /* Loads a new instance of ClientCommandHandler using dynamic import */
+  private async reloadCommandHandler(): Promise<void> {
+    try {
+      const modulePath = new URL('./clientcommandhandler.js', import.meta.url).pathname;
+      const module = await importFresh(modulePath);
+      this.handlers.command = new module.default();
+      this.logging.info("Reloaded Command Handler.");
+    } catch (e) {
+      this.logging.error("Error loading Command Handler: " + ErrorHelper.toMessage(e));
+    }
+  }
+
   /* When a command is not directly handled by handleCommand, it comes through here and is
    * passed on to each extension in-case they have it as a command */
   private passOnReloadToExtensions(): void {
@@ -202,27 +219,31 @@ class Dimensions {
       let handler = handlers[key];
       if (handler.reloadable && typeof handler.reloadName !== 'undefined') {
         if (typeof handler.reload === 'function') {
-          handler.reload(require);
+          // Note: Extensions need to be updated to support ESM dynamic imports
+          // The require parameter is no longer available in ESM
+          handler.reload(undefined as any);
         }
       }
     }
   }
 
-  /* Loads a new instance of ClientPacketHandler by requiring the file again */
-  private reloadClientHandlers(): void {
+  /* Loads a new instance of ClientPacketHandler using dynamic import */
+  private async reloadClientHandlers(): Promise<void> {
     try {
-      let ClientPacketHandler = reload(module)('./clientpackethandler.js', require).default;
-      this.handlers.clientPacketHandler = new ClientPacketHandler();
+      const modulePath = new URL('./clientpackethandler.js', import.meta.url).pathname;
+      const module = await importFresh(modulePath);
+      this.handlers.clientPacketHandler = new module.default();
     } catch (e) {
       this.logging.error("Error loading Client Packet Handler: " + ErrorHelper.toMessage(e));
     }
   }
 
-  /* Loads a new instance of TerrariaServerPacketHandler by requiring the file again */
-  private reloadTerrariaServerHandlers(): void {
+  /* Loads a new instance of TerrariaServerPacketHandler using dynamic import */
+  private async reloadTerrariaServerHandlers(): Promise<void> {
     try {
-      let TerrariaServerPacketHandler = reload(module)('./terrariaserverpackethandler.js').default;
-      this.handlers.terrariaServerPacketHandler = new TerrariaServerPacketHandler();
+      const modulePath = new URL('./terrariaserverpackethandler.js', import.meta.url).pathname;
+      const module = await importFresh(modulePath);
+      this.handlers.terrariaServerPacketHandler = new module.default();
     } catch (e) {
       this.logging.error("Error loading TerrariaServer Packet Handler: " + ErrorHelper.toMessage(e));
     }
@@ -246,12 +267,13 @@ class Dimensions {
   }
 
   /* Unloads and re-loads all extensions directly from their directories */
-  private reloadExtensions(): void {
+  private async reloadExtensions(): Promise<void> {
     this.unloadExtensions();
 
     this.handlers.extensions = {};
-    Object.keys(require.cache).forEach(key => delete require.cache[key]);
-    Extensions.loadExtensions(this.handlers.extensions, this.listenServers, this.options.log, this.logging, this.extensionStorage);
+    // Note: ESM module cache cannot be cleared like CommonJS require.cache
+    // Extensions will be reloaded with cache busting via dynamic imports
+    await Extensions.loadExtensions(this.handlers.extensions, this.listenServers, this.options.log, this.logging, this.extensionStorage);
   }
 
   /* Checks the config servers against the existing listen servers and updates any allocations

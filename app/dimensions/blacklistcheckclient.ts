@@ -1,8 +1,8 @@
-import ClientArgs from 'dimensions/clientargs';
-import RawPacket from 'dimensions/packets/rawpacket';
-import { getPacketsFromBuffer, BuffersPackets } from 'dimensions/utils';
-import { getProperIP } from 'dimensions/utils';
-import Blacklist from 'dimensions/blacklist';
+import ClientArgs from './clientargs.js';
+import RawPacket from './packets/rawpacket.js';
+import { getPacketsFromBuffer, BuffersPackets } from './utils.js';
+import { getProperIP } from './utils.js';
+import Blacklist from './blacklist.js';
 import { Parser, PlayerSlotSetPacket } from 'terraria-packet';
 
 enum ClientState {

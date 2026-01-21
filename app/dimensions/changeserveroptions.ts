@@ -1,4 +1,4 @@
-import RoutingInformation from 'dimensions/routinginformation';
+import RoutingInformation from './routinginformation.js';
 
 interface ChangeServerOptions {
     preventSpawnOnJoin?: boolean;

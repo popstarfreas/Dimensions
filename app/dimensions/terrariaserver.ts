@@ -1,13 +1,14 @@
-import { BuffersPackets, getPacketsFromBuffer } from 'dimensions/utils';
-import terrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
-import PacketTypes from 'dimensions/packettypes';
-import Client from 'dimensions/client';
+import { BuffersPackets, getPacketsFromBuffer } from './utils.js';
+import terrariaServerPacketHandler from './terrariaserverpackethandler.js';
+import PacketTypes from './packettypes.js';
+import Client from './client.js';
 import * as Net from 'net';
-import Point from 'dimensions/point';
-import RawPacket from 'dimensions/packets/rawpacket';
-import Entities from 'dimensions/entities';
-import ClientState from 'dimensions/clientstate';
-import ErrorHelper from 'dimensions/errorhelper';
+import Point from './point.js';
+import RawPacket from './packets/rawpacket.js';
+import Entities from './entities.js';
+import ClientState from './clientstate.js';
+import ErrorHelper from './errorhelper.js';
+import { Parser } from 'terraria-packet';
 
 /* Used to track information specific to the current server that a client is on
  * as well as pass received data from the TerrariaServer to the handlers */
@@ -103,6 +104,7 @@ class TerrariaServer {
       if (allowedPackets.length > 0) {
         if (!this.client.socket.destroyed && this.client.socket.writable) {
           for (const buf of allowedPackets) {
+            console.log(Parser.parse(buf, true));
             this.client.socket.write(buf);
           }
         } else {

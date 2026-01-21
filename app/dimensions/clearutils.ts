@@ -1,5 +1,5 @@
-import Client from "dimensions/client";
-import PacketTypes from "dimensions/packettypes";
+import Client from "./client.js";
+import PacketTypes from "./packettypes.js";
 
 import { PlayerActivePacket, NpcUpdatePacket, ItemDropUpdatePacket, NetModuleLoadPacket } from 'terraria-packet';
 

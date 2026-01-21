@@ -1,4 +1,5 @@
-import BufferReader from 'dimensions/packets/bufferreader';
+import BufferReader from '@popstarfreas/packetfactory/bufferreader';
+
 describe("bufferreader", () => {
     describe("byte", () => {
         it("should read a byte correctly", () => {
@@ -20,17 +21,17 @@ describe("bufferreader", () => {
     describe("color", () => {
         it("should read a color correctly", () => {
             let reader = new BufferReader(Buffer.from("050607", "hex"));
-            expect(reader.readColor()).toEqual({R: 5, G: 6, B: 7});
+            expect(reader.readColor()).toEqual({ R: 5, G: 6, B: 7 });
         });
 
         it("should read a zero color correctly", () => {
             let reader = new BufferReader(Buffer.from("000000", "hex"));
-            expect(reader.readColor()).toEqual({R: 0, G: 0, B: 0});
+            expect(reader.readColor()).toEqual({ R: 0, G: 0, B: 0 });
         });
 
         it("should read a maximum color correctly", () => {
             let reader = new BufferReader(Buffer.from("ffffff", "hex"));
-            expect(reader.readColor()).toEqual({R: 255, G: 255, B: 255});
+            expect(reader.readColor()).toEqual({ R: 255, G: 255, B: 255 });
         });
     });
 
@@ -93,27 +94,27 @@ describe("bufferreader", () => {
     describe("uint64", () => {
         it("should correctly read a small uint64", () => {
             let reader = new BufferReader(Buffer.from("3200000000000000", "hex"));
-            expect(reader.readUInt64()).toEqual(50);
+            expect(reader.readUInt64()).toEqual(50n);
         });
 
         it("should correctly read maximum uint16", () => {
             let reader = new BufferReader(Buffer.from("ffff000000000000", "hex"));
-            expect(reader.readUInt64()).toEqual(65535);
+            expect(reader.readUInt64()).toEqual(65535n);
         });
 
         it("should correctly read maximum uint32", () => {
             let reader = new BufferReader(Buffer.from("ffffffff00000000", "hex"));
-            expect(reader.readUInt64()).toEqual(4294967295);
+            expect(reader.readUInt64()).toEqual(4294967295n);
         });
 
         it("should correctly read maximum uint64", () => {
             let reader = new BufferReader(Buffer.from("ffffffffffffffff", "hex"));
-            expect(reader.readUInt64()).toEqual(18446744073709551615);
+            expect(reader.readUInt64()).toEqual(18446744073709551615n);
         });
 
         it("should correctly read zero uint64", () => {
             let reader = new BufferReader(Buffer.from("0000000000000000", "hex"));
-            expect(reader.readUInt64()).toEqual(0);
+            expect(reader.readUInt64()).toEqual(0n);
         });
     });
 

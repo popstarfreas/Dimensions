@@ -1,8 +1,8 @@
-import PacketReader from 'dimensions/packets/packetreader';
+import PacketReader from '@popstarfreas/packetfactory/packetreader';
 
 describe("packetreader", () => {
     let reader: PacketReader;
-    
+
     beforeEach(() => {
         reader = new PacketReader(Buffer.from("02000505", "hex"));
     });

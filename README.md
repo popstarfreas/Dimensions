@@ -10,7 +10,7 @@ Follow the link and download either version. Later releases may offer better per
 Follow the link and download and install git: https://git-scm.com/downloads
 
 This is needed to install one of the dependencies.
- 
+
 ### Step 3: Install the Plugin
 Download the plugin and put it in each Terraria Server for use with Dimensions
  * [Download](https://github.com/popstarfreas/Dimensions-TerrariaServer/releases)
@@ -21,9 +21,11 @@ The plugin is necessary to fix IP addresses of players connecting through Dimens
 ### Step 4: Setting Up and Running
  * Download the latest release and extract it to its own folder
  * Open a cmd prompt/terminal at the folder and execute the command `npm install --only=production` (it may take a bit to finish)
- * Copy the file "config.js.example" and rename it to "config.js" and edit it to your specifications
+ * Copy `configuration/config.yaml.example` to `configuration/config.yaml` and edit it to your specifications
  * OR follow the quickstart guide in the [Config Wiki](https://github.com/popstarfreas/Dimensions/wiki/Config)
  * To start Dimensions execute `npm run start`
+
+**Note:** Legacy `config.js` in the root directory is still supported for backwards compatibility, but YAML configuration is recommended for new installations.
 
 ### Step 5 (Optional): Install Redis
 **If you do not need to have live reloading of modules / the configuration file then you do not need to do this step.**
@@ -56,11 +58,29 @@ Download and install Redis for your OS
 
 Dimensions uses the latest Typescript with strict checks enabled to help catch bugs. It is recommended that you modify the Typescript code instead of the transpiled javascript code. This will not only provide you with more safety regarding changes, but the original source is likely to be more understandable and you can merge changes from this repo using git.
 
+### Project Structure
+
+The project uses ES modules (ESM) and has the following structure:
+
+```
+app/
+├── dimensions/          # Core library source code
+│   ├── extension/       # Extension base classes
+│   ├── datatypes/       # Data type definitions
+│   └── packets/         # Packet handling
+├── spec/                # Test files
+└── index.ts             # Entry point
+configuration/
+├── config.yaml.example  # Full configuration example
+└── config.yaml.quickstart # Minimal quickstart template
+```
+
 ### Extensions
 To build an extension:
  * ``npm init`` in a new folder to initialise it
  * ``npm i dimensions@npm:@popstarfreas/dimensions``, this installs dimensions as a dependency
- * Have a look at [an existing extension](https://github.com/popstarfreas/Kickback/blob/master/index.ts) or [the abstract extension class](https://github.com/popstarfreas/Dimensions/blob/dev/node_modules/dimensions/extension/index.ts) to see a template for where to start
+ * Have a look at [an existing extension](https://github.com/popstarfreas/Kickback/blob/master/index.ts) or [the abstract extension class](https://github.com/popstarfreas/Dimensions/blob/dev/app/dimensions/extension/index.ts) to see a template for where to start
+ * Extensions must use ESM syntax (`import`/`export`) rather than CommonJS (`require`/`module.exports`)
 
 A list of extensions for dimensions is available at the wiki here: https://github.com/popstarfreas/Dimensions/wiki/Extensions
    

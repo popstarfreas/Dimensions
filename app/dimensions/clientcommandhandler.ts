@@ -1,5 +1,5 @@
-import Client from 'dimensions/client';
-import ClientState from 'dimensions/clientstate';
+import Client from './client.js';
+import ClientState from './clientstate.js';
 
 export interface Command {
   name: string;

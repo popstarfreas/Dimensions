@@ -1,7 +1,7 @@
-import PacketReader from 'dimensions/packets/packetreader';
-import BufferWriter from 'dimensions/packets/bufferwriter';
-import BitsByte from './bitsbyte';
-import { getPackedStringByteLen } from 'dimensions/utils';
+import PacketReader from '@popstarfreas/packetfactory/packetreader';
+import BufferWriter from '@popstarfreas/packetfactory/bufferwriter';
+import BitsByte from './bitsbyte.js';
+import { getPackedStringByteLen } from '../utils.js';
 
 class PlayerDeathReason {
     protected _reasonType: BitsByte | null = null;
@@ -60,7 +60,7 @@ class PlayerDeathReason {
     }
 
     public getHexData(): Buffer {
-        let writer = new BufferWriter(this.byteLen)
+        let writer = new BufferWriter(Buffer.allocUnsafe(this.byteLen));
         writer.packByte(this._reasonType !== null ? this._reasonType.value : 0)
 
         if (this._killerPlayerId !== null) {

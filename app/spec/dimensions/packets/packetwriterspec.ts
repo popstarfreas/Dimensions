@@ -1,4 +1,4 @@
-import PacketWriter from 'dimensions/packets/packetwriter';
+import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 
 describe("packetwriter", () => {
     it("should correctly write the type of packet", () => {

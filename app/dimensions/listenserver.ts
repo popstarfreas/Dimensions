@@ -1,21 +1,22 @@
 import * as Net from 'net';
-import RawPacket from 'dimensions/packets/rawpacket';
-import { getProperIP } from 'dimensions/utils';
-import Client from 'dimensions/client';
-import ClientArgs from 'dimensions/clientargs';
-import ServerDetails from 'dimensions/serverdetails';
-import GlobalHandlers from 'dimensions/globalhandlers';
-import { ConfigListenServer, ConfigOptions } from 'dimensions/configloader';
-import RoutingServer from 'dimensions/routingserver';
-import Blacklist from 'dimensions/blacklist';
-import PacketTypes from 'dimensions/packettypes';
-import PacketWriter from 'dimensions/packets/packetwriter';
-import GlobalTracking from 'dimensions/globaltracking';
-import ListenServerArgs from 'dimensions/listenserverargs';
-import NetworkText from 'dimensions/packets/networktext';
-import StringUtils from 'dimensions/stringutils';
-import ErrorHelper from 'dimensions/errorhelper';
-import BlacklistCheckClient from 'dimensions/blacklistcheckclient';
+import { v4 as uuidv4 } from 'uuid';
+import RawPacket from './packets/rawpacket.js';
+import { getProperIP } from './utils.js';
+import Client from './client.js';
+import ClientArgs from './clientargs.js';
+import ServerDetails from './serverdetails.js';
+import GlobalHandlers from './globalhandlers.js';
+import { ConfigListenServer, ConfigOptions } from './configloader.js';
+import RoutingServer from './routingserver.js';
+import Blacklist from './blacklist.js';
+import PacketTypes from './packettypes.js';
+import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
+import GlobalTracking from './globaltracking.js';
+import ListenServerArgs from './listenserverargs.js';
+import NetworkText from '@popstarfreas/packetfactory/networktext';
+import StringUtils from './stringutils.js';
+import ErrorHelper from './errorhelper.js';
+import BlacklistCheckClient from './blacklistcheckclient.js';
 import * as winston from 'winston';
 
 /**
@@ -26,7 +27,6 @@ export class ListenServer {
   /** The clients that are currently being checked for whether they are blacklisted */
   public checkingClients: BlacklistCheckClient[];
   public servers: { [id: string]: RoutingServer };
-  private idCounter: number;
   private options: ConfigOptions;
   private port: number;
   private routingServers: RoutingServer[];
@@ -44,7 +44,6 @@ export class ListenServer {
   ServerHandleStart: () => void;
 
   constructor(args: ListenServerArgs) {
-    this.idCounter = 0;
     this.clients = [];
     this.checkingClients = [];
     this.servers = args.servers;
@@ -326,7 +325,7 @@ export class ListenServer {
     }
 
     let clientArgs: ClientArgs = {
-      id: this.idCounter++,
+      id: uuidv4(),
       socket: socket,
       server: chosenServer,
       serversDetails: this.serversDetails,

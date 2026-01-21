@@ -1,8 +1,8 @@
-FROM node:lts-bullseye AS build
+FROM node:lts AS build
 WORKDIR /app
-COPY package-lock.json /app
+COPY pnpm-lock.yaml /app
 COPY package.json /app
-RUN yarn install
+RUN corepack pnpm install
 COPY rescript.json /app
 RUN mkdir /app/app
 COPY app /app/app
@@ -11,7 +11,7 @@ RUN npm run build
 
 COPY dimensions_cli.js /app
 
-FROM node:lts-bullseye-slim
+FROM node:lts-slim
 
 WORKDIR /app
 RUN mkdir /app/logs

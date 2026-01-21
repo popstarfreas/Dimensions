@@ -1,10 +1,16 @@
-import RoutingServer from 'dimensions/routingserver';
-import * as Language from 'dimensions/language';
+import RoutingServer from './routingserver.js';
+import * as Language from './language.js';
 import * as assert from 'assert';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as yaml from 'yaml';
-const reload = require("require-nocache")
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import { createRequire } from 'module';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const legacyRequire = createRequire(import.meta.url);
 
 export interface ConfigListenServer {
   listenPort: number;
@@ -180,21 +186,34 @@ export interface Config {
 // link pointed at. In order to avoid these problems, we now also support a configuration directory
 // that uses a yaml file. This means we can use fs to read that file avoiding the module cache and
 // soft link issue, as well as properly support hot reloading when dimensions is deployed in k8s.
-export const oldConfigFilePath = path.resolve(__dirname, '../../../config.js');
-export const configurationDirectory = path.resolve(__dirname, '../../../configuration');
+// Legacy config.js remains supported for compatibility.
+export const oldConfigFilePath = path.resolve(__dirname, '../../config.js');
+export const configurationDirectory = path.resolve(__dirname, '../../configuration');
 
 export let usingOldConfig = false
-function loadConfig(): UnvalidatedConfig {
-  try {
+function loadLegacyConfigSync(fresh: boolean): UnvalidatedConfig {
+  const resolvedPath = legacyRequire.resolve(oldConfigFilePath);
+  if (fresh && legacyRequire.cache[resolvedPath]) {
+    delete legacyRequire.cache[resolvedPath];
+  }
+  const legacyModule = legacyRequire(resolvedPath);
+  const config = legacyModule?.ConfigSettings ?? legacyModule?.default ?? legacyModule;
+  if (!config || typeof config !== "object") {
+    throw new Error("Legacy config.js did not export ConfigSettings");
+  }
+  return config as UnvalidatedConfig;
+}
+
+function loadConfigSync(): UnvalidatedConfig {
+  // For initial load, we prefer YAML config if it exists (ESM-compatible)
+  if (fs.existsSync(path.resolve(configurationDirectory, 'config.yaml'))) {
+    usingOldConfig = false;
+    return yaml.parse(fs.readFileSync(path.resolve(configurationDirectory, 'config.yaml'), 'utf8'));
+  } else if (fs.existsSync(oldConfigFilePath)) {
     usingOldConfig = true;
-    return require(oldConfigFilePath).ConfigSettings;
-  } catch (e) {
-    if (fs.existsSync(path.resolve(configurationDirectory, 'config.yaml'))) {
-      usingOldConfig = false;
-      return yaml.parse(fs.readFileSync(path.resolve(configurationDirectory, 'config.yaml'), 'utf8'));
-    } else {
-      throw new Error("No config file found");
-    }
+    return loadLegacyConfigSync(false);
+  } else {
+    throw new Error("No config file found. Please create configuration/config.yaml or if using a legacy config make sure config.js is present");
   }
 }
 
@@ -216,8 +235,8 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
 
   try {
     if (typeof unvalidatedConfig.options.nameChanges !== "undefined") {
-      assert(unvalidatedConfig.options.nameChanges.mode === "legacy" || unvalidatedConfig.options.nameChanges.mode === "rewrite", "nameChanges.mode must be either 'legacy' or 'rewrite'");
-      assert(Array.isArray(unvalidatedConfig.options.nameChanges.exclusions), "nameChanges.exclusions must be an array");
+      assert.ok(unvalidatedConfig.options.nameChanges.mode === "legacy" || unvalidatedConfig.options.nameChanges.mode === "rewrite", "nameChanges.mode must be either 'legacy' or 'rewrite'");
+      assert.ok(Array.isArray(unvalidatedConfig.options.nameChanges.exclusions), "nameChanges.exclusions must be an array");
     }
 
     if (typeof unvalidatedConfig.options.debuffOnSwitch !== "undefined") {
@@ -234,7 +253,7 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
 
     if (typeof unvalidatedConfig.options.disconnectOnKick !== "undefined") {
       if (unvalidatedConfig.options.disconnectOnKick.type === "onKickReasonPrefix") {
-        assert(Array.isArray(unvalidatedConfig.options.disconnectOnKick.kickReasonPrefixes), "disconnectOnKick.kickReasonPrefixes must be an array");
+        assert.ok(Array.isArray(unvalidatedConfig.options.disconnectOnKick.kickReasonPrefixes), "disconnectOnKick.kickReasonPrefixes must be an array");
         validatedConfig.options.disconnectOnKick = {
           type: "onKickReasonPrefix",
           kickReasonPrefixes: unvalidatedConfig.options.disconnectOnKick.kickReasonPrefixes,
@@ -270,11 +289,11 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
 
     validatedConfig.options.blacklist.enabled = unvalidatedConfig.options.blacklist.enabled ?? false;
     if (validatedConfig.options.blacklist.enabled) {
-      assert(typeof unvalidatedConfig.options.blacklist.hostname !== "undefined", "Blacklist enabled but no hostname provided");
-      assert(typeof unvalidatedConfig.options.blacklist.path !== "undefined", "Blacklist enabled but no path provided");
-      assert(typeof unvalidatedConfig.options.blacklist.port !== "undefined", "Blacklist enabled but no port provided");
-      assert(typeof unvalidatedConfig.options.blacklist.apiKey !== "undefined", "Blacklist enabled but no api key provided");
-      assert(unvalidatedConfig.options.blacklist.errorPolicy === "AllowJoining" || unvalidatedConfig.options.blacklist.errorPolicy === "DenyJoining", "Blacklist errorPolicy must be either 'AllowJoining' or 'DenyJoining'");
+      assert.ok(typeof unvalidatedConfig.options.blacklist.hostname !== "undefined", "Blacklist enabled but no hostname provided");
+      assert.ok(typeof unvalidatedConfig.options.blacklist.path !== "undefined", "Blacklist enabled but no path provided");
+      assert.ok(typeof unvalidatedConfig.options.blacklist.port !== "undefined", "Blacklist enabled but no port provided");
+      assert.ok(typeof unvalidatedConfig.options.blacklist.apiKey !== "undefined", "Blacklist enabled but no api key provided");
+      assert.ok(unvalidatedConfig.options.blacklist.errorPolicy === "AllowJoining" || unvalidatedConfig.options.blacklist.errorPolicy === "DenyJoining", "Blacklist errorPolicy must be either 'AllowJoining' or 'DenyJoining'");
 
       validatedConfig.options.blacklist.hostname = unvalidatedConfig.options.blacklist.hostname!;
       validatedConfig.options.blacklist.path = unvalidatedConfig.options.blacklist.path!;
@@ -291,17 +310,15 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
 }
 
 export function reloadConfig(): Config {
-  try {
+  if (fs.existsSync(path.resolve(configurationDirectory, 'config.yaml'))) {
+    usingOldConfig = false;
+    return validateConfig(yaml.parse(fs.readFileSync(path.resolve(configurationDirectory, 'config.yaml'), 'utf8')));
+  } else if (fs.existsSync(oldConfigFilePath)) {
     usingOldConfig = true;
-    return validateConfig(reload(module)(oldConfigFilePath).ConfigSettings);
-  } catch (e) {
-    if (fs.existsSync(path.resolve(configurationDirectory, 'config.yaml'))) {
-      usingOldConfig = false;
-      return validateConfig(yaml.parse(fs.readFileSync(path.resolve(configurationDirectory, 'config.yaml'), 'utf8')));
-    } else {
-      throw new Error("No config file found");
-    }
+    return validateConfig(loadLegacyConfigSync(true));
+  } else {
+    throw new Error("No config file found. Please use configuration/config.yaml or config.js");
   }
 }
 
-export const ConfigSettings: Config = validateConfig(loadConfig());
+export const ConfigSettings: Config = validateConfig(loadConfigSync());

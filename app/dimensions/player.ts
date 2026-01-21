@@ -1,8 +1,8 @@
-import Item from 'dimensions/item';
-import Client from 'dimensions/client';
-import PacketWriter from 'dimensions/packets/packetwriter';
-import PacketTypes from 'dimensions/packettypes';
-import Color from 'dimensions/color';
+import Item from './item.js';
+import Client from './client.js';
+import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
+import PacketTypes from './packettypes.js';
+import Color from './color.js';
 import { PlayerInfoPacket } from 'terraria-packet';
 type Difficulty = PlayerInfoPacket.difficulty
 type Mode = PlayerInfoPacket.mode

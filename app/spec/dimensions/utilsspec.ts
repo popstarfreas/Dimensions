@@ -1,9 +1,9 @@
-import * as utils from "dimensions/utils";
-import BufferWriter from "dimensions/packets/bufferwriter";
+import * as utils from "../../dimensions/utils.js";
+import BufferWriter from '@popstarfreas/packetfactory/bufferwriter';
 
 describe("utils", () => {
     it("should correctly buffer an incomplete packet", () => {
-        const buf = new BufferWriter(3).packUInt16(4).packByte(0).data;
+        const buf = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(4).packByte(0).data;
         const res = utils.getPacketsFromBuffer(buf);
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");
@@ -13,7 +13,7 @@ describe("utils", () => {
     });
 
     it("should correctly buffer an incomplete packet", () => {
-        const buf = new BufferWriter(2).packUInt16(4).data;
+        const buf = new BufferWriter(Buffer.allocUnsafe(2)).packUInt16(4).data;
         const res = utils.getPacketsFromBuffer(buf);
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");
@@ -23,8 +23,8 @@ describe("utils", () => {
     });
 
     it("should correctly buffer an incomplete packet", () => {
-        const bufA = new BufferWriter(3).packUInt16(3).packByte(0).data;
-        const bufB = new BufferWriter(2).packUInt16(4).data;
+        const bufA = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(3).packByte(0).data;
+        const bufB = new BufferWriter(Buffer.allocUnsafe(2)).packUInt16(4).data;
         const res = utils.getPacketsFromBuffer(Buffer.concat([bufA, bufB]));
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");
@@ -35,19 +35,19 @@ describe("utils", () => {
     });
 
     it("should correctly handle an invalid packet (length = 0)", () => {
-        const buf = new BufferWriter(2).packUInt16(0).data;
+        const buf = new BufferWriter(Buffer.allocUnsafe(2)).packUInt16(0).data;
         const res = utils.getPacketsFromBuffer(buf);
         expect(res.type).toEqual("InvalidPacketLength");
     });
 
     it("should correctly handle an invalid packet (length = 1)", () => {
-        const buf = new BufferWriter(2).packUInt16(1).data;
+        const buf = new BufferWriter(Buffer.allocUnsafe(2)).packUInt16(1).data;
         const res = utils.getPacketsFromBuffer(buf);
         expect(res.type).toEqual("InvalidPacketLength");
     });
 
     it("should correctly buffer an incomplete packet length", () => {
-        const buf = new BufferWriter(1).packByte(4).data;
+        const buf = new BufferWriter(Buffer.allocUnsafe(1)).packByte(4).data;
         const res = utils.getPacketsFromBuffer(buf);
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");
@@ -58,8 +58,8 @@ describe("utils", () => {
 
     it("should correctly read a correct packet and buffer"
         + " the incomplete packet length of the next", () => {
-            const bufA = new BufferWriter(3).packUInt16(3).packByte(0).data;
-            const bufB = new BufferWriter(1).packByte(4).data;
+            const bufA = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(3).packByte(0).data;
+            const bufB = new BufferWriter(Buffer.allocUnsafe(1)).packByte(4).data;
             const res = utils.getPacketsFromBuffer(Buffer.concat([bufA, bufB]));
             if (res.type !== "ValidPackets") {
                 throw new Error("Expected ValidPackets");
@@ -70,7 +70,7 @@ describe("utils", () => {
         });
 
     it("should correctly read one packet", () => {
-        const bufA = new BufferWriter(3).packUInt16(3).packByte(0).data;
+        const bufA = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(3).packByte(0).data;
         const res = utils.getPacketsFromBuffer(bufA);
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");
@@ -81,7 +81,7 @@ describe("utils", () => {
     });
 
     it("should correctly read packet", () => {
-        const buf = new BufferWriter(4).packUInt16(4).packByte(0).packByte(0).data;
+        const buf = new BufferWriter(Buffer.allocUnsafe(4)).packUInt16(4).packByte(0).packByte(0).data;
         const res = utils.getPacketsFromBuffer(buf);
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");
@@ -92,8 +92,8 @@ describe("utils", () => {
     });
 
     it("should correctly read packets", () => {
-        const bufA = new BufferWriter(4).packUInt16(4).packByte(0).packByte(0).data;
-        const bufB = new BufferWriter(4).packUInt16(4).packByte(0).packByte(0).data;
+        const bufA = new BufferWriter(Buffer.allocUnsafe(4)).packUInt16(4).packByte(0).packByte(0).data;
+        const bufB = new BufferWriter(Buffer.allocUnsafe(4)).packUInt16(4).packByte(0).packByte(0).data;
         const res = utils.getPacketsFromBuffer(Buffer.concat([bufA, bufB]));
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");
@@ -105,8 +105,8 @@ describe("utils", () => {
     });
 
     it("should correctly separate two packets", () => {
-        const bufA = new BufferWriter(3).packUInt16(3).packByte(0).data;
-        const bufB = new BufferWriter(3).packUInt16(3).packByte(1).data;
+        const bufA = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(3).packByte(0).data;
+        const bufB = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(3).packByte(1).data;
         const res = utils.getPacketsFromBuffer(Buffer.concat([bufA, bufB]));
         if (res.type !== "ValidPackets") {
             throw new Error("Expected ValidPackets");

@@ -1,27 +1,27 @@
-import ClientCommandHandler from 'dimensions/clientcommandhandler';
-import TerrariaServer from 'dimensions/terrariaserver';
-import Client from 'dimensions/client';
-import ClientArgs from 'dimensions/clientargs';
+import ClientCommandHandler from '../../dimensions/clientcommandhandler.js';
+import { v4 as uuidv4 } from 'uuid';
+import TerrariaServer from '../../dimensions/terrariaserver.js';
+import Client from '../../dimensions/client.js';
+import ClientArgs from '../../dimensions/clientargs.js';
 import * as Net from 'net';
-import RoutingServer from 'dimensions/routingserver';
-import ClientPacketHandler from 'dimensions/clientpackethandler';
-import TerrariaServerPacketHandler from 'dimensions/terrariaserverpackethandler';
-import { ConfigOptions } from 'dimensions/configloader';
+import RoutingServer from '../../dimensions/routingserver.js';
+import ClientPacketHandler from '../../dimensions/clientpackethandler.js';
+import TerrariaServerPacketHandler from '../../dimensions/terrariaserverpackethandler.js';
+import { ConfigOptions } from '../../dimensions/configloader.js';
 import * as winston from 'winston';
-import GlobalTracking from 'dimensions/globaltracking';
-import GlobalHandlers from 'dimensions/globalhandlers';
-import ServerDetails from 'dimensions/serverdetails';
-import { Dictionary } from 'dimensions/dictionary';
-import * as Language from 'dimensions/language';
-let Mitm = require('mitm');
-//type DoneFn = () => void;
+import GlobalTracking from '../../dimensions/globaltracking.js';
+import GlobalHandlers from '../../dimensions/globalhandlers.js';
+import ServerDetails from '../../dimensions/serverdetails.js';
+import { Dictionary } from '../../dimensions/dictionary.js';
+import * as Language from '../../dimensions/language.js';
+type DoneFn = (err?: unknown) => void;
 
 describe("client", () => {
-    let mitm: any;
     let config: ConfigOptions;
     let serverA: RoutingServer;
     let serverB: RoutingServer;
     let socket: Net.Socket;
+    let tcpServer: Net.Server;
     let serversDetails: Dictionary<ServerDetails>;
     let globalHandlers: GlobalHandlers;
     let servers: Dictionary<RoutingServer>;
@@ -32,8 +32,9 @@ describe("client", () => {
 
     let clientSocket: Net.Socket;
     let clientSocketDataHandlers: ((data: string) => void)[];
+    let id = uuidv4();
 
-    beforeEach(() => {
+    beforeEach((done: DoneFn) => {
         config = {
             socketTimeout: 0,
             socketNoDelay: true,
@@ -86,18 +87,15 @@ describe("client", () => {
             disconnectOnKick: { type: "never" },
             hotReload: false
         };
-        mitm = Mitm();
         clientSocketDataHandlers = [];
-        mitm.on("connection", (socket: Net.Socket) => {
-            clientSocket = socket;
+        tcpServer = Net.createServer((incomingSocket: Net.Socket) => {
+            clientSocket = incomingSocket;
             clientSocket.on("data", (data) => {
                 for (let i = 0; i < clientSocketDataHandlers.length; i++) {
                     clientSocketDataHandlers[i](data.toString('hex'));
                 }
             });
         });
-
-        socket = Net.connect(22, "example.org");
         serverA = {
             name: "servera",
             serverIP: "localhost",
@@ -147,7 +145,7 @@ describe("client", () => {
         let clientArgs: ClientArgs = {
             globalHandlers: globalHandlers,
             globalTracking: globalTracking,
-            id: 0,
+            id,
             logging: winston.createLogger(),
             options: config,
             server: serverA,
@@ -156,12 +154,38 @@ describe("client", () => {
             socket: socket
         };
 
-        client = new Client(clientArgs);
-        server = new TerrariaServer(socket, client);
+        tcpServer.listen(0, "127.0.0.1", () => {
+            const address = tcpServer.address();
+            if (!address || typeof address === "string") {
+                done(new Error("Failed to start local test server"));
+                return;
+            }
+
+            socket = Net.connect(address.port, "127.0.0.1");
+            const onError = (err: Error) => done(err);
+            socket.once("error", onError);
+            socket.once("connect", () => {
+                socket.off("error", onError);
+                clientArgs.socket = socket;
+                client = new Client(clientArgs);
+                server = new TerrariaServer(socket, client);
+                done();
+            });
+        });
     });
 
-    afterEach(() => {
-        mitm.disable();
+    afterEach((done: DoneFn) => {
+        if (clientSocket && !clientSocket.destroyed) {
+            clientSocket.destroy();
+        }
+        if (socket && !socket.destroyed) {
+            socket.destroy();
+        }
+        if (tcpServer) {
+            tcpServer.close(() => done());
+        } else {
+            done();
+        }
     });
 
     it("should decrement client counts when disconnecting from a server", () => {
@@ -175,7 +199,7 @@ describe("client", () => {
     });
 
     it("should correctly set up the required properties", () => {
-        expect(client.ID).toEqual(0);
+        expect(client.ID).toEqual(id);
         expect(client.options).toEqual(config);
         expect(client.server.name).toEqual(serverA.name);
         expect(client.server.ip).toEqual(serverA.serverIP);

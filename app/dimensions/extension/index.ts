@@ -1,8 +1,8 @@
-import Client from 'dimensions/client';
-import ClientPacketHandler from 'dimensions/extension/clientpackethandler';
-import TerrariaServerPacketHandler from 'dimensions/extension/terrariaserverpackethandler';
-import ListenServer from 'dimensions/listenserver';
-import TerrariaServer from 'dimensions/terrariaserver';
+import Client from '../client.js';
+import ClientPacketHandler from './clientpackethandler.js';
+import TerrariaServerPacketHandler from './terrariaserverpackethandler.js';
+import ListenServer from '../listenserver.js';
+import TerrariaServer from '../terrariaserver.js';
 import { Socket } from 'net';
 
 export interface PacketHandler {

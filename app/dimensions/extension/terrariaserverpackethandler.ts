@@ -1,5 +1,5 @@
-import TerrariaServer from 'dimensions/terrariaserver';
-import RawPacket from 'dimensions/packets/rawpacket';
+import TerrariaServer from '../terrariaserver.js';
+import RawPacket from '../packets/rawpacket.js';
 
 class TerrariaServerPacketHandler {
     protected currentServer: TerrariaServer | null;

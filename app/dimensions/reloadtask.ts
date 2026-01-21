@@ -1,4 +1,4 @@
-import { ConfigListenServer } from 'dimensions/configloader';
+import { ConfigListenServer } from './configloader.js';
 
 interface ReloadTask {
     key: string;

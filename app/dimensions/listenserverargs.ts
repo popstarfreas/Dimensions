@@ -1,9 +1,9 @@
-import GlobalHandlers from 'dimensions/globalhandlers';
-import ServerDetails from 'dimensions/serverdetails';
-import RoutingServer from 'dimensions/routingserver';
-import GlobalTracking from 'dimensions/globaltracking';
-import Blacklist from 'dimensions/blacklist';
-import { ConfigOptions, ConfigListenServer } from 'dimensions/configloader';
+import GlobalHandlers from './globalhandlers.js';
+import ServerDetails from './serverdetails.js';
+import RoutingServer from './routingserver.js';
+import GlobalTracking from './globaltracking.js';
+import Blacklist from './blacklist.js';
+import { ConfigOptions, ConfigListenServer } from './configloader.js';
 import * as winston from 'winston';
 
 export interface ListenServerArgs {

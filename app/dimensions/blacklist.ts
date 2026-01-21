@@ -1,7 +1,7 @@
 import * as http from 'http';
 import * as util from 'node:util';
 import * as url from 'node:url';
-import { EnabledBlackList as BlacklistConfiguration } from 'dimensions/configloader';
+import { EnabledBlackList as BlacklistConfiguration } from './configloader.js';
 
 export interface BlackListCache {
     isHostIP: boolean;

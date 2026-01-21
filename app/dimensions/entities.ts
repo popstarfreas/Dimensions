@@ -1,7 +1,7 @@
-import Item from 'dimensions/item';
-import NPC from 'dimensions/npc';
-import Player from 'dimensions/player';
-import Pylon from 'dimensions/pylon';
+import Item from './item.js';
+import NPC from './npc.js';
+import Player from './player.js';
+import Pylon from './pylon.js';
 
 interface Entities {
   items: (Item | undefined)[];

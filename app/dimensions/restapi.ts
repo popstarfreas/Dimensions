@@ -1,8 +1,8 @@
-import GlobalTracking from "dimensions/globaltracking";
-import ErrorHelper from 'dimensions/errorhelper';
-import RoutingServer from "dimensions/routingserver";
-import ServerDetails from "dimensions/serverdetails";
-import { RestApiResponse } from "dimensions/configloader";
+import GlobalTracking from "./globaltracking.js";
+import ErrorHelper from './errorhelper.js';
+import RoutingServer from "./routingserver.js";
+import ServerDetails from "./serverdetails.js";
+import { RestApiResponse } from "./configloader.js";
 import * as Net from "net";
 import * as uuid from "uuid";
 import * as fs from "fs";

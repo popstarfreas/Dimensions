@@ -1,5 +1,5 @@
-import Client from 'dimensions/client';
-import RawPacket from 'dimensions/packets/rawpacket';
+import Client from '../client.js';
+import RawPacket from '../packets/rawpacket.js';
 
 class ClientPacketHandler {
     protected currentClient: Client | null;

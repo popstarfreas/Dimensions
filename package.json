@@ -1,29 +1,56 @@
 {
   "name": "@popstarfreas/dimensions",
-  "version": "6.3.0",
+  "version": "7.0.0",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git://github.com/popstarfreas/Dimensions.git"
   },
   "description": "",
-  "main": "index.js",
+  "main": "./build/index.js",
+  "types": "./build/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./build/dimensions/index.js",
+      "types": "./build/dimensions/index.d.ts"
+    },
+    "./extension": {
+      "import": "./build/dimensions/extension/index.js",
+      "types": "./build/dimensions/extension/index.d.ts"
+    },
+    "./extension/*": {
+      "import": "./build/dimensions/extension/*.js",
+      "types": "./build/dimensions/extension/*.d.ts"
+    },
+    "./packets/*": {
+      "import": "./build/dimensions/packets/*.js",
+      "types": "./build/dimensions/packets/*.d.ts"
+    },
+    "./datatypes/*": {
+      "import": "./build/dimensions/datatypes/*.js",
+      "types": "./build/dimensions/datatypes/*.d.ts"
+    },
+    "./*": {
+      "import": "./build/*.js",
+      "types": "./build/*.d.ts"
+    }
+  },
   "scripts": {
     "start": "cd ./build && node ./index.js",
     "build": "tsc -p ./",
     "bstart": "npm run build && npm run start",
     "bstart-debug": "npm run build && cd ./build && node-debug ./index.js && cd ../",
     "test": "npm run build && jasmine --config=jasmine.json",
-    "makemodule": "rm -rf ./module/* && tsc --declaration -p ./ && mv -v build/node_modules/dimensions/* module && cp package.json module/package.json",
+    "makemodule": "rm -rf ./module/* && tsc --declaration -p ./ && mv -v build/dimensions/* module && cp package.json module/package.json",
     "makerelease": "./makerelease.sh"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@popstarfreas/packetfactory": "^7.1.1",
+    "@popstarfreas/packetfactory": "^7.1.3",
     "@rescript/runtime": "^12.0.0",
     "glob": "^11.0.3",
     "redis": "^3.1.2",
-    "require-nocache": "^1.0.0",
     "terraria-packet": "github:popstarfreas/rescript-terrariapacket#b7f932c3a578f34e2461145fed2d97e5fc58da93",
     "utf8": "^3.0.0",
     "uuid": "^11.1.0",

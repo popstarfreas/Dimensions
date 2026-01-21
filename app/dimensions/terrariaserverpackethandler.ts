@@ -1,17 +1,18 @@
-import PacketTypes from 'dimensions/packettypes';
-import { getProperIP } from 'dimensions/utils';
-import NPC from 'dimensions/npc';
-import TerrariaServer from 'dimensions/terrariaserver';
-import Client from 'dimensions/client';
-import RawPacket from 'dimensions/packets/rawpacket';
+import PacketTypes from './packettypes.js';
+import { getProperIP } from './utils.js';
+import NPC from './npc.js';
+import TerrariaServer from './terrariaserver.js';
+import Client from './client.js';
+import RawPacket from './packets/rawpacket.js';
 import * as Net from 'net';
-import Item from 'dimensions/item';
-import Player from 'dimensions/player';
-import ClientState from 'dimensions/clientstate';
-import ErrorHelper from 'dimensions/errorhelper';
+import Item from './item.js';
+import Player from './player.js';
+import ClientState from './clientstate.js';
+import ErrorHelper from './errorhelper.js';
 
 import { WorldInfoPacket, PlayerInfoPacket, NpcUpdatePacket, ItemDropUpdatePacket, PlayerSpawnPacket, NetModuleLoadPacket, DisconnectPacket, PlayerActivePacket, PlayerInventorySlotPacket, DimensionsUpdatePacket, Parser, } from "terraria-packet";
 import NetworkText from '@popstarfreas/packetfactory/networktext';
+import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 
 /**
  * This handles all packets coming from a Terraria Server, sometimes responding instead of the client

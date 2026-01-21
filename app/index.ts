@@ -1,5 +1,5 @@
-import Dimensions from "dimensions";
-import { ConfigSettings } from 'dimensions/configloader';
+import Dimensions from "./dimensions/index.js";
+import { ConfigSettings } from './dimensions/configloader.js';
 import * as winston from "winston";
 
 let fileFormat = winston.format.json()
@@ -47,7 +47,7 @@ process.on('uncaughtException', function(e: any) {
    logging.error(e, e.stack);
 });
 
-var dimensions = new Dimensions(logging);
+const dimensions = await Dimensions.create(logging);
 process.once('SIGTERM', () => {
    dimensions.close();
 })

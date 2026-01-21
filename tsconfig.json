@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2017",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "target": "es2020",
         "sourceMap": false,
         "outDir": "build",
         "strict": true,
@@ -10,7 +11,7 @@
     },
     "include": [
         "app/index.ts",
-        "app/node_modules/dimensions",
+        "app/dimensions",
         "app/spec"
     ]
 }

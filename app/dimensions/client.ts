@@ -1,21 +1,21 @@
-import Player from 'dimensions/player';
-import TerrariaServer from 'dimensions/terrariaserver';
+import Player from './player.js';
+import TerrariaServer from './terrariaserver.js';
 import * as Net from 'net';
-import { ConfigOptions } from 'dimensions/configloader';
-import PacketTypes from 'dimensions/packettypes';
-import ClientPacketHandler from 'dimensions/clientpackethandler';
-import RoutingServer from 'dimensions/routingserver';
-import GlobalHandlers from 'dimensions/globalhandlers';
-import ServerDetails from 'dimensions/serverdetails';
-import RoutingInformation from 'dimensions/routinginformation';
-import { getPacketsFromBuffer, BuffersPackets } from 'dimensions/utils';
-import RawPacket from 'dimensions/packets/rawpacket';
-import ChangeServerOptions from 'dimensions/changeserveroptions';
-import GlobalTracking from 'dimensions/globaltracking';
-import ClientState from 'dimensions/clientstate';
-import ClientArgs from 'dimensions/clientargs';
-import ErrorHelper from 'dimensions/errorhelper';
-import ClearUtils from 'dimensions/clearutils';
+import { ConfigOptions } from './configloader.js';
+import PacketTypes from './packettypes.js';
+import ClientPacketHandler from './clientpackethandler.js';
+import RoutingServer from './routingserver.js';
+import GlobalHandlers from './globalhandlers.js';
+import ServerDetails from './serverdetails.js';
+import RoutingInformation from './routinginformation.js';
+import { getPacketsFromBuffer, BuffersPackets } from './utils.js';
+import RawPacket from './packets/rawpacket.js';
+import ChangeServerOptions from './changeserveroptions.js';
+import GlobalTracking from './globaltracking.js';
+import ClientState from './clientstate.js';
+import ClientArgs from './clientargs.js';
+import ErrorHelper from './errorhelper.js';
+import ClearUtils from './clearutils.js';
 import * as winston from 'winston';
 import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 
@@ -26,7 +26,7 @@ import NetworkText from '@popstarfreas/packetfactory/networktext';
  * This class handles switching servers and passing data of a single client
  */
 class Client {
-  public ID: number;
+  public ID: string;
   public options: ConfigOptions;
   public servers: { [id: string]: RoutingServer };
   public socket: Net.Socket;
