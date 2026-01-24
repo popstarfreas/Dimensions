@@ -159,7 +159,7 @@ class Client {
 
   public sendExtraInformation(): void {
     if (this.extraJoinInformation) {
-      this.server.socket.write(new PacketWriter()
+      this.server.sendDirect(new PacketWriter()
         .setType(PacketTypes.DimensionsUpdate)
         .packInt16(5)
         .packString(this.extraJoinInformation)
@@ -182,7 +182,7 @@ class Client {
       .packNetworkText(reason)
       .data;
 
-    this.socket.write(disconnect);
+    this.sendDirect(disconnect);
     this.socket.pause();
 
     // Don't disconnect instantly otherwise it will show 'Lost Connection' on client
@@ -270,7 +270,7 @@ class Client {
           if (allowedData.length > 0 && this.connected) {
             if (this.server.socket) {
               for (const buf of allowedData) {
-                this.server.socket.write(buf);
+                this.server.sendDirect(buf);
               }
             } else {
               this.sendChatMessage(this.options.language.phrases.areYouEvenConnected, "ff0000");
@@ -317,13 +317,13 @@ class Client {
               .setType(1)
               .packString(verText)
               .data;
-            this.server.socket.write(packet);
+            this.server.sendDirect(packet);
           } else {
             // Send allowedData to the server if the client is connected to one
             if (allowedData.length > 0 && this.connected) {
               if (this.server.socket) {
                 for (const buf of allowedData) {
-                  this.server.socket.write(buf);
+                  this.server.sendDirect(buf);
                 }
               } else {
                 this.sendChatMessage(this.options.language.phrases.areYouEvenConnected, "ff0000");
@@ -368,7 +368,7 @@ class Client {
       const chatMessage = { packetType: PacketTypes.LoadNetModule, data: chatMessageData };
       const chatMessagePacket = this.server.getPacketHandler().handlePacket(this.server, chatMessage);
       if (chatMessagePacket !== null) {
-        this.socket.write(chatMessagePacket);
+        this.sendDirect(chatMessagePacket);
       }
     }
   }
@@ -377,7 +377,7 @@ class Client {
   public sendWaitingPackets(): void {
     if (!this.server.socket.destroyed && this.packetQueue.length > 0) {
       for (const packet of this.packetQueue) {
-        this.server.socket.write(packet);
+        this.server.sendDirect(packet);
       }
 
       this.packetQueue = [];
@@ -463,7 +463,7 @@ class Client {
 
           const debuffPacket = this.server.getPacketHandler().handlePacket(this.server, debuff);
           if (debuffPacket !== null) {
-            this.send(debuffPacket);
+            this.sendDirect(debuffPacket);
           }
         }
       }
@@ -500,7 +500,7 @@ class Client {
         const allowedData = this.getPacketHandler().handlePacket(this, packet);
 
         if (allowedData !== null) {
-          this.server.socket.write(packet.data);
+          this.server.sendDirect(packet.data);
         }
 
         if (typeof options !== 'undefined' && typeof options.routingInformation !== 'undefined') {
@@ -520,12 +520,26 @@ class Client {
   }
 
   /**
-   * Sends data if the socket is open
+   * Sends data if the socket is open, does not invoke any handlers
+   *
    * @param buf 
    */
-  public send(buf: Buffer): void {
-    if (!this.socket.destroyed) {
+  public sendDirect(buf: Buffer): void {
+    if (this.socket.writable) {
       this.socket.write(buf);
+      Object.values(this.globalHandlers.extensions).forEach((extension) => {
+        if (extension.sendPacketToClientEvent) {
+          try {
+            extension.sendPacketToClientEvent(this, buf);
+          } catch (error) {
+            if (this.options.log.extensionError) {
+              const name = extension.name ?? "unknown";
+              const logMessage = `[${process.pid}] Extension ${name} Client Send Packet Event Error: ${ErrorHelper.toMessage(error)}`;
+              this.logging.info(logMessage);
+            }
+          }
+        }
+      });
     }
   }
 

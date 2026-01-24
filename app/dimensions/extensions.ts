@@ -6,14 +6,13 @@ import * as path from "path";
 import { Dictionary } from "./dictionary.js";
 import ErrorHelper from './errorhelper.js';
 import * as winston from 'winston';
-import { pathToFileURL } from 'url';
+import { createRequire } from "module";
+import { requireNoCache } from "@popstarfreas/packetfactory/utils";
 
-type ExtensionModule = { default: { new(logging: winston.Logger): Extension } }
+const require = createRequire(import.meta.url);
 
-async function importFresh(modulePath: string): Promise<any> {
-    const url = pathToFileURL(modulePath).href;
-    return import(`${url}?t=${Date.now()}`);
-}
+
+type ExtensionConstructor = { new(logging: winston.Logger): Extension };
 
 // Note: Bundled extensions (extensions.js) are not supported in ESM mode
 // Extensions must be loaded dynamically from the extensions folder
@@ -24,32 +23,64 @@ class Extensions {
     public static async loadExtensions(extensionsList: Dictionary<Extension>, listenServers: { [name: string]: ListenServer }, options: LogOptions, logging: winston.Logger, storageMap: Map<string, any>) {
         try {
             logging.info("Dynamically loading extensions.");
-            const extensionFiles = glob.sync(`${this.folder}/**/index.js`);
+            const extensionFiles = glob.sync(`${this.folder}/**/index.*js`);
+            const extensionClasses: any[] = [];
 
             for (const file of extensionFiles) {
-                try {
-                    const extensionModule = await importFresh(path.resolve(file)) as ExtensionModule;
-                    if (typeof extensionModule.default === "undefined") {
-                        continue;
-                    }
+                switch (path.extname(file)) {
+                    case ".js":
+                    case ".cjs":
+                        {
+                            const extensionCls: ExtensionConstructor = requireNoCache(path.resolve(file), require).default;
+                            extensionClasses.push(extensionCls);
+                        }
+                        break;
+                    case ".mjs":
+                        {
+                            const extensionCls: ExtensionConstructor = (await import(path.resolve(file))).default;
+                            extensionClasses.push(extensionCls);
+                        }
+                        break;
+                    default:
+                        throw new Error("Unknown extension type.");
+                }
+            }
 
-                    const extension: Extension = new (extensionModule.default)(logging);
-                    const storage = storageMap.get(extension.name);
-                    if (extension.load && typeof storage !== "undefined") {
+
+            for (const extensionCls of extensionClasses) {
+                const extension = new extensionCls(logging);
+                if (!extension) {
+                    continue;
+                }
+                const storage = storageMap.get(extension.name);
+                if (extension.load && typeof storage !== "undefined") {
+                    try {
                         extension.load(storage);
                         storageMap.delete(extension.name);
+                    } catch (error) {
+                        if (options.extensionError) {
+                            const name = extension.name ?? "unknown";
+                            const logMessage = `[${process.pid}] Extension ${name} Load Error: ${ErrorHelper.toMessage(error)}`;
+                            logging.info(logMessage);
+                        }
                     }
+                }
 
-                    extensionsList[extension.name] = extension;
-                    if (typeof extension.setListenServers === "function") {
+                extensionsList[extension.name] = extension;
+                if (typeof extension.setListenServers === "function") {
+                    try {
                         extension.setListenServers(listenServers);
+                    } catch (error) {
+                        if (options.extensionError) {
+                            const name = extension.name ?? "unknown";
+                            const logMessage = `[${process.pid}] Extension ${name} Set Listen Servers Error: ${ErrorHelper.toMessage(error)}`;
+                            logging.info(logMessage);
+                        }
                     }
+                }
 
-                    if (options.extensionLoad) {
-                        logging.info(`[Extension] ${extension.name} ${extension.version} loaded.`);
-                    }
-                } catch (e) {
-                    logging.error(`Failed to load extension from ${file}. Error: ` + ErrorHelper.toMessage(e));
+                if (options.extensionLoad) {
+                    logging.info(`[Extension] ${extension.name} ${extension.version} loaded.`);
                 }
             }
         } catch (e) {

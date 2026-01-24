@@ -23,7 +23,7 @@ class ClearUtils {
     const playerActive = { packetType: PacketTypes.PlayerActive, data: data._0 };
     const playerActivePacket = client.server.getPacketHandler().handlePacket(client.server, playerActive);
     if (playerActivePacket !== null) {
-      client.socket.write(playerActivePacket);
+      client.sendDirect(playerActivePacket);
     }
   }
 
@@ -62,7 +62,7 @@ class ClearUtils {
       const packet = { packetType: PacketTypes.NPCUpdate, data: data._0 };
       const finalPacket = client.server.getPacketHandler().handlePacket(client.server, packet);
       if (finalPacket !== null) {
-        client.socket.write(packet.data);
+        client.sendDirect(packet.data);
       }
     }
     client.server.entityTracking.NPCs[npcIndex] = undefined;
@@ -98,7 +98,7 @@ class ClearUtils {
     };
     const updateItemDropPacket = client.server.getPacketHandler().handlePacket(client.server, updateItemDrop);
     if (updateItemDropPacket !== null) {
-      client.socket.write(updateItemDropPacket);
+      client.sendDirect(updateItemDropPacket);
     }
   }
 
@@ -127,7 +127,7 @@ class ClearUtils {
       };
       const loadNetModulePacket = client.server.getPacketHandler().handlePacket(client.server, loadNetModule);
       if (loadNetModulePacket !== null) {
-        client.socket.write(loadNetModulePacket);
+        client.sendDirect(loadNetModulePacket);
       }
     }
   }
@@ -210,7 +210,7 @@ class ClearUtils {
         };
         const processedData = client.server.getPacketHandler().handlePacket(client.server, packet);
         if (processedData !== null) {
-          client.socket.write(processedData);
+          client.sendDirect(processedData);
         }
       }
     }

@@ -8,7 +8,6 @@ import RawPacket from './packets/rawpacket.js';
 import Entities from './entities.js';
 import ClientState from './clientstate.js';
 import ErrorHelper from './errorhelper.js';
-import { Parser } from 'terraria-packet';
 
 /* Used to track information specific to the current server that a client is on
  * as well as pass received data from the TerrariaServer to the handlers */
@@ -61,6 +60,31 @@ class TerrariaServer {
     return this.client.globalHandlers.terrariaServerPacketHandler;
   }
 
+  /**
+   * Sends data if the socket is open, does not invoke any
+   * handlers only a send event
+   *
+   * @param buf
+   */
+  public sendDirect(buf: Buffer): void {
+    if (this.socket.writable) {
+      this.socket.write(buf);
+      Object.values(this.client.globalHandlers.extensions).forEach((extension) => {
+        if (extension.sendPacketToServerEvent) {
+          try {
+            extension.sendPacketToServerEvent(this, buf);
+          } catch (error) {
+            if (this.client.options.log.extensionError) {
+              const name = extension.name ?? "unknown";
+              const logMessage = `[${process.pid}] Extension ${name} Server Send Packet Event Error: ${ErrorHelper.toMessage(error)}`;
+              this.client.logging.info(logMessage);
+            }
+          }
+        }
+      });
+    }
+  }
+
   /* Handles all data coming from the TerrariaServer */
   public handleData(encodedData: Buffer): void {
     try {
@@ -104,8 +128,7 @@ class TerrariaServer {
       if (allowedPackets.length > 0) {
         if (!this.client.socket.destroyed && this.client.socket.writable) {
           for (const buf of allowedPackets) {
-            console.log(Parser.parse(buf, true));
-            this.client.socket.write(buf);
+            this.client.sendDirect(buf);
           }
         } else {
           this.socket.destroy();
@@ -122,7 +145,7 @@ class TerrariaServer {
   public sendWaitingPackets(): void {
     if (!this.socket.destroyed && this.packetQueue.length > 0) {
       for (const packet of this.packetQueue) {
-        this.client.socket.write(packet);
+        this.client.sendDirect(packet);
       }
 
       this.packetQueue = [];
@@ -137,9 +160,17 @@ class TerrariaServer {
     for (let key in handlers) {
       let handler = handlers[key];
       if (typeof handler.serverDisconnectPreHandler !== 'undefined') {
-        handled = handler.serverDisconnectPreHandler(this);
-        if (handled) {
-          break;
+        try {
+          handled = handler.serverDisconnectPreHandler(this);
+          if (handled) {
+            break;
+          }
+        } catch (error) {
+          if (this.client.options.log.extensionError) {
+            const name = handler.name ?? key;
+            const logMessage = `[${process.pid}] Extension ${name} Server Disconnect Pre Handler Error: ${ErrorHelper.toMessage(error)}`;
+            this.client.logging.info(logMessage);
+          }
         }
       }
     }
@@ -155,9 +186,17 @@ class TerrariaServer {
     for (let key in handlers) {
       let handler = handlers[key];
       if (typeof handler.serverDisconnectHandler !== 'undefined') {
-        handled = handler.serverDisconnectHandler(this);
-        if (handled) {
-          break;
+        try {
+          handled = handler.serverDisconnectHandler(this);
+          if (handled) {
+            break;
+          }
+        } catch (error) {
+          if (this.client.options.log.extensionError) {
+            const name = handler.name ?? key;
+            const logMessage = `[${process.pid}] Extension ${name} Server Disconnect Handler Error: ${ErrorHelper.toMessage(error)}`;
+            this.client.logging.info(logMessage);
+          }
         }
       }
     }

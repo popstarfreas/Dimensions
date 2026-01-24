@@ -221,7 +221,15 @@ class Dimensions {
         if (typeof handler.reload === 'function') {
           // Note: Extensions need to be updated to support ESM dynamic imports
           // The require parameter is no longer available in ESM
-          handler.reload(undefined as any);
+          try {
+            handler.reload(undefined as any);
+          } catch (error) {
+            if (this.options.log.extensionError) {
+              const name = handler.name ?? key;
+              const logMessage = `[${process.pid}] Extension ${name} Reload Error: ${ErrorHelper.toMessage(error)}`;
+              this.logging.info(logMessage);
+            }
+          }
         }
       }
     }
@@ -254,9 +262,17 @@ class Dimensions {
     for (let key in this.handlers.extensions) {
       let extension = this.handlers.extensions[key];
       if (extension.unload) {
-        const storage = extension.unload();
-        if (typeof storage !== "undefined") {
-          this.extensionStorage.set(extension.name, storage);
+        try {
+          const storage = extension.unload();
+          if (typeof storage !== "undefined") {
+            this.extensionStorage.set(extension.name, storage);
+          }
+        } catch (error) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? key;
+            const logMessage = `[${process.pid}] Extension ${name} Unload Error: ${ErrorHelper.toMessage(error)}`;
+            this.logging.info(logMessage);
+          }
         }
       }
 

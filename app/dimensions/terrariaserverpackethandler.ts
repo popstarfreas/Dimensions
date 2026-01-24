@@ -36,9 +36,17 @@ class TerrariaServerPacketHandler {
     for (let key in handlers) {
       let handler = handlers[key];
       if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.serverHandler !== 'undefined') {
-        handled = handler.priorPacketHandlers.serverHandler.handlePacket(server, packet);
-        if (handled) {
-          break;
+        try {
+          handled = handler.priorPacketHandlers.serverHandler.handlePacket(server, packet);
+          if (handled) {
+            break;
+          }
+        } catch (error) {
+          if (server.client.options.log.extensionError) {
+            const name = handler.name ?? key;
+            const logMessage = `[${process.pid}] Extension ${name} Prior Server Packet Handler Error: ${ErrorHelper.toMessage(error)}`;
+            server.client.logging.info(logMessage);
+          }
         }
       }
     }
@@ -59,9 +67,17 @@ class TerrariaServerPacketHandler {
     for (let key in handlers) {
       let handler = handlers[key];
       if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.serverHandler !== 'undefined') {
-        handled = handler.postPacketHandlers.serverHandler.handlePacket(server, packet);
-        if (handled) {
-          break;
+        try {
+          handled = handler.postPacketHandlers.serverHandler.handlePacket(server, packet);
+          if (handled) {
+            break;
+          }
+        } catch (error) {
+          if (server.client.options.log.extensionError) {
+            const name = handler.name ?? key;
+            const logMessage = `[${process.pid}] Extension ${name} Post Server Packet Handler Error: ${ErrorHelper.toMessage(error)}`;
+            server.client.logging.info(logMessage);
+          }
         }
       }
     }
@@ -99,7 +115,8 @@ class TerrariaServerPacketHandler {
           server.client.logging.error(`Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError.TAG}`);
           break;
       }
-      return null;
+      // We still return the data because we trust the server
+      return packet.data;
     }
 
     let handled: boolean = false;
@@ -111,7 +128,7 @@ class TerrariaServerPacketHandler {
           handled = this.handleDisconnect(parsed._0);
           break;
         case "PlayerSlotSet":
-          handled = this.handleContinueConnecting(parsed._0);
+          handled = this.handleContinueConnecting(parsed._0.playerSlotId);
           break;
         case "WorldInfo":
           handled = this.handleWorldInfo(parsed._0);
@@ -236,7 +253,7 @@ class TerrariaServerPacketHandler {
         .packString(ip)
         .data;
 
-      this.currentServer.socket.write(packetData);
+      this.currentServer.sendDirect(packetData);
     }
 
     return false;
@@ -270,7 +287,7 @@ class TerrariaServerPacketHandler {
         .packSingle(-1)
         .packSingle(-1)
         .data;
-      this.currentServer.socket.write(getSection);
+      this.currentServer.sendDirect(getSection);
 
       this.currentServer.client.state = ClientState.FinalisingSwitch;
 
@@ -281,7 +298,7 @@ class TerrariaServerPacketHandler {
           .packInt16(this.currentServer.client.routingInformation.type)
           .packString(this.currentServer.client.routingInformation.info)
           .data;
-        this.currentServer.socket.write(dimensionsUpdate);
+        this.currentServer.sendDirect(dimensionsUpdate);
         this.currentServer.client.routingInformation = null;
       }
     }
@@ -316,10 +333,10 @@ class TerrariaServerPacketHandler {
       }
 
       if (typeof server.client !== 'undefined' && typeof server.client.socket !== 'undefined') {
-        server.socket.write(spawnPlayer._0);
+        server.sendDirect(spawnPlayer._0);
 
         if (!server.client.preventSpawnOnJoin) {
-          server.client.socket.write(spawnPlayer._0);
+          server.client.sendDirect(spawnPlayer._0);
         }
       }
     }
@@ -334,7 +351,15 @@ class TerrariaServerPacketHandler {
       for (let key in server.client.globalHandlers.extensions) {
         const e = server.client.globalHandlers.extensions[key];
         if (e.clientFullyConnectedHandler) {
-          e.clientFullyConnectedHandler(server.client);
+          try {
+            e.clientFullyConnectedHandler(server.client);
+          } catch (error) {
+            if (server.client.options.log.extensionError) {
+              const name = e.name ?? key;
+              const logMessage = `[${process.pid}] Extension ${name} Client Fully Connected Handler Error: ${ErrorHelper.toMessage(error)}`;
+              server.client.logging.info(logMessage);
+            }
+          }
         }
       }
     }

@@ -10,9 +10,13 @@ export interface PacketHandler {
     serverHandler?: TerrariaServerPacketHandler;
 }
 
+export type ClientConnectedEvent = (client: Client) => void;
+export type ClientDisconnectEvent = (client: Client) => void;
 export type ClientErrorHandler = (client: Client, error: Error) => boolean;
+export type SendPacketToClientEvent = (client: Client, packet: Buffer) => void;
 export type ServerErrorHandler = (server: TerrariaServer, error: Error) => boolean;
 export type ServerDisconnectHandler = (server: TerrariaServer) => boolean;
+export type SendPacketToServerEvent = (server: TerrariaServer, packet: Buffer) => void;
 export type SocketConnectPreHandler = (socket: Socket) => Promise<boolean>;
 export type SocketConnectPostHandler = (socket: Socket) => void;
 export type ClientFullyConnectedHandler = (client: Client) => void;
@@ -49,6 +53,12 @@ export interface Extension<T = undefined> {
     socketConnectPostHandler?: SocketConnectPostHandler;
 
     clientFullyConnectedHandler?: ClientFullyConnectedHandler;
+
+    sendPacketToClientEvent?: SendPacketToClientEvent;
+    sendPacketToServerEvent?: SendPacketToServerEvent;
+
+    clientConnectEvent?: ClientConnectedEvent;
+    clientDisconnectEvent?: ClientDisconnectEvent;
 
     // Socket close Handling
     socketClosePreHandler?: SocketClosePreHandler;

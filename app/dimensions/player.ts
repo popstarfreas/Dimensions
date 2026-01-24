@@ -83,7 +83,7 @@ class Player {
 			.packInt16(item.netID)
 			.data;
 
-		this.client.socket.write(playerInventorySlot);
+		this.client.sendDirect(playerInventorySlot);
 	}
 
 	public restoreSavedMaxHealth(): void {
@@ -98,7 +98,7 @@ class Player {
 			.packInt16(this.life)
 			.data;
 
-		this.client.socket.write(playerLife);
+		this.client.sendDirect(playerLife);
 	}
 
 	/**
@@ -120,7 +120,7 @@ class Player {
 			.packInt16(this.mana)
 			.data;
 
-		this.client.socket.write(playerMana);
+		this.client.sendDirect(playerMana);
 	}
 
 	/**
@@ -169,7 +169,7 @@ class Player {
 		};
 		const playerInfoPacket = PlayerInfoPacket.toBuffer(playerInfo);
 		if (playerInfoPacket.TAG === "Ok") {
-			this.client.socket.write(playerInfoPacket._0);
+			this.client.sendDirect(playerInfoPacket._0);
 		}
 	}
 }

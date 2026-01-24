@@ -242,20 +242,41 @@ export class ListenServer {
       return;
     }
 
-    for (const extension of Object.values(this.globalHandlers.extensions)) {
-      if (extension.socketConnectPreHandler) {
-        const handled = await extension.socketConnectPreHandler(socket);
-        if (handled) {
-          return;
+    try {
+      for (const extension of Object.values(this.globalHandlers.extensions)) {
+        if (extension.socketConnectPreHandler) {
+          try {
+            const handled = await extension.socketConnectPreHandler(socket);
+            if (handled) {
+              return;
+            }
+          } catch (error) {
+            if (this.options.log.extensionError) {
+              const name = extension.name ?? "unknown";
+              const logMessage = `[${process.pid}] Extension ${name} Socket Connect Pre Handler Error: ${ErrorHelper.toMessage(error)}`;
+              this.logging.info(logMessage);
+            }
+          }
         }
       }
+    }
+    catch (error) {
+      console.log(error);
     }
 
     this.setupNewSocket(socket);
 
     for (const extension of Object.values(this.globalHandlers.extensions)) {
       if (extension.socketConnectPostHandler) {
-        extension.socketConnectPostHandler(socket);
+        try {
+          extension.socketConnectPostHandler(socket);
+        } catch (error) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} Socket Connect Post Handler Error: ${ErrorHelper.toMessage(error)}`;
+            this.logging.info(logMessage);
+          }
+        }
       }
     }
   }
@@ -419,6 +440,7 @@ export class ListenServer {
     if (bufferPacket !== undefined) {
       client.handleDataSend(bufferPacket);
     }
+    this.extensionClientConnectEvent(client);
     return client;
   }
 
@@ -486,20 +508,53 @@ export class ListenServer {
     });
   }
 
+  private extensionClientConnectEvent(client: Client) {
+    for (const extension of Object.values(this.globalHandlers.extensions)) {
+      if (extension.clientConnectEvent) {
+        try {
+          extension.clientConnectEvent(client);
+        } catch (error) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} Connect Event Error: ${ErrorHelper.toMessage(error)}`;
+            this.logging.info(logMessage);
+          }
+        }
+      }
+    }
+  }
+
+  private extensionClientDisconnectEvent(client: Client) {
+    for (const extension of Object.values(this.globalHandlers.extensions)) {
+      if (extension.clientDisconnectEvent) {
+        try {
+          extension.clientDisconnectEvent(client);
+        } catch (error) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} Disconnect Event Error: ${ErrorHelper.toMessage(error)}`;
+            this.logging.info(logMessage);
+          }
+        }
+      }
+    }
+  }
+
   private extensionSocketClosePreHandlers(socket: Net.Socket, client: Client): boolean {
-    try {
-      for (const extension of Object.values(this.globalHandlers.extensions)) {
-        if (extension.socketClosePreHandler) {
+    for (const extension of Object.values(this.globalHandlers.extensions)) {
+      if (extension.socketClosePreHandler) {
+        try {
           const handled = extension.socketClosePreHandler(socket, client);
           if (handled) {
             return true;
           }
+        } catch (e) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} Disconnect Pre Handler Error: ${ErrorHelper.toMessage(e)}`;
+            this.logging.info(logMessage);
+          }
         }
-      }
-    } catch (e) {
-      if (this.options.log.extensionError) {
-        const logMessage = `[${process.pid}] Extension Disconnect Pre Handler Error: ${ErrorHelper.toMessage(e)}`;
-        this.logging.info(logMessage);
       }
     }
 
@@ -507,16 +562,17 @@ export class ListenServer {
   }
 
   private extensionSocketClosePostHandlers(socket: Net.Socket, client: Client) {
-    try {
-      for (const extension of Object.values(this.globalHandlers.extensions)) {
-        if (extension.socketClosePostHandler) {
+    for (const extension of Object.values(this.globalHandlers.extensions)) {
+      if (extension.socketClosePostHandler) {
+        try {
           extension.socketClosePostHandler(socket, client);
+        } catch (e) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} Disconnect Post Handler Error: ${ErrorHelper.toMessage(e)}`;
+            this.logging.info(logMessage);
+          }
         }
-      }
-    } catch (e) {
-      if (this.options.log.extensionError) {
-        const logMessage = `[${process.pid}] Extension Disconnect Post Handler Error: ${ErrorHelper.toMessage(e)}`;
-        this.logging.info(logMessage);
       }
     }
   }
@@ -557,6 +613,7 @@ export class ListenServer {
 
       socket.removeAllListeners();
       this.extensionSocketClosePostHandlers(socket, client);
+      this.extensionClientDisconnectEvent(client);
     });
   }
 

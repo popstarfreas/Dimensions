@@ -3,6 +3,7 @@ import Client from './client.js';
 import RawPacket from './packets/rawpacket.js';
 import { Command } from './clientcommandhandler.js';
 import ClientState from './clientstate.js';
+import ErrorHelper from './errorhelper.js';
 
 import { ConnectRequestPacket, PlayerInfoPacket, PlayerBuffsSetPacket, PlayerBuffAddPacket, PlayerInventorySlotPacket, PlayerManaPacket, PlayerHealthPacket, PlayerUpdatePacket, ClientUuidPacket, NetModuleLoadPacket, ItemDropUpdatePacket, ItemOwnerPacket, PlayerSpawnPacket, Parser } from "terraria-packet";
 
@@ -16,9 +17,17 @@ class ClientPacketHandler {
     for (let key in handlers) {
       let handler = handlers[key];
       if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.clientHandler !== 'undefined') {
-        handled = handler.priorPacketHandlers.clientHandler.handlePacket(client, packet);
-        if (handled) {
-          break;
+        try {
+          handled = handler.priorPacketHandlers.clientHandler.handlePacket(client, packet);
+          if (handled) {
+            break;
+          }
+        } catch (error) {
+          if (client.options.log.extensionError) {
+            const name = handler.name ?? key;
+            const logMessage = `[${process.pid}] Extension ${name} Prior Client Packet Handler Error: ${ErrorHelper.toMessage(error)}`;
+            client.logging.info(logMessage);
+          }
         }
       }
     }
@@ -33,9 +42,17 @@ class ClientPacketHandler {
     for (let key in handlers) {
       let handler = handlers[key];
       if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.clientHandler !== 'undefined') {
-        handled = handler.postPacketHandlers.clientHandler.handlePacket(client, packet);
-        if (handled) {
-          break;
+        try {
+          handled = handler.postPacketHandlers.clientHandler.handlePacket(client, packet);
+          if (handled) {
+            break;
+          }
+        } catch (error) {
+          if (client.options.log.extensionError) {
+            const name = handler.name ?? key;
+            const logMessage = `[${process.pid}] Extension ${name} Post Client Packet Handler Error: ${ErrorHelper.toMessage(error)}`;
+            client.logging.info(logMessage);
+          }
         }
       }
     }

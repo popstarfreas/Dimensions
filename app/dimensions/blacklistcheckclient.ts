@@ -56,7 +56,10 @@ class BlacklistCheckClient {
             args.disconnectCb();
             this.dispose()
         })
-        const playerSlotSetPacket = PlayerSlotSetPacket.toBuffer(0);
+        const playerSlotSetPacket = PlayerSlotSetPacket.toBuffer({
+            playerSlotId: 0,
+            serverWantsToRunCheckBytesInClientLoopThread: true,
+        });
         if (playerSlotSetPacket.TAG === "Error") {
             this.settings.clientArgs.logging.error(`Error creating player slot set packet: ${playerSlotSetPacket._0}`);
             return;
