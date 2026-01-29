@@ -76,25 +76,24 @@ class ClientPacketHandler {
         switch (parsed.TAG) {
           case "ReaderError":
             if (parsed._0.error instanceof Error) {
-              client.logging.error(`Error parsing packet: ${parsed._0.context} ${parsed._0.error.message}`);
+              client.logging.error(`Error parsing packet: ${parsed._0.context} ${parsed._0.error.message}\n${rawPacket.data.toString("hex")}`);
             } else {
-              client.logging.error(`Error parsing packet: ${parsed._0.context}`);
+              client.logging.error(`Error parsing packet: ${parsed._0.context}\n${rawPacket.data.toString("hex")}`);
             }
             break;
           default:
-            client.logging.error(`Error parsing packet: ${parsed.TAG}`);
+            client.logging.error(`Error parsing packet: ${parsed.TAG}\n${rawPacket.data.toString("hex")}`);
             break;
         }
         return null
       } else {
         switch (parsed) {
           case "IgnoredPacket":
-            client.logging.info(`Ignoring packet: ${rawPacket.packetType}`);
+            client.logging.debug(`Ignoring packet: ${rawPacket.packetType}`);
             break;
           default:
-            client.logging.error(`Error parsing packet: ${rawPacket.packetType} ${parsed}`);
+            client.logging.error(`Error parsing packet: ${rawPacket.packetType} ${parsed}\n${rawPacket.data.toString("hex")}`);
             return null
-            break;
         }
       }
     } else {

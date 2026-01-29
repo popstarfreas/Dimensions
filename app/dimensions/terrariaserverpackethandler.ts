@@ -121,21 +121,22 @@ class TerrariaServerPacketHandler {
         switch (parseError.TAG) {
           case "ReaderError":
             if (parseError._0.error instanceof Error) {
-              server.client.logging.error(`Error parsing packet: ${parseError._0.context} ${parseError._0.error.message}`);
+              server.client.logging.error(`Error parsing packet: ${parseError._0.context} ${parseError._0.error.message}\n${packet.data.toString("hex")}`);
             } else {
-              server.client.logging.error(`Error parsing packet: ${parseError._0.context}`);
+              server.client.logging.error(`Error parsing packet: ${parseError._0.context}\n${packet.data.toString("hex")}`);
             }
             break;
           default:
-            server.client.logging.error(`Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError.TAG}`);
+            server.client.logging.error(`Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError.TAG}\n${packet.data.toString("hex")}`);
             break;
         }
       } else {
         switch (parseError) {
           case "IgnoredPacket":
-            server.client.logging.info(`Ignoring packet: ${PacketTypes[packet.packetType]}`);
+            server.client.logging.debug(`Ignoring packet: ${PacketTypes[packet.packetType]}`);
+            break;
           default:
-            server.client.logging.error(`Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError}`);
+            server.client.logging.error(`Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError}\n${packet.data.toString("hex")}`);
             break;
         }
       }
