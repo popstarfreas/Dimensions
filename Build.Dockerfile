@@ -14,4 +14,4 @@ COPY configuration/config.yaml.example /app
 COPY License.md /app
 COPY README.md /app
 COPY makerelease.sh /app
-RUN ./makerelease.sh -
+RUN ./makerelease.sh
