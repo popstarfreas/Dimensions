@@ -20,11 +20,8 @@ cp License.md release/License.md
 cp README.md release/README.md
 name="Dimensions.zip"
 package=$(cat package.json)
-regex="\"version\": \"(([0-9]+\.?){3})"
-if [[ $package =~ $regex ]]; then
-    version="${BASH_REMATCH[1]}"
-    name="Dimensions-v$version.zip"
-fi
+version=$(jq -r '.version' package.json)
+name="Dimensions-v$version.zip"
 mv release Dimensions
 zip --symlinks -r "$name" Dimensions
 rm -rf Dimensions
