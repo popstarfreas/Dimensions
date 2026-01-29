@@ -3,7 +3,6 @@ WORKDIR /app
 COPY pnpm-lock.yaml /app
 COPY package.json /app
 RUN corepack pnpm install
-COPY rescript.json /app
 RUN mkdir /app/app
 COPY app /app/app
 COPY tsconfig.json /app

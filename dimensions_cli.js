@@ -1,6 +1,7 @@
-const redis = require('redis');
+import * as redis from 'redis';
+import * as readline from 'readline';
+
 const redisClient = redis.createClient();
-const readline = require('readline');
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout

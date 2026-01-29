@@ -3,7 +3,8 @@
   * For backwards compatibility, the `src/node_modules` path is exported in the package.json and is also symlinked to the new location, best effort has been made to keep this compatible with existing extensions but there is the possibility of accidental breakages. New extensions should use ESM.
  * Configuration is now done via a YAML file in `configuration/config.yaml` this is the recommended approach for new configuration files or for deployment in k8s
   * Legacy config.js is still supported for backwards compatibility, but is not recommended for new deployments
-* Client IDs are now UUIDs instead of numbers - you can now use these as proper unique identifiers for that client's particular session
+ * Client IDs are now UUIDs instead of numbers - you can now use these as proper unique identifiers for that client's particular session
+ * This project now uses pnpm instead of npm. To ensure the right dependencies are installed, please use `pnpm install` instead of `npm install` or if you do not have pnpm, you might be able to use `corepack pnpm install`
 
 # Features
  * Packet parsing now relies more on the `terraria-packet` dependency - this is just to unify our parsing into one implementation
