@@ -2,6 +2,8 @@
 
 Dimensions is: A routing service that can also load balance connections. For use with Terraria Servers.
 
+**For compatibility with v1.4.5.x**: Please see latest pre-releases in https://github.com/popstarfreas/Dimensions/releases
+
 ## Installation
 ### Step 1: Install NodeJS
 Follow the link and download either version. Later releases may offer better performance. https://nodejs.org/en/
