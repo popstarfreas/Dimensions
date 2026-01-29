@@ -20,5 +20,7 @@ WORKDIR /app/build
 COPY --from=build /app/node_modules /app/node_modules
 COPY --from=build /app/build /app/build
 COPY --from=build /app/dimensions_cli.js /app/dimensions_cli.js
+RUN mkdir -p /app/build/node_modules && ln -s /app/build/dimensions /app/build/node_modules/dimensions
+COPY shim.json /app/build/node_modules/dimensions/package.json
 
 CMD ["node", "index.js"]

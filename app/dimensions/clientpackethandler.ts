@@ -5,7 +5,7 @@ import { Command } from './clientcommandhandler.js';
 import ClientState from './clientstate.js';
 import ErrorHelper from './errorhelper.js';
 
-import { ConnectRequestPacket, PlayerInfoPacket, PlayerBuffsSetPacket, PlayerBuffAddPacket, PlayerInventorySlotPacket, PlayerManaPacket, PlayerHealthPacket, PlayerUpdatePacket, ClientUuidPacket, NetModuleLoadPacket, ItemDropUpdatePacket, ItemOwnerPacket, PlayerSpawnPacket, Parser } from "terraria-packet";
+import { ConnectRequestPacket, PlayerInfoPacket, PlayerBuffsSetPacket, PlayerBuffAddPacket, PlayerInventorySlotPacket, PlayerManaPacket, PlayerHealthPacket, PlayerUpdatePacket, ClientUuidPacket, NetModuleLoadPacket, ItemDropUpdatePacket, ItemOwnerPacket, PlayerSpawnPacket, Parser, } from "terraria-packet";
 
 class ClientPacketHandler {
   private currentClient!: Client;
@@ -72,80 +72,91 @@ class ClientPacketHandler {
     const parsedResult = Parser.parse(rawPacket.data, false);
     if (parsedResult.TAG === "Error") {
       const parsed = parsedResult._0;
+      if (typeof parsed === "object") {
+        switch (parsed.TAG) {
+          case "ReaderError":
+            if (parsed._0.error instanceof Error) {
+              client.logging.error(`Error parsing packet: ${parsed._0.context} ${parsed._0.error.message}`);
+            } else {
+              client.logging.error(`Error parsing packet: ${parsed._0.context}`);
+            }
+            break;
+          default:
+            client.logging.error(`Error parsing packet: ${parsed.TAG}`);
+            break;
+        }
+        return null
+      } else {
+        switch (parsed) {
+          case "IgnoredPacket":
+            client.logging.info(`Ignoring packet: ${rawPacket.packetType}`);
+            break;
+          default:
+            client.logging.error(`Error parsing packet: ${rawPacket.packetType} ${parsed}`);
+            return null
+            break;
+        }
+      }
+    } else {
+      // Set current client while we handle this packet
+      this.currentClient = client;
+      const parsed = parsedResult._0;
       switch (parsed.TAG) {
-        case "ReaderError":
-          if (parsed._0.error instanceof Error) {
-            client.logging.error(`Error parsing packet: ${parsed._0.context} ${parsed._0.error.message}`);
-          } else {
-            client.logging.error(`Error parsing packet: ${parsed._0.context}`);
+        case "ConnectRequest":
+          handled = this.handleConnectRequest(parsed._0);
+          break;
+        case "PlayerInfo":
+          handled = this.handlePlayerInfo(parsed._0, rawPacket);
+          break;
+        case "PlayerBuffsSet":
+          handled = this.handleUpdatePlayerBuff(parsed._0, rawPacket);
+          break;
+        case "PlayerBuffAdd":
+          handled = this.handleAddPlayerBuff(parsed._0);
+          break;
+        case "PlayerInventorySlot":
+          handled = this.handlePlayerInventorySlot(parsed._0);
+          break;
+        case "PlayerMana":
+          handled = this.handlePlayerMana(parsed._0);
+          break;
+        case "PlayerHealth":
+          handled = this.handlePlayerHP(parsed._0, rawPacket);
+          break;
+        case "PlayerUpdate":
+          handled = this.handleUpdatePlayer(parsed._0, rawPacket);
+          break;
+        case "ItemDropUpdate":
+          handled = this.handleUpdateItemDrop(parsed._0, rawPacket);
+          break;
+        case "ItemOwner":
+          handled = this.handleUpdateItemOwner(parsed._0, rawPacket);
+          break;
+        case "WorldDataRequest":
+          if (this.currentClient.state === ClientState.FreshConnection) {
+            // Finished sending inventory
+            this.currentClient.state = ClientState.FinishinedSendingInventory;
           }
           break;
-        default:
-          client.logging.error(`Error parsing packet: ${parsed.TAG}`);
+        case "PlayerSpawn":
+          handled = this.handleSpawnPlayer(parsed._0);
+          break;
+        case "NetModuleLoad":
+          handled = this.handleLoadNetModule(parsed._0);
+          break;
+        case "DimensionsUpdate":
+          // Client cannot send 67 (It's used by Dimensions to communicate special info)
+          handled = true;
+          break;
+        case "ClientUuid":
+          handled = this.handleClientUUID(parsed._0);
+          break;
+        case "PlayerStealth":
+        case "PlayerDamage":
+        case "Zones":
+          handled = this.handlePotentialEarlyPacket(rawPacket);
           break;
       }
-
-      return null
-    }
-
-    // Set current client while we handle this packet
-    this.currentClient = client;
-    const parsed = parsedResult._0;
-    switch (parsed.TAG) {
-      case "ConnectRequest":
-        handled = this.handleConnectRequest(parsed._0);
-        break;
-      case "PlayerInfo":
-        handled = this.handlePlayerInfo(parsed._0, rawPacket);
-        break;
-      case "PlayerBuffsSet":
-        handled = this.handleUpdatePlayerBuff(parsed._0, rawPacket);
-        break;
-      case "PlayerBuffAdd":
-        handled = this.handleAddPlayerBuff(parsed._0);
-        break;
-      case "PlayerInventorySlot":
-        handled = this.handlePlayerInventorySlot(parsed._0);
-        break;
-      case "PlayerMana":
-        handled = this.handlePlayerMana(parsed._0);
-        break;
-      case "PlayerHealth":
-        handled = this.handlePlayerHP(parsed._0, rawPacket);
-        break;
-      case "PlayerUpdate":
-        handled = this.handleUpdatePlayer(parsed._0, rawPacket);
-        break;
-      case "ItemDropUpdate":
-        handled = this.handleUpdateItemDrop(parsed._0, rawPacket);
-        break;
-      case "ItemOwner":
-        handled = this.handleUpdateItemOwner(parsed._0, rawPacket);
-        break;
-      case "WorldDataRequest":
-        if (this.currentClient.state === ClientState.FreshConnection) {
-          // Finished sending inventory
-          this.currentClient.state = ClientState.FinishinedSendingInventory;
-        }
-        break;
-      case "PlayerSpawn":
-        handled = this.handleSpawnPlayer(parsed._0);
-        break;
-      case "NetModuleLoad":
-        handled = this.handleLoadNetModule(parsed._0);
-        break;
-      case "DimensionsUpdate":
-        // Client cannot send 67 (It's used by Dimensions to communicate special info)
-        handled = true;
-        break;
-      case "ClientUuid":
-        handled = this.handleClientUUID(parsed._0);
-        break;
-      case "PlayerStealth":
-      case "PlayerDamage":
-      case "Zones":
-        handled = this.handlePotentialEarlyPacket(rawPacket);
-        break;
     }
 
     if (handled) {
@@ -198,6 +209,9 @@ class ClientPacketHandler {
       player.pantsColor = playerInfo.pantsColor;
       player.shoeColor = playerInfo.shoeColor;
       player.difficulty = playerInfo.difficulty;
+      player.voiceVariant = playerInfo.voiceVariant;
+      player.voicePitchOffset = playerInfo.voicePitchOffset;
+
       player.allowedCharacterChange = false;
     }
 
@@ -238,7 +252,7 @@ class ClientPacketHandler {
 
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push(rawPacket.data);
+      this.currentClient.packetQueue.push({ rawPacket });
       return true;
     }
 
@@ -272,8 +286,8 @@ class ClientPacketHandler {
    * from an SSC server to a Non-SSC server */
   private handlePlayerInventorySlot(playerInventorySlot: PlayerInventorySlotPacket.t): boolean {
     if ((this.currentClient.state === ClientState.FreshConnection || this.currentClient.state === ClientState.ConnectionSwitchEstablished) && !this.currentClient.waitingCharacterRestore) {
-      const { slot, stack, prefix, itemId } = playerInventorySlot;
-      this.currentClient.player.inventory[slot] = new Item(slot, stack, prefix, itemId);
+      const { slot, stack, prefix, itemType } = playerInventorySlot;
+      this.currentClient.player.inventory[slot] = new Item(slot, stack, prefix, itemType);
     }
 
     return false;
@@ -305,7 +319,7 @@ class ClientPacketHandler {
 
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push(rawPacket.data);
+      this.currentClient.packetQueue.push({ rawPacket });
       return true;
     }
 
@@ -315,7 +329,7 @@ class ClientPacketHandler {
   private handleUpdatePlayer(_playerUpdate: PlayerUpdatePacket.t, rawPacket: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push(rawPacket.data);
+      this.currentClient.packetQueue.push({ rawPacket });
       return true;
     }
 
@@ -329,7 +343,7 @@ class ClientPacketHandler {
   private handleUpdateItemDrop(_itemDropUpdate: ItemDropUpdatePacket.t, rawPacket: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push(rawPacket.data);
+      this.currentClient.packetQueue.push({ rawPacket });
       return true;
     }
 
@@ -346,7 +360,7 @@ class ClientPacketHandler {
   private handleUpdateItemOwner(_itemOwner: ItemOwnerPacket.t, rawPacket: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push(rawPacket.data);
+      this.currentClient.packetQueue.push({ rawPacket });
       return true;
     }
 
@@ -398,7 +412,12 @@ class ClientPacketHandler {
   private handlePotentialEarlyPacket(packet: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push(packet.data);
+      this.currentClient.packetQueue.push({
+        rawPacket: {
+          data: packet.data,
+          packetType: packet.packetType
+        }
+      });
       return true;
     }
 

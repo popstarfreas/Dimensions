@@ -4,6 +4,9 @@ import TerrariaServerPacketHandler from './terrariaserverpackethandler.js';
 import ListenServer from '../listenserver.js';
 import TerrariaServer from '../terrariaserver.js';
 import { Socket } from 'net';
+import RawPacket from '../packets/rawpacket.js';
+import ClientArgs from '../clientargs.js';
+export { PacketSource } from '../terrariaserverpackethandler.js';
 
 export interface PacketHandler {
     clientHandler?: ClientPacketHandler;
@@ -22,6 +25,58 @@ export type SocketConnectPostHandler = (socket: Socket) => void;
 export type ClientFullyConnectedHandler = (client: Client) => void;
 export type SocketClosePreHandler = (socket: Socket, client: Client) => boolean;
 export type SocketClosePostHandler = (socket: Socket, client: Client) => void;
+
+// BlacklistCheckClient packet hooks
+export enum BlacklistCheckState {
+    AssignedClientId = 'AssignedClientId',
+    SentPlayerInfo = 'SentPlayerInfo',
+    SentUuid = 'SentUuid',
+}
+
+export interface BlacklistCheckContext {
+    socket: Socket;
+    clientArgs: ClientArgs;
+    state: BlacklistCheckState;
+}
+
+export type BlacklistCheckPacketPreHandler = (
+    context: BlacklistCheckContext,
+    packet: RawPacket
+) => boolean;
+
+export type BlacklistCheckPacketPostHandler = (
+    context: BlacklistCheckContext,
+    packet: RawPacket
+) => boolean;
+
+// Raw socket write hooks (for writes before Client exists)
+export enum RawSocketWriteReason {
+    BlacklistCheck = 'blacklistCheck',
+    ConnectionLimitExceeded = 'connectionLimitExceeded',
+    BlacklistCheckClientSetup = 'blacklistCheckClientSetup',
+    Other = 'other',
+}
+
+export interface RawSocketWriteContext {
+    socket: Socket;
+    remoteAddress?: string;
+    reason: RawSocketWriteReason;
+    clientArgs?: ClientArgs;
+}
+
+export interface RawSocketWritePacket {
+    packet: Buffer;
+}
+
+export type RawSocketWritePreHandler = (
+    context: RawSocketWriteContext,
+    packet: RawSocketWritePacket
+) => boolean;
+
+export type RawSocketWritePostHandler = (
+    context: RawSocketWriteContext,
+    packet: RawSocketWritePacket
+) => void;
 
 export interface Extension<T = undefined> {
     name: string;
@@ -65,6 +120,14 @@ export interface Extension<T = undefined> {
     socketClosePostHandler?: SocketClosePostHandler;
     serverDisconnectPreHandler?: ServerDisconnectHandler;
     serverDisconnectHandler?: ServerDisconnectHandler;
+
+    // BlacklistCheckClient packet hooks
+    blacklistCheckPacketPreHandler?: BlacklistCheckPacketPreHandler;
+    blacklistCheckPacketPostHandler?: BlacklistCheckPacketPostHandler;
+
+    // Raw socket write hooks (for writes before Client exists)
+    rawSocketWritePreHandler?: RawSocketWritePreHandler;
+    rawSocketWritePostHandler?: RawSocketWritePostHandler;
 }
 
 export default Extension;

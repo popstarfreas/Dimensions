@@ -1,9 +1,7 @@
 import Item from './item.js';
 import Client from './client.js';
-import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
-import PacketTypes from './packettypes.js';
 import Color from './color.js';
-import { PlayerInfoPacket } from 'terraria-packet';
+import { PlayerHealthPacket, PlayerInfoPacket, PlayerInventorySlotPacket, PlayerManaPacket } from 'terraria-packet';
 type Difficulty = PlayerInfoPacket.difficulty
 type Mode = PlayerInfoPacket.mode
 
@@ -49,6 +47,8 @@ class Player {
 	public usedGummyWorm: boolean = false;
 	public usedAmbrosia: boolean = false;
 	public ateArtisanBread: boolean = false;
+	public voiceVariant: number = 0;
+	public voicePitchOffset: number = 0;
 	private client: Client | null;
 
 	public difficulty: Difficulty = "Softcore";
@@ -74,16 +74,24 @@ class Player {
 			return;
 		}
 
-		let playerInventorySlot = new PacketWriter()
-			.setType(PacketTypes.PlayerInventorySlot)
-			.packByte(this.id)
-			.packInt16(item.slot)
-			.packInt16(item.stack)
-			.packByte(item.prefix)
-			.packInt16(item.netID)
-			.data;
+		let playerInventorySlot = PlayerInventorySlotPacket.toBuffer({
+			playerId: this.id,
+			slot: item.slot,
+			stack: item.stack,
+			prefix: item.prefix,
+			itemType: item.netID,
+			favorited: false,
+			blocked: false
+		})
 
-		this.client.sendDirect(playerInventorySlot);
+		switch (playerInventorySlot.TAG) {
+			case "Ok":
+				this.client.sendDirect(playerInventorySlot._0);
+				break;
+			case "Error":
+				this.client.logging.error(`Error creating player inventory slot packet: ${playerInventorySlot._0}`);
+				break;
+		}
 	}
 
 	public restoreSavedMaxHealth(): void {
@@ -91,14 +99,20 @@ class Player {
 			return;
 		}
 
-		let playerLife = new PacketWriter()
-			.setType(PacketTypes.PlayerHP)
-			.packByte(this.id)
-			.packInt16(this.life)
-			.packInt16(this.life)
-			.data;
+		let playerLife = PlayerHealthPacket.toBuffer({
+			playerId: this.id,
+			maxHealth: this.life,
+			health: this.life
+		})
 
-		this.client.sendDirect(playerLife);
+		switch (playerLife.TAG) {
+			case "Ok":
+				this.client.sendDirect(playerLife._0);
+				break;
+			case "Error":
+				this.client.logging.error(`Error creating player health packet: ${playerLife._0}`);
+				break;
+		}
 	}
 
 	/**
@@ -113,14 +127,20 @@ class Player {
 			return;
 		}
 
-		let playerMana = new PacketWriter()
-			.setType(PacketTypes.PlayerMana)
-			.packByte(this.id)
-			.packInt16(this.mana)
-			.packInt16(this.mana)
-			.data;
+		let playerMana = PlayerManaPacket.toBuffer({
+			playerId: this.id,
+			maxMana: this.mana,
+			mana: this.mana
+		})
 
-		this.client.sendDirect(playerMana);
+		switch (playerMana.TAG) {
+			case "Ok":
+				this.client.sendDirect(playerMana._0);
+				break;
+			case "Error":
+				this.client.logging.error(`Error creating player mana packet: ${playerMana._0}`);
+				break;
+		}
 	}
 
 	/**
@@ -165,7 +185,9 @@ class Player {
 			usedGalaxyPearl: this.usedGalaxyPearl,
 			usedGummyWorm: this.usedGummyWorm,
 			usedAmbrosia: this.usedAmbrosia,
-			ateArtisanBread: this.ateArtisanBread
+			ateArtisanBread: this.ateArtisanBread,
+			voiceVariant: this.voiceVariant,
+			voicePitchOffset: this.voicePitchOffset
 		};
 		const playerInfoPacket = PlayerInfoPacket.toBuffer(playerInfo);
 		if (playerInfoPacket.TAG === "Ok") {

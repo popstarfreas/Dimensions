@@ -1,0 +1,72 @@
+{
+  "name": "dimensions",
+  "version": "7.0.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/popstarfreas/Dimensions.git"
+  },
+  "description": "",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.js",
+      "types": "./index.d.ts"
+    },
+    "./extension": {
+      "import": "./extension/index.js",
+      "require": "./extension/index.js",
+      "types": "./extension/index.d.ts"
+    },
+    "./extension/*": {
+      "import": "./extension/*.js",
+      "require": "./extension/*.js",
+      "types": "./extension/*.d.ts"
+    },
+    "./packets/*": {
+      "import": "./packets/*.js",
+      "require": "./packets/*.js",
+      "types": "./packets/*.d.ts"
+    },
+    "./datatypes/*": {
+      "import": "./datatypes/*.js",
+      "require": "./datatypes/*.js",
+      "types": "./datatypes/*.d.ts"
+    },
+    "./*": {
+      "import": "./*.js",
+      "require": "./*.js",
+      "types": "./*.d.ts"
+    }
+  },
+  "scripts": {
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dimensions": "link:.",
+    "@popstarfreas/packetfactory": "^7.1.3",
+    "@rescript/runtime": "^12.0.0",
+    "glob": "^11.0.3",
+    "redis": "^3.1.2",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#b7f932c3a578f34e2461145fed2d97e5fc58da93",
+    "utf8": "^3.0.0",
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/glob": "^9.0.0",
+    "@types/jasmine": "^3.4.0",
+    "@types/mitm": "^1.3.2",
+    "@types/node": "^24.0.14",
+    "@types/redis": "^2.8.32",
+    "@types/utf8": "^3.0.0",
+    "@types/uuid": "^10.0.0",
+    "jasmine": "^3.4.0",
+    "mitm": "^1.7.3",
+    "typescript": "^5.8.3"
+  }
+}

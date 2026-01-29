@@ -1,5 +1,6 @@
 import Client from "./client.js";
 import PacketTypes from "./packettypes.js";
+import { PacketSource } from "./terrariaserverpackethandler.js";
 
 import { PlayerActivePacket, NpcUpdatePacket, ItemDropUpdatePacket, NetModuleLoadPacket } from 'terraria-packet';
 
@@ -21,7 +22,7 @@ class ClearUtils {
       return;
     }
     const playerActive = { packetType: PacketTypes.PlayerActive, data: data._0 };
-    const playerActivePacket = client.server.getPacketHandler().handlePacket(client.server, playerActive);
+    const playerActivePacket = client.server.getPacketHandler().handlePacket(client.server, playerActive, PacketSource.Dimensions);
     if (playerActivePacket !== null) {
       client.sendDirect(playerActivePacket);
     }
@@ -54,15 +55,17 @@ class ClearUtils {
       },
       releaseOwner: undefined,
       playerCountScale: undefined,
-      strengthMultiplier: undefined,
-      spawnedFromStatue: false
+      difficulty: undefined,
+      spawnedFromStatue: false,
+      spawnNeedsSyncing: false,
+      shimmerTransparency: false
     }
     const data = NpcUpdatePacket.toBuffer(npc);
     if (data.TAG === "Ok") {
       const packet = { packetType: PacketTypes.NPCUpdate, data: data._0 };
-      const finalPacket = client.server.getPacketHandler().handlePacket(client.server, packet);
+      const finalPacket = client.server.getPacketHandler().handlePacket(client.server, packet, PacketSource.Dimensions);
       if (finalPacket !== null) {
-        client.sendDirect(packet.data);
+        client.sendDirect(finalPacket);
       }
     }
     client.server.entityTracking.NPCs[npcIndex] = undefined;
@@ -96,7 +99,7 @@ class ClearUtils {
       data: data._0,
       packetType: PacketTypes.UpdateItemDrop,
     };
-    const updateItemDropPacket = client.server.getPacketHandler().handlePacket(client.server, updateItemDrop);
+    const updateItemDropPacket = client.server.getPacketHandler().handlePacket(client.server, updateItemDrop, PacketSource.Dimensions);
     if (updateItemDropPacket !== null) {
       client.sendDirect(updateItemDropPacket);
     }
@@ -125,7 +128,7 @@ class ClearUtils {
         data: data._0,
         packetType: PacketTypes.LoadNetModule
       };
-      const loadNetModulePacket = client.server.getPacketHandler().handlePacket(client.server, loadNetModule);
+      const loadNetModulePacket = client.server.getPacketHandler().handlePacket(client.server, loadNetModule, PacketSource.Dimensions);
       if (loadNetModulePacket !== null) {
         client.sendDirect(loadNetModulePacket);
       }
@@ -208,7 +211,7 @@ class ClearUtils {
           data: buffer._0,
           packetType: PacketTypes.LoadNetModule,
         };
-        const processedData = client.server.getPacketHandler().handlePacket(client.server, packet);
+        const processedData = client.server.getPacketHandler().handlePacket(client.server, packet, PacketSource.Dimensions);
         if (processedData !== null) {
           client.sendDirect(processedData);
         }

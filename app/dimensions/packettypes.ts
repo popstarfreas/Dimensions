@@ -147,6 +147,19 @@ enum PacketTypes {
   ShimmerEffectOrCoinLuck = 146,
   LoadoutSwitch = 147,
   ItemDropProtectedUpdate = 148,
+  DeadCellsDisplayJarTryPlacing = 149,
+  PlayerSpectate = 150,
+  ItemDropClear = 151,
+  PlayerItemUseSound = 152,
+  NpcHurtByDebuff = 153,
+  Ping = 154,
+  ChestResize = 155,
+  LeashedEntityAnchorInsertItem = 156,
+  PlayerTeamUpdate = 157,
+  PlayerTeamSwapSpawn = 158,
+  SectionRequest = 159,
+  ItemDropPosition = 160,
+  HostToken = 161,
 };
 
 export default PacketTypes;

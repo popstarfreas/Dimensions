@@ -16,11 +16,16 @@ import ClientState from './clientstate.js';
 import ClientArgs from './clientargs.js';
 import ErrorHelper from './errorhelper.js';
 import ClearUtils from './clearutils.js';
+import { PacketSource } from './terrariaserverpackethandler.js';
 import * as winston from 'winston';
 import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 
-import { PlayerBuffAddPacket } from 'terraria-packet';
+import { DisconnectPacket, NetModuleLoadPacket, PlayerBuffAddPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
+
+interface PacketQueueItem {
+  rawPacket: RawPacket,
+}
 
 /**
  * This class handles switching servers and passing data of a single client
@@ -45,7 +50,7 @@ class Client {
   public countIncremented: boolean;
   public serversDetails: { [id: string]: ServerDetails };
   public preventSpawnOnJoin: boolean;
-  public packetQueue: Buffer[];
+  public packetQueue: PacketQueueItem[];
   public logging: winston.Logger;
   public version: string;
   private globalTracking: GlobalTracking;
@@ -177,12 +182,18 @@ class Client {
       reason = new NetworkText(0, reason);
     }
 
-    var disconnect = new PacketWriter()
-      .setType(PacketTypes.Disconnect)
-      .packNetworkText(reason)
-      .data;
+    let disconnect = DisconnectPacket.toBuffer({
+      reason: reason
+    })
 
-    this.sendDirect(disconnect);
+    switch (disconnect.TAG) {
+      case "Ok":
+        this.sendDirect(disconnect._0);
+        break;
+      case "Error":
+        this.logging.error(`Error creating disconnect packet: ${disconnect._0}`);
+        break;
+    }
     this.socket.pause();
 
     // Don't disconnect instantly otherwise it will show 'Lost Connection' on client
@@ -357,18 +368,29 @@ class Client {
         color = "00ff00"
       }
 
-      let chatMessageData = new PacketWriter()
-        .setType(PacketTypes.LoadNetModule)
-        .packUInt16(1)
-        .packByte(255)
-        .packNetworkText(networkText)
-        .packHex(color)
-        .data;
+      let colorRgb = {
+        R: parseInt(color.substring(0, 2), 16),
+        G: parseInt(color.substring(2, 4), 16),
+        B: parseInt(color.substring(4, 6), 16)
+      }
+      let chatMessageData = NetModuleLoadPacket.toBuffer({
+        TAG: "ServerText",
+        _0: 255,
+        _1: networkText,
+        _2: colorRgb
+      })
 
-      const chatMessage = { packetType: PacketTypes.LoadNetModule, data: chatMessageData };
-      const chatMessagePacket = this.server.getPacketHandler().handlePacket(this.server, chatMessage);
-      if (chatMessagePacket !== null) {
-        this.sendDirect(chatMessagePacket);
+      switch (chatMessageData.TAG) {
+        case "Ok":
+          const chatMessage = { packetType: PacketTypes.LoadNetModule, data: chatMessageData._0 };
+          const chatMessagePacket = this.server.getPacketHandler().handlePacket(this.server, chatMessage, PacketSource.Dimensions);
+          if (chatMessagePacket !== null) {
+            this.sendDirect(chatMessagePacket);
+          }
+          break;
+        case "Error":
+          this.logging.error(`Error creating chat message packet: ${chatMessageData._0}`);
+          break;
       }
     }
   }
@@ -377,7 +399,10 @@ class Client {
   public sendWaitingPackets(): void {
     if (!this.server.socket.destroyed && this.packetQueue.length > 0) {
       for (const packet of this.packetQueue) {
-        this.server.sendDirect(packet);
+        const data = this.globalHandlers.clientPacketHandler.handlePacket(this, packet.rawPacket)
+        if (data !== null) {
+          this.server.sendDirect(data);
+        }
       }
 
       this.packetQueue = [];
@@ -430,8 +455,6 @@ class Client {
       this.server.reset();
       this.state = ClientState.FreshConnection;
 
-      //console.log("Connecting to " + ip + ":" + port);
-
       // Update server information
       this.server.ip = ip;
       this.server.port = port;
@@ -461,7 +484,7 @@ class Client {
             packetType: PacketTypes.AddPlayerBuff,
           };
 
-          const debuffPacket = this.server.getPacketHandler().handlePacket(this.server, debuff);
+          const debuffPacket = this.server.getPacketHandler().handlePacket(this.server, debuff, PacketSource.Dimensions);
           if (debuffPacket !== null) {
             this.sendDirect(debuffPacket);
           }
@@ -569,7 +592,6 @@ class Client {
   }
 
   public handleClose(): void {
-    //console.log("Client Socket Closed.");
     if (!this.server.socket.destroyed) {
       this.server.afterClosed = null;
       this.server.socket.destroy();

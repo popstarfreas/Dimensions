@@ -9,8 +9,6 @@ import GlobalHandlers from './globalhandlers.js';
 import { ConfigListenServer, ConfigOptions } from './configloader.js';
 import RoutingServer from './routingserver.js';
 import Blacklist from './blacklist.js';
-import PacketTypes from './packettypes.js';
-import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 import GlobalTracking from './globaltracking.js';
 import ListenServerArgs from './listenserverargs.js';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
@@ -18,6 +16,8 @@ import StringUtils from './stringutils.js';
 import ErrorHelper from './errorhelper.js';
 import BlacklistCheckClient from './blacklistcheckclient.js';
 import * as winston from 'winston';
+import { RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
+import { DisconnectPacket, StatusPacket } from 'terraria-packet';
 
 /**
  * Listens on a specified port and routes users balancing amounts between routing servers it handles
@@ -190,19 +190,86 @@ export class ListenServer {
   }
 
   /**
+   * Writes to a socket with extension hook support.
+   * Used for writes that occur before a Client object exists.
+   */
+  private writeToSocketWithHooks(
+    socket: Net.Socket,
+    packet: Buffer,
+    reason: RawSocketWriteContext['reason'],
+    clientArgs?: ClientArgs
+  ): boolean {
+    const context: RawSocketWriteContext = {
+      socket: socket,
+      remoteAddress: socket.remoteAddress,
+      reason: reason,
+      clientArgs: clientArgs
+    };
+    const packetWrapper = { packet: packet };
+
+    // Run pre-handlers
+    for (const extension of Object.values(this.globalHandlers.extensions)) {
+      if (extension.rawSocketWritePreHandler) {
+        try {
+          const blocked = extension.rawSocketWritePreHandler(context, packetWrapper);
+          if (blocked) {
+            return false;
+          }
+        } catch (error) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} RawSocketWrite Pre Handler Error: ${ErrorHelper.toMessage(error)}`;
+            this.logging.info(logMessage);
+          }
+        }
+      }
+    }
+
+    // Perform the write
+    socket.write(packetWrapper.packet);
+
+    // Run post-handlers
+    for (const extension of Object.values(this.globalHandlers.extensions)) {
+      if (extension.rawSocketWritePostHandler) {
+        try {
+          extension.rawSocketWritePostHandler(context, packetWrapper);
+        } catch (error) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} RawSocketWrite Post Handler Error: ${ErrorHelper.toMessage(error)}`;
+            this.logging.info(logMessage);
+          }
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * Sends the client the disconnect packet and then drops the connection
    *
    * @param socket The socket to disconnect
    * @param reason The reason to disconnect the client
    */
-  private disconnectClient(socket: Net.Socket, reason: string): void {
-    let kickPacket = new PacketWriter()
-      .setType(PacketTypes.Disconnect)
-      .packNetworkText(new NetworkText(0, reason))
-      .data;
+  private disconnectClient(
+    socket: Net.Socket,
+    reason: string,
+    hookReason: RawSocketWriteContext['reason'] = RawSocketWriteReason.Other
+  ): void {
+    let kickPacket = DisconnectPacket.toBuffer({
+      reason: new NetworkText(0, reason)
+    })
 
     if (!socket.destroyed) {
-      socket.write(kickPacket);
+      switch (kickPacket.TAG) {
+        case "Ok":
+          this.writeToSocketWithHooks(socket, kickPacket._0, hookReason);
+          break;
+        case "Error":
+          this.logging.error(`Error creating disconnect packet: ${kickPacket._0}`);
+          break;
+      }
 
       // Allow time for client to receive and process kick packet
       setTimeout(() => {
@@ -291,7 +358,11 @@ export class ListenServer {
     const counter = this.connectionsTracker.get(ip);
     if (typeof counter !== "undefined") {
       if (counter + 1 > this.options.connectionLimit.connectionLimitPerIP) {
-        this.disconnectClient(socket, StringUtils.format(this.options.connectionLimit.kickReason, this.options.connectionLimit.connectionLimitPerIP));
+        this.disconnectClient(
+          socket,
+          StringUtils.format(this.options.connectionLimit.kickReason, this.options.connectionLimit.connectionLimitPerIP),
+          RawSocketWriteReason.ConnectionLimitExceeded
+        );
         connectionDropped = true;
       } else {
         this.connectionsTracker.set(ip, counter + 1);
@@ -389,7 +460,7 @@ export class ListenServer {
             if (index > -1) {
               this.checkingClients.splice(index, 1);
             }
-            this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError);
+            this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError, RawSocketWriteReason.BlacklistCheck);
           } else {
             const index = this.checkingClients.indexOf(client);
             if (index > -1) {
@@ -404,7 +475,7 @@ export class ListenServer {
           if (index > -1) {
             this.checkingClients.splice(index, 1);
           }
-          this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError);
+          this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError, RawSocketWriteReason.BlacklistCheck);
         },
         disconnectCb: () => {
           const index = this.checkingClients.indexOf(client);
@@ -451,7 +522,7 @@ export class ListenServer {
    * @return Whether or not the ip is blacklisted
    */
   private kickBlacklisted(client: ClientArgs): void {
-    this.disconnectClient(client.socket, this.options.language.phrases.blacklisted);
+    this.disconnectClient(client.socket, this.options.language.phrases.blacklisted, RawSocketWriteReason.BlacklistCheck);
 
     if (this.options.log.clientBlocked) {
       this.logging.info(`${process.pid}] Client: ${getProperIP(client.socket.remoteAddress)} was blocked from joining.`);
@@ -465,14 +536,24 @@ export class ListenServer {
    */
   private sendCheckingIp(client: ClientArgs): void {
     const msg = "Checking access...";
-    let statusPacket = new PacketWriter()
-      .setType(PacketTypes.Status)
-      .packInt32(1)
-      .packNetworkText(new NetworkText(0, msg))
-      .packByte(0)
-      .data;
+    let statusPacket = StatusPacket.toBuffer({
+      max: 0,
+      text: new NetworkText(0, msg),
+      flags: {
+        hideStatusTextPercent: true,
+        statusTextHasShadows: true,
+        runCheckBytes: false
+      }
+    })
 
-    client.socket.write(statusPacket);
+    switch (statusPacket.TAG) {
+      case "Ok":
+        this.writeToSocketWithHooks(client.socket, statusPacket._0, RawSocketWriteReason.BlacklistCheck, client);
+        break;
+      case "Error":
+        this.logging.error(`Error creating status packet: ${statusPacket._0}`);
+        break;
+    }
   }
 
   /**

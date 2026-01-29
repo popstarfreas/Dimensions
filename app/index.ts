@@ -43,8 +43,8 @@ process.on('unhandledRejection', (reason: any, _promise: any) => {
    logging.error('unhandledRejection Reason: ' + reason.stack);
 });
 
-process.on('uncaughtException', function(e: any) {
-   logging.error(e, e.stack);
+process.on('uncaughtException', function (e: any) {
+   logging.error("Uncaught", e, e.stack);
 });
 
 const dimensions = await Dimensions.create(logging);

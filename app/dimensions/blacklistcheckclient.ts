@@ -4,6 +4,8 @@ import { getPacketsFromBuffer, BuffersPackets } from './utils.js';
 import { getProperIP } from './utils.js';
 import Blacklist from './blacklist.js';
 import { Parser, PlayerSlotSetPacket } from 'terraria-packet';
+import { BlacklistCheckContext, BlacklistCheckState, RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
+import ErrorHelper from './errorhelper.js';
 
 enum ClientState {
     StartOfConnection,
@@ -64,9 +66,7 @@ class BlacklistCheckClient {
             this.settings.clientArgs.logging.error(`Error creating player slot set packet: ${playerSlotSetPacket._0}`);
             return;
         }
-        this.settings.clientArgs.socket.write(
-            playerSlotSetPacket._0
-        );
+        this.writeToSocket(playerSlotSetPacket._0, RawSocketWriteReason.BlacklistCheckClientSetup);
     }
 
     handleData(data: Buffer) {
@@ -98,8 +98,17 @@ class BlacklistCheckClient {
             return
         }
 
+        // Run pre-handlers
+        if (this.runPreHandlers(rawPacket)) {
+            return;
+        }
+
         const packetResult = Parser.parseLazy(rawPacket.data, false)
         if (packetResult.TAG === "Error") {
+            // I saw mobile send this and do not know why
+            if (rawPacket.packetType == 163) {
+                return
+            }
             this.dispose()
             this.packetErrorCheckingBlacklistCb(new Error(`Error parsing packet: ${packetResult._0}`))
             return
@@ -148,6 +157,7 @@ class BlacklistCheckClient {
                     this.packetErrorCheckingBlacklistCb(new Error("Client IP could not be parsed"))
                     return
                 }
+                this.state = ClientState.SentUuid;
 
                 this.settings.blacklist.checkInformation(this.name, ip, clientUuid.uuid).then((isBlacklisted) => {
                     if (this.disposed) {
@@ -168,6 +178,9 @@ class BlacklistCheckClient {
                 })
                 break;
         }
+
+        // Run post-handlers
+        this.runPostHandlers(rawPacket);
     }
 
     handleError(err: Error) {
@@ -180,6 +193,124 @@ class BlacklistCheckClient {
     dispose() {
         this.settings.clientArgs.socket.removeAllListeners();
         this.disposed = true;
+    }
+
+    private getHookContext(): BlacklistCheckContext {
+        let stateString: BlacklistCheckState;
+        switch (this.state) {
+            case ClientState.SentPlayerInfo:
+                stateString = BlacklistCheckState.SentPlayerInfo;
+                break;
+            case ClientState.SentUuid:
+                stateString = BlacklistCheckState.SentUuid;
+                break;
+            default:
+                stateString = BlacklistCheckState.AssignedClientId;
+        }
+        return {
+            socket: this.settings.clientArgs.socket,
+            clientArgs: this.settings.clientArgs,
+            state: stateString
+        };
+    }
+
+    private runPreHandlers(packet: RawPacket): boolean {
+        const extensions = this.settings.clientArgs.globalHandlers.extensions;
+        const context = this.getHookContext();
+
+        for (const key in extensions) {
+            const extension = extensions[key];
+            if (extension.blacklistCheckPacketPreHandler) {
+                try {
+                    const handled = extension.blacklistCheckPacketPreHandler(context, packet);
+                    if (handled) {
+                        return true;
+                    }
+                } catch (error) {
+                    if (this.settings.clientArgs.options.log.extensionError) {
+                        const name = extension.name ?? key;
+                        const logMessage = `[${process.pid}] Extension ${name} BlacklistCheck Pre Handler Error: ${ErrorHelper.toMessage(error)}`;
+                        this.settings.clientArgs.logging.info(logMessage);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private runPostHandlers(packet: RawPacket): boolean {
+        const extensions = this.settings.clientArgs.globalHandlers.extensions;
+        const context = this.getHookContext();
+
+        for (const key in extensions) {
+            const extension = extensions[key];
+            if (extension.blacklistCheckPacketPostHandler) {
+                try {
+                    const handled = extension.blacklistCheckPacketPostHandler(context, packet);
+                    if (handled) {
+                        return true;
+                    }
+                } catch (error) {
+                    if (this.settings.clientArgs.options.log.extensionError) {
+                        const name = extension.name ?? key;
+                        const logMessage = `[${process.pid}] Extension ${name} BlacklistCheck Post Handler Error: ${ErrorHelper.toMessage(error)}`;
+                        this.settings.clientArgs.logging.info(logMessage);
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private writeToSocket(packet: Buffer, reason: RawSocketWriteContext['reason']): void {
+        const extensions = this.settings.clientArgs.globalHandlers.extensions;
+        const context: RawSocketWriteContext = {
+            socket: this.settings.clientArgs.socket,
+            remoteAddress: this.settings.clientArgs.socket.remoteAddress,
+            reason: reason,
+            clientArgs: this.settings.clientArgs
+        };
+        const packetWrapper = { packet: packet };
+
+        // Run pre-handlers
+        for (const key in extensions) {
+            const extension = extensions[key];
+            if (extension.rawSocketWritePreHandler) {
+                try {
+                    const blocked = extension.rawSocketWritePreHandler(context, packetWrapper);
+                    if (blocked) {
+                        return;
+                    }
+                } catch (error) {
+                    if (this.settings.clientArgs.options.log.extensionError) {
+                        const name = extension.name ?? key;
+                        const logMessage = `[${process.pid}] Extension ${name} RawSocketWrite Pre Handler Error: ${ErrorHelper.toMessage(error)}`;
+                        this.settings.clientArgs.logging.info(logMessage);
+                    }
+                }
+            }
+        }
+
+        // Perform the write
+        this.settings.clientArgs.socket.write(packetWrapper.packet);
+
+        // Run post-handlers
+        for (const key in extensions) {
+            const extension = extensions[key];
+            if (extension.rawSocketWritePostHandler) {
+                try {
+                    extension.rawSocketWritePostHandler(context, packetWrapper);
+                } catch (error) {
+                    if (this.settings.clientArgs.options.log.extensionError) {
+                        const name = extension.name ?? key;
+                        const logMessage = `[${process.pid}] Extension ${name} RawSocketWrite Post Handler Error: ${ErrorHelper.toMessage(error)}`;
+                        this.settings.clientArgs.logging.info(logMessage);
+                    }
+                }
+            }
+        }
     }
 }
 

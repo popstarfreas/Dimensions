@@ -1,5 +1,5 @@
 import { BuffersPackets, getPacketsFromBuffer } from './utils.js';
-import terrariaServerPacketHandler from './terrariaserverpackethandler.js';
+import terrariaServerPacketHandler, { PacketSource } from './terrariaserverpackethandler.js';
 import PacketTypes from './packettypes.js';
 import Client from './client.js';
 import * as Net from 'net';
@@ -8,6 +8,10 @@ import RawPacket from './packets/rawpacket.js';
 import Entities from './entities.js';
 import ClientState from './clientstate.js';
 import ErrorHelper from './errorhelper.js';
+
+interface PacketQueueItem {
+  rawPacket: RawPacket,
+}
 
 /* Used to track information specific to the current server that a client is on
  * as well as pass received data from the TerrariaServer to the handlers */
@@ -26,7 +30,7 @@ class TerrariaServer {
   public afterClosed!: ((client: Client) => void) | null;
   public entityTracking!: Entities;
   public isSSC!: boolean;
-  public packetQueue!: Buffer[];
+  public packetQueue!: PacketQueueItem[];
   private bufferPacket!: Buffer;
 
   constructor(socket: Net.Socket, client: Client) {
@@ -114,7 +118,8 @@ class TerrariaServer {
       let packets: RawPacket[] = entireDataInfo.packets;
       packets.forEach((packet: RawPacket) => {
         try {
-          const buf = this.getPacketHandler().handlePacket(this, packet);
+          const buf = this.getPacketHandler().handlePacket(this, packet, PacketSource.TerrariaServer);
+          //const buf = packet.data;
           if (buf !== null) {
             allowedPackets.push(buf);
           }
@@ -145,7 +150,10 @@ class TerrariaServer {
   public sendWaitingPackets(): void {
     if (!this.socket.destroyed && this.packetQueue.length > 0) {
       for (const packet of this.packetQueue) {
-        this.client.sendDirect(packet);
+        const packetData = this.getPacketHandler().handlePacket(this, packet.rawPacket, PacketSource.Dimensions);
+        if (packetData !== null) {
+          this.client.sendDirect(packetData);
+        }
       }
 
       this.packetQueue = [];
@@ -264,8 +272,6 @@ class TerrariaServer {
    * 
    * TODO: Handle non-refused errors when the host itself is offline */
   public handleError(error: Error): void {
-    //console.log(this.ip + ":" + this.port + " " + this.name);
-    //this.client.changeServer(Config.IP, Config.PORT);
     let matches: RegExpMatchArray | null = / E([A-z]*?) /.exec(error.message);
     let type: string = matches !== null && matches.length > 1 ? matches[1] : "";
     let serverDetails = this.client.serversDetails[this.name];
