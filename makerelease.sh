@@ -5,7 +5,7 @@ rm -rf build/spec
 mkdir release
 cp -r build release/build
 cp package.json release/package.json
-cp package-lock.json release/package-lock.json
+cp pnpm-lock.json release/pnpm-lock.json
 cp config.js.example release/config.js.example
 mkdir release/logs
 cp dimensions_cli.js release/dimensions_cli.js
