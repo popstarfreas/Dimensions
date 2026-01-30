@@ -1,5 +1,5 @@
-import Client from './client.js';
-import ClientState from './clientstate.js';
+import Client from "./client.js";
+import ClientState from "./clientstate.js";
 
 export interface Command {
   name: string;
@@ -13,12 +13,12 @@ export class ClientCommandHandler {
   /**
    * Turns a message into a command object, splitting the command name
    * from its arguments.
-   * 
+   *
    * @param message The message to convert into a command object
    * @return The command object created
    */
   public parseCommand(message: string): Command {
-    let args: string[] = message.split(' ');
+    let args: string[] = message.split(" ");
     let name: string = message.substr(1, args[0].length - 1);
 
     // Remove first arg as it is the command name
@@ -28,47 +28,64 @@ export class ClientCommandHandler {
 
   /**
    * Handles any matching command from the client
-   * 
+   *
    * @param command The command object with the name and args
    * @param client The client that is trying to use the command
    * @return whether or not the command was handled
    */
   public handle(command: Command, client: Client): boolean {
-    let handled: boolean = false;
+    //let handled: boolean = false;
     if (client.servers[command.name]) {
-      if (client.server.name.toLowerCase() == command.name && client.connected) {
-        client.sendChatMessage(client.options.language.phrases.youAreAlreadyInthatDimension);
+      if (
+        client.server.name.toLowerCase() == command.name &&
+        client.connected
+      ) {
+        client.sendChatMessage(
+          client.options.language.phrases.youAreAlreadyInthatDimension,
+        );
       } else {
-        if (client.state === ClientState.FullyConnected || client.state === ClientState.Disconnected) {
-          client.sendChatMessage(client.options.language.phrases.shiftingToDimension.replace("${name}", client.servers[command.name].name), "FF0000");
+        if (
+          client.state === ClientState.FullyConnected ||
+          client.state === ClientState.Disconnected
+        ) {
+          client.sendChatMessage(
+            client.options.language.phrases.shiftingToDimension.replace(
+              "${name}",
+              client.servers[command.name].name,
+            ),
+            "FF0000",
+          );
 
           client.changeServer(client.servers[command.name]);
         } else {
-          client.sendChatMessage(client.options.language.phrases.youNeedToWaitUntilConnected);
+          client.sendChatMessage(
+            client.options.language.phrases.youNeedToWaitUntilConnected,
+          );
         }
       }
-      handled = true;
+      //handled = true;
     } else {
       switch (command.name) {
         case "who":
-          handled = this.handleWho(client);
+          this.handleWho(client);
           break;
-        case "dimensions":
-        case client.options.language.phrases.dimensionsCommandName:
-          handled = this.handleDimensions(client);
-          break;
+        //case "dimensions":
+        //case client.options.language.phrases.dimensionsCommandName:
+        //this.handleDimensions(client);
+        //break;
+        //CSFT
         case "void":
-          handled = this.handleVoid(client);
+          this.handleVoid(client);
           break;
       }
     }
-
-    return handled;
+    //服务器处理
+    return false;
   }
 
   /**
    * Adds a message denoting how many users exist in total on this Dimensions instance
-   * 
+   *
    * @param args The command args
    * @param client The client executing who
    * @return Whether or not the who command was handled
@@ -81,19 +98,20 @@ export class ClientCommandHandler {
     }
 
     // Try to make it come after the normal response
-    setTimeout(function() {
-      client.sendChatMessage(client.options.language.phrases.playerCount.replace("${total}", total.toString()));
+    //CSFT - 修改
+    setTimeout(function () {
+      client.sendChatMessage(
+        client.options.language.phrases.playerCount.replace(
+          "${total}",
+          total.toString(),
+        ),
+        "00BFFF",
+      );
     }, 100);
     return false;
   }
 
-  /**
-   * Gives the client a list of dimensions available prefixed with '/'
-   * 
-   * @param args The command args
-   * @param client The client who is executing the command
-   * @return Whether the dimensions command was handled
-   */
+  /*
   private handleDimensions(client: Client): boolean {
     let dimensionsList: string = "";
     let dimensionNames: string[] = Object.keys(client.servers);
@@ -101,7 +119,8 @@ export class ClientCommandHandler {
       let name: string = dimensionNames[i];
       let hidden: boolean = client.servers[name].hidden;
       if (!hidden) {
-        dimensionsList += (i > 0 ? "[c/00B530:,] " : " ") + "/" + client.servers[name].name;
+        dimensionsList +=
+          (i > 0 ? "[c/00B530:,] " : " ") + "/" + client.servers[name].name;
       }
     }
 
@@ -111,9 +130,10 @@ export class ClientCommandHandler {
     return true;
   }
 
+  */
   /**
    * Allows a user to disconnect from their current dimension leaving them without a server
-   * 
+   *
    * @param args The command args
    * @param client The client executing the void command
    * @return Whether the void command was handled
@@ -123,6 +143,6 @@ export class ClientCommandHandler {
     client.sendChatMessage(client.options.language.phrases.youEnteredTheVoid);
     return true;
   }
-};
+}
 
 export default ClientCommandHandler;

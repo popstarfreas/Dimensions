@@ -1,11 +1,26 @@
-import Item from './item.js';
-import Client from './client.js';
-import RawPacket from './packets/rawpacket.js';
-import { Command } from './clientcommandhandler.js';
-import ClientState from './clientstate.js';
-import ErrorHelper from './errorhelper.js';
+import Item from "./item.js";
+import Client from "./client.js";
+import RawPacket from "./packets/rawpacket.js";
+import { Command } from "./clientcommandhandler.js";
+import ClientState from "./clientstate.js";
+import ErrorHelper from "./errorhelper.js";
 
-import { ConnectRequestPacket, PlayerInfoPacket, PlayerBuffsSetPacket, PlayerBuffAddPacket, PlayerInventorySlotPacket, PlayerManaPacket, PlayerHealthPacket, PlayerUpdatePacket, ClientUuidPacket, NetModuleLoadPacket, ItemDropUpdatePacket, ItemOwnerPacket, PlayerSpawnPacket, Parser, } from "terraria-packet";
+import {
+  ConnectRequestPacket,
+  PlayerInfoPacket,
+  PlayerBuffsSetPacket,
+  PlayerBuffAddPacket,
+  PlayerInventorySlotPacket,
+  PlayerManaPacket,
+  PlayerHealthPacket,
+  PlayerUpdatePacket,
+  ClientUuidPacket,
+  NetModuleLoadPacket,
+  ItemDropUpdatePacket,
+  ItemOwnerPacket,
+  PlayerSpawnPacket,
+  Parser,
+} from "terraria-packet";
 
 class ClientPacketHandler {
   private currentClient!: Client;
@@ -16,9 +31,15 @@ class ClientPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.clientHandler !== 'undefined') {
+      if (
+        typeof handler.priorPacketHandlers !== "undefined" &&
+        typeof handler.priorPacketHandlers.clientHandler !== "undefined"
+      ) {
         try {
-          handled = handler.priorPacketHandlers.clientHandler.handlePacket(client, packet);
+          handled = handler.priorPacketHandlers.clientHandler.handlePacket(
+            client,
+            packet,
+          );
           if (handled) {
             break;
           }
@@ -41,9 +62,15 @@ class ClientPacketHandler {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.clientHandler !== 'undefined') {
+      if (
+        typeof handler.postPacketHandlers !== "undefined" &&
+        typeof handler.postPacketHandlers.clientHandler !== "undefined"
+      ) {
         try {
-          handled = handler.postPacketHandlers.clientHandler.handlePacket(client, packet);
+          handled = handler.postPacketHandlers.clientHandler.handlePacket(
+            client,
+            packet,
+          );
           if (handled) {
             break;
           }
@@ -76,24 +103,30 @@ class ClientPacketHandler {
         switch (parsed.TAG) {
           case "ReaderError":
             if (parsed._0.error instanceof Error) {
-              client.logging.error(`Error parsing packet: ${parsed._0.context} ${parsed._0.error.message}`);
+              client.logging.error(
+                `Error parsing packet: ${parsed._0.context} ${parsed._0.error.message}`,
+              );
             } else {
-              client.logging.error(`Error parsing packet: ${parsed._0.context}`);
+              client.logging.error(
+                `Error parsing packet: ${parsed._0.context}`,
+              );
             }
             break;
           default:
             client.logging.error(`Error parsing packet: ${parsed.TAG}`);
             break;
         }
-        return null
+        return null;
       } else {
         switch (parsed) {
           case "IgnoredPacket":
             client.logging.info(`Ignoring packet: ${rawPacket.packetType}`);
             break;
           default:
-            client.logging.error(`Error parsing packet: ${rawPacket.packetType} ${parsed}`);
-            return null
+            client.logging.error(
+              `Error parsing packet: ${rawPacket.packetType} ${parsed}`,
+            );
+            return null;
             break;
         }
       }
@@ -171,7 +204,9 @@ class ClientPacketHandler {
     return rawPacket.data;
   }
 
-  private handleConnectRequest(connectRequest: ConnectRequestPacket.t): boolean {
+  private handleConnectRequest(
+    connectRequest: ConnectRequestPacket.t,
+  ): boolean {
     if (this.currentClient.version === "unknown") {
       this.currentClient.version = connectRequest?.version ?? "unknown";
     }
@@ -181,13 +216,25 @@ class ClientPacketHandler {
 
   /* Updates tracked visuals for player to restore them when they switch from
    * an SSC to a non-SSC server */
-  private handlePlayerInfo(playerInfo: PlayerInfoPacket.t, rawPacket: RawPacket): boolean {
+  private handlePlayerInfo(
+    playerInfo: PlayerInfoPacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
     const player = this.currentClient.player;
     if (player.name !== playerInfo.name) {
       if (player.allowedNameChange) {
-        this.currentClient.setName(playerInfo.name);
+        // CSFT - 修改
+        if (player.name !== "") {
+          this.currentClient.disconnect("禁止在传送期间修改名称!");
+        } else {
+          this.currentClient.setName(playerInfo.name);
+        }
       } else if (this.currentClient.options.nameChanges?.mode === "rewrite") {
-        const data = PlayerInfoPacket.toBuffer({ ...playerInfo, playerId: this.currentClient.player.id, name: player.name });
+        const data = PlayerInfoPacket.toBuffer({
+          ...playerInfo,
+          playerId: this.currentClient.player.id,
+          name: player.name,
+        });
         if (data.TAG === "Ok") {
           rawPacket.data = data._0;
         }
@@ -220,7 +267,10 @@ class ClientPacketHandler {
 
   /* Used to prevent invisibility buff from being sent to the server
    * for used when the config is set to blockInvis = true */
-  private handleUpdatePlayerBuff(playerBuffsSet: PlayerBuffsSetPacket.t, rawPacket: RawPacket): boolean {
+  private handleUpdatePlayerBuff(
+    playerBuffsSet: PlayerBuffsSetPacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
     let shouldBlockInvis = false;
     const blockInvis = this.currentClient.options.blockInvis;
     switch (blockInvis) {
@@ -230,7 +280,13 @@ class ClientPacketHandler {
       case false:
         break;
       default:
-        shouldBlockInvis = blockInvis.enabled && blockInvis.servers.some(server => server.toLowerCase() === this.currentClient.server.name.toLowerCase())
+        shouldBlockInvis =
+          blockInvis.enabled &&
+          blockInvis.servers.some(
+            (server) =>
+              server.toLowerCase() ===
+              this.currentClient.server.name.toLowerCase(),
+          );
         break;
     }
 
@@ -242,9 +298,14 @@ class ClientPacketHandler {
         return buff;
       });
 
-      const buf = PlayerBuffsSetPacket.toBuffer({ playerId: this.currentClient.player.id, buffs })
+      const buf = PlayerBuffsSetPacket.toBuffer({
+        playerId: this.currentClient.player.id,
+        buffs,
+      });
       if (buf.TAG === "Error") {
-        this.currentClient.logging.error(`Error creating player buffs set: ${buf._0}`);
+        this.currentClient.logging.error(
+          `Error creating player buffs set: ${buf._0}`,
+        );
         return true;
       }
       rawPacket.data = buf._0;
@@ -271,7 +332,13 @@ class ClientPacketHandler {
       case false:
         break;
       default:
-        shouldBlockInvis = blockInvis.enabled && blockInvis.servers.some(server => server.toLowerCase() === this.currentClient.server.name.toLowerCase())
+        shouldBlockInvis =
+          blockInvis.enabled &&
+          blockInvis.servers.some(
+            (server) =>
+              server.toLowerCase() ===
+              this.currentClient.server.name.toLowerCase(),
+          );
         break;
     }
 
@@ -284,10 +351,21 @@ class ClientPacketHandler {
 
   /* Tracks the players inventory slots to restore them when they switch
    * from an SSC server to a Non-SSC server */
-  private handlePlayerInventorySlot(playerInventorySlot: PlayerInventorySlotPacket.t): boolean {
-    if ((this.currentClient.state === ClientState.FreshConnection || this.currentClient.state === ClientState.ConnectionSwitchEstablished) && !this.currentClient.waitingCharacterRestore) {
+  private handlePlayerInventorySlot(
+    playerInventorySlot: PlayerInventorySlotPacket.t,
+  ): boolean {
+    if (
+      (this.currentClient.state === ClientState.FreshConnection ||
+        this.currentClient.state === ClientState.ConnectionSwitchEstablished) &&
+      !this.currentClient.waitingCharacterRestore
+    ) {
       const { slot, stack, prefix, itemType } = playerInventorySlot;
-      this.currentClient.player.inventory[slot] = new Item(slot, stack, prefix, itemType);
+      this.currentClient.player.inventory[slot] = new Item(
+        slot,
+        stack,
+        prefix,
+        itemType,
+      );
     }
 
     return false;
@@ -296,8 +374,7 @@ class ClientPacketHandler {
   /* Tracks the player mana to restore it when they switch from an
    * SSC server to a Non-SSC server */
   private handlePlayerMana(playerMana: PlayerManaPacket.t): boolean {
-    if (!this.currentClient.player.allowedManaChange)
-      return false;
+    if (!this.currentClient.player.allowedManaChange) return false;
 
     const { maxMana } = playerMana;
     this.currentClient.player.mana = maxMana;
@@ -308,7 +385,10 @@ class ClientPacketHandler {
 
   /* Tracks the player HP to restore it when they switch from an
    * SSC server to a Non-SSC server */
-  private handlePlayerHP(playerHealth: PlayerHealthPacket.t, rawPacket: RawPacket): boolean {
+  private handlePlayerHP(
+    playerHealth: PlayerHealthPacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
     if (!this.currentClient.player.allowedLifeChange) {
       return false;
     }
@@ -326,7 +406,10 @@ class ClientPacketHandler {
     return false;
   }
 
-  private handleUpdatePlayer(_playerUpdate: PlayerUpdatePacket.t, rawPacket: RawPacket): boolean {
+  private handleUpdatePlayer(
+    _playerUpdate: PlayerUpdatePacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
       this.currentClient.packetQueue.push({ rawPacket });
@@ -340,7 +423,10 @@ class ClientPacketHandler {
    * which causes them to be kicked. It also adds it to the packet queue
    * so that it may be sent when the client has fully connected (and wont
    * get kicked for sending it) */
-  private handleUpdateItemDrop(_itemDropUpdate: ItemDropUpdatePacket.t, rawPacket: RawPacket): boolean {
+  private handleUpdateItemDrop(
+    _itemDropUpdate: ItemDropUpdatePacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
       this.currentClient.packetQueue.push({ rawPacket });
@@ -357,7 +443,10 @@ class ClientPacketHandler {
    *
    * Note: This packet is important for tShock SSC to work. If this was
    *       prevented outright, SSC would be broken (inventory would be unchangable) */
-  private handleUpdateItemOwner(_itemOwner: ItemOwnerPacket.t, rawPacket: RawPacket): boolean {
+  private handleUpdateItemOwner(
+    _itemOwner: ItemOwnerPacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
       this.currentClient.packetQueue.push({ rawPacket });
@@ -394,8 +483,12 @@ class ClientPacketHandler {
 
     // If chat message is a command
     if (chatMessage.length > 1 && chatMessage.substr(0, 1) === "/") {
-      let command: Command = this.currentClient.globalHandlers.command.parseCommand(chatMessage);
-      handled = this.currentClient.globalHandlers.command.handle(command, this.currentClient);
+      let command: Command =
+        this.currentClient.globalHandlers.command.parseCommand(chatMessage);
+      handled = this.currentClient.globalHandlers.command.handle(
+        command,
+        this.currentClient,
+      );
     }
 
     return handled;
@@ -415,15 +508,14 @@ class ClientPacketHandler {
       this.currentClient.packetQueue.push({
         rawPacket: {
           data: packet.data,
-          packetType: packet.packetType
-        }
+          packetType: packet.packetType,
+        },
       });
       return true;
     }
 
     return false;
   }
-
 }
 
 export default ClientPacketHandler;

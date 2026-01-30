@@ -1,18 +1,30 @@
-import PacketTypes from './packettypes.js';
-import { getProperIP } from './utils.js';
-import NPC from './npc.js';
-import TerrariaServer from './terrariaserver.js';
-import Client from './client.js';
-import RawPacket from './packets/rawpacket.js';
-import * as Net from 'net';
-import Item from './item.js';
-import Player from './player.js';
-import ClientState from './clientstate.js';
-import ErrorHelper from './errorhelper.js';
+import PacketTypes from "./packettypes.js";
+import { getProperIP } from "./utils.js";
+import NPC from "./npc.js";
+import TerrariaServer from "./terrariaserver.js";
+import Client from "./client.js";
+import RawPacket from "./packets/rawpacket.js";
+import * as Net from "net";
+import Item from "./item.js";
+import Player from "./player.js";
+import ClientState from "./clientstate.js";
+import ErrorHelper from "./errorhelper.js";
 
-import { WorldInfoPacket, PlayerInfoPacket, NpcUpdatePacket, ItemDropUpdatePacket, PlayerSpawnPacket, NetModuleLoadPacket, DisconnectPacket, PlayerActivePacket, PlayerInventorySlotPacket, DimensionsUpdatePacket, Parser, } from "terraria-packet";
-import NetworkText from '@popstarfreas/packetfactory/networktext';
-import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
+import {
+  WorldInfoPacket,
+  PlayerInfoPacket,
+  NpcUpdatePacket,
+  ItemDropUpdatePacket,
+  PlayerSpawnPacket,
+  NetModuleLoadPacket,
+  DisconnectPacket,
+  PlayerActivePacket,
+  PlayerInventorySlotPacket,
+  Parser,
+} from "terraria-packet";
+import NetworkText from "@popstarfreas/packetfactory/networktext";
+import PacketWriter from "@popstarfreas/packetfactory/packetwriter";
+import PacketReader from "@popstarfreas/packetfactory/packetreader";
 
 /*let arr = [
   Buffer.from("4f040a6d55bf8b244514ae7ad53fe6d7ce8ecd6ddfcd71c1a2230837e20ab2464251b72cd360b0b4a0e31ee2dd6920170c829c81260bee19191cf823d84065f10fb85ccb0bb6149954c30de5cc448cccc6ef5555f7ce8913f4eb7aef7bdffbdeab9aaebf7a427c2584f805cfa35f9f533b8e9c7e04635ca61f1997ab6da77fc062b622447ec41b7bced40110a4dd9d7b12d9422276665c82d86c25d5c8716e575b7e7c6f5c4f5b9f902b0d1cb9a3df734a4bf1b7d03f513a85a5742116781af1b3d05f70ec5ce81728656efd25db85d013f623de65dcbc417fce0ce72dc39c91cf7086f1c82718c6170ca598c678e9e32518392ed8df616ee1d9cab89aae693cf71a7d269965a1552cd36529f36851ee7e6c6418e548b3bca4899d0027710274a1dff88a735fb18c0482d7c3b80681cc6e9e22bddeab87f1cd2c49cbd850c2f282c8402dda3645a45b443d102f6999d4cc52301fed6d51fb8cdeb684e4129e4c357ae74ca9b8709851e32d63a132169aaf159afc6fa1896854b4858cef65ca56c56976e3e0ee5ff488addc885194d8ab933566159923a507ad513683f1fb7edc9cc279543d0daa7b13f158eed505387cbdb28124b1411509baeb1b762278752ca8e2a9933a64d5fd38289016e21f90e6d9d66ff8efd4d9d663e9f753669b857820eb6cf891f70f3f0be66b6f3605c7808216aa76fde99c8a875e50287812fb5a4459b029a9075c9c9e38169fa89135a4d43691da0de1ea301ec929eb6e29f1ae0a2e05cd3d8a9a8ba0b968359f06cd45d05c04cd45d07cda686e0a1e8a28fdd8cb79c813514d3b27de77cc439bb12049af315ced10324731bb01ce3d45c93350133f6896aa3f563b96acdab648b3c64a12fba22243b22dcf4c81ced7ad8a36194ee8dc5fd61bf853c1285a225919da246128d3f7667fa4fbb692c62a98949dc48f2414017a59e76816063d27c14884c619218c6f288fde925ee4235bbd5aad145b50f581790598e14bd56a50ada257cd56c98d11e0b9ef49bfc5b563a6c4fb00592fc30ef36d2cda34c823f48fe9610c4e703dce1c01bd0b7bc54f079f697264c965aec2c79b015b00bc087b75df55a9718a3ff46f463fc166b0d760bb99e03263c07a142013842e332484aefd27d485cd617978cf22d621c73701877743c6757825df398758bc1bc2843b032437e179071ba96ff30bc670877b043ecf50d071f61b84dd1e597d0bde3eafe304dec67a88f5eb9cce8b028b031ec82de398e21253058ee7991136c112c4586530e48c4d048adec67507df55209e82a5b6f666acc9d12ee4de451778bdecf727506ec06e04ce1edf9aef3d1d6e4d9df80ee11e03d5e392bc9b4c18d003f0bdef6f4e15c5f6d6280701d467ca0f423f99716944f479a29c616c1ef213607072432309677d685c47ab981a8e069f1a7c10ac9f3edfe8d808c56ede9c4f03340db4144ca6bff53d64ed48c8d81433e3e1e0ac69abbf09353b4867be541d581f1e605f387ebaa6a9e323192838f21de100bb4c60101d633b476757a4b821c7fd3f85fffd0b", "hex"),
@@ -37,7 +49,7 @@ import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 // to make sure extensions can do something with it.
 export enum PacketSource {
   TerrariaServer,
-  Dimensions
+  Dimensions,
 }
 
 /**
@@ -57,14 +69,25 @@ class TerrariaServerPacketHandler {
    * @param packet The packet that is being sent
    * @return Whether or not the packet was handled (and should not be sent)
    */
-  private runPriorHandlers(server: TerrariaServer, packet: RawPacket, source: PacketSource): boolean {
+  private runPriorHandlers(
+    server: TerrariaServer,
+    packet: RawPacket,
+    source: PacketSource,
+  ): boolean {
     let handlers = server.client.globalHandlers.extensions;
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.priorPacketHandlers !== 'undefined' && typeof handler.priorPacketHandlers.serverHandler !== 'undefined') {
+      if (
+        typeof handler.priorPacketHandlers !== "undefined" &&
+        typeof handler.priorPacketHandlers.serverHandler !== "undefined"
+      ) {
         try {
-          handled = handler.priorPacketHandlers.serverHandler.handlePacket(server, packet, source);
+          handled = handler.priorPacketHandlers.serverHandler.handlePacket(
+            server,
+            packet,
+            source,
+          );
           if (handled) {
             break;
           }
@@ -88,14 +111,25 @@ class TerrariaServerPacketHandler {
    * @param packet The packet that is being sent
    * @return Whether or not the packet was handled (and should not be sent)
    */
-  private runPostHandlers(server: TerrariaServer, packet: RawPacket, source: PacketSource): boolean {
+  private runPostHandlers(
+    server: TerrariaServer,
+    packet: RawPacket,
+    source: PacketSource,
+  ): boolean {
     let handlers = server.client.globalHandlers.extensions;
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.postPacketHandlers !== 'undefined' && typeof handler.postPacketHandlers.serverHandler !== 'undefined') {
+      if (
+        typeof handler.postPacketHandlers !== "undefined" &&
+        typeof handler.postPacketHandlers.serverHandler !== "undefined"
+      ) {
         try {
-          handled = handler.postPacketHandlers.serverHandler.handlePacket(server, packet, source);
+          handled = handler.postPacketHandlers.serverHandler.handlePacket(
+            server,
+            packet,
+            source,
+          );
           if (handled) {
             break;
           }
@@ -119,7 +153,11 @@ class TerrariaServerPacketHandler {
    * @param packet The packet that is being sent
    * @return The packet data (either origin or modified)
    */
-  public handlePacket(server: TerrariaServer, packet: RawPacket, source: PacketSource): Buffer | null {
+  public handlePacket(
+    server: TerrariaServer,
+    packet: RawPacket,
+    source: PacketSource,
+  ): Buffer | null {
     this.currentServer = server;
 
     let priorHandled: boolean = this.runPriorHandlers(server, packet, source);
@@ -128,9 +166,7 @@ class TerrariaServerPacketHandler {
     }
 
     // Parse everything except TileSectionSend because that is a big packet
-    const parsedResult = Parser.parse(packet.data, true, [
-      "TileSectionSend"
-    ]);
+    const parsedResult = Parser.parse(packet.data, true, ["TileSectionSend"]);
 
     let handled: boolean = false;
     if (parsedResult.TAG === "Error") {
@@ -139,21 +175,31 @@ class TerrariaServerPacketHandler {
         switch (parseError.TAG) {
           case "ReaderError":
             if (parseError._0.error instanceof Error) {
-              server.client.logging.error(`Error parsing packet: ${parseError._0.context} ${parseError._0.error.message}`);
+              server.client.logging.error(
+                `Error parsing packet: ${parseError._0.context} ${parseError._0.error.message}`,
+              );
             } else {
-              server.client.logging.error(`Error parsing packet: ${parseError._0.context}`);
+              server.client.logging.error(
+                `Error parsing packet: ${parseError._0.context}`,
+              );
             }
             break;
           default:
-            server.client.logging.error(`Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError.TAG}`);
+            server.client.logging.error(
+              `Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError.TAG}`,
+            );
             break;
         }
       } else {
         switch (parseError) {
           case "IgnoredPacket":
-            server.client.logging.info(`Ignoring packet: ${PacketTypes[packet.packetType]}`);
+            server.client.logging.info(
+              `Ignoring packet: ${PacketTypes[packet.packetType]}`,
+            );
           default:
-            server.client.logging.error(`Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError}`);
+            server.client.logging.error(
+              `Error parsing packet: ${PacketTypes[packet.packetType]} ${parseError}`,
+            );
             break;
         }
       }
@@ -178,7 +224,7 @@ class TerrariaServerPacketHandler {
             handled = this.handleCompleteConnectionAndSpawn();
             break;
           case "DimensionsUpdate":
-            handled = this.handleDimensionsUpdate(parsed._0);
+            handled = this.handleDimensionsUpdate(packet);
             break;
           case "NpcUpdate":
             handled = this.handleNPCUpdate(parsed._0);
@@ -235,7 +281,7 @@ class TerrariaServerPacketHandler {
     if (!client.ingame) {
       client.disconnect(reason);
     } else {
-      var color = "C8FF00";
+      var color = "FF6A6A";
       var message = client.options.language.phrases.dimensionDisconnectedYou;
       const disconnectOnKick = client.options.disconnectOnKick;
       switch (disconnectOnKick.type) {
@@ -253,11 +299,24 @@ class TerrariaServerPacketHandler {
           }
           break;
       }
+      //CSFT - 修改
       client.sendChatMessage(message, color);
-      client.sendChatMessage(new NetworkText(1, client.options.language.phrases.reason + "{0}", [reason]), color);
+      client.sendChatMessage(
+        new NetworkText(1, client.options.language.phrases.reason + "{0}", [
+          reason,
+        ]),
+        color,
+      );
       client.wasKicked = true;
       client.connected = false;
-
+      setTimeout(() => {
+        client.disconnect(
+          new NetworkText(1, client.options.language.phrases.reason + "{0}", [
+            reason,
+          ]),
+        );
+      }, 5000);
+      //client.disconnect_CSFT(new NetworkText(1, client.options.language.phrases.reason + "{0}", [reason]));
       if (this.socket) {
         this.socket.destroy();
       }
@@ -277,12 +336,13 @@ class TerrariaServerPacketHandler {
 
     // Send IP Address
     if (!this.currentServer.isVanilla) {
-      let ip: string = getProperIP(this.currentServer.client.socket.remoteAddress as string) as string;
+      let ip: string = getProperIP(
+        this.currentServer.client.socket.remoteAddress as string,
+      ) as string;
       const packetData = new PacketWriter()
         .setType(PacketTypes.DimensionsUpdate)
         .packInt16(0) // Type
-        .packString(ip)
-        .data;
+        .packString(ip).data;
 
       this.currentServer.sendDirect(packetData);
     }
@@ -299,7 +359,10 @@ class TerrariaServerPacketHandler {
   private handleWorldInfo(worldInfo: WorldInfoPacket.t): boolean {
     this.currentServer.isSSC = worldInfo.eventInfo.serverSidedCharacters;
 
-    if (this.currentServer.client.waitingCharacterRestore && !this.currentServer.isSSC) {
+    if (
+      this.currentServer.client.waitingCharacterRestore &&
+      !this.currentServer.isSSC
+    ) {
       this.restoreInventory(this.currentServer.client);
       this.restoreLife(this.currentServer.client);
       this.restoreMana(this.currentServer.client);
@@ -307,7 +370,10 @@ class TerrariaServerPacketHandler {
     }
     this.currentServer.client.waitingCharacterRestore = false;
 
-    if (this.currentServer.client.state === ClientState.ConnectionSwitchEstablished) {
+    if (
+      this.currentServer.client.state ===
+      ClientState.ConnectionSwitchEstablished
+    ) {
       this.currentServer.spawn.x = worldInfo.spawnX;
       this.currentServer.spawn.y = worldInfo.spawnY;
 
@@ -316,8 +382,7 @@ class TerrariaServerPacketHandler {
       let getSection = new PacketWriter()
         .setType(PacketTypes.GetSectionOrRequestSync)
         .packSingle(-1)
-        .packSingle(-1)
-        .data;
+        .packSingle(-1).data;
       this.currentServer.sendDirect(getSection);
 
       this.currentServer.client.state = ClientState.FinalisingSwitch;
@@ -327,8 +392,7 @@ class TerrariaServerPacketHandler {
         let dimensionsUpdate = new PacketWriter()
           .setType(PacketTypes.DimensionsUpdate)
           .packInt16(this.currentServer.client.routingInformation.type)
-          .packString(this.currentServer.client.routingInformation.info)
-          .data;
+          .packString(this.currentServer.client.routingInformation.info).data;
         this.currentServer.sendDirect(dimensionsUpdate);
         this.currentServer.client.routingInformation = null;
       }
@@ -357,14 +421,19 @@ class TerrariaServerPacketHandler {
         numberOfDeathsPve: 0,
         numberOfDeathsPvp: 0,
         team: 0,
-      })
+      });
 
       if (spawnPlayer.TAG === "Error") {
-        this.currentServer.client.logging.error(`Error creating spawn player packet: ${spawnPlayer._0}`);
+        this.currentServer.client.logging.error(
+          `Error creating spawn player packet: ${spawnPlayer._0}`,
+        );
         return true;
       }
 
-      if (typeof server.client !== 'undefined' && typeof server.client.socket !== 'undefined') {
+      if (
+        typeof server.client !== "undefined" &&
+        typeof server.client.socket !== "undefined"
+      ) {
         server.sendDirect(spawnPlayer._0);
 
         if (!server.client.preventSpawnOnJoin) {
@@ -372,7 +441,6 @@ class TerrariaServerPacketHandler {
         }
       }
     }
-
 
     if (server.client.state === ClientState.FinishinedSendingInventory) {
       server.client.state = ClientState.FullyConnected;
@@ -406,44 +474,75 @@ class TerrariaServerPacketHandler {
    * @param packet The dimensions update packet
    * @return Whether or not the packet has been handled (and is not to be sent)
    */
-  private handleDimensionsUpdate(dimensionsUpdate: DimensionsUpdatePacket.t): boolean {
-    switch (dimensionsUpdate) {
-      case "GamemodesJoinMode":
-        return true;
-      default:
-        switch (dimensionsUpdate.TAG) {
-          case "RealIpAddress":
-            return true;
-          case "SwitchServer":
-            if (this.currentServer.client.servers[dimensionsUpdate._0.toLowerCase()]) {
-              const phrases = this.currentServer.client.options.language.phrases;
-              this.currentServer.client.sendChatMessage(phrases.shiftingToDimension.replace("${name}", dimensionsUpdate._0), "FF0000");
-              this.currentServer.client.changeServer(this.currentServer.client.servers[dimensionsUpdate._0.toLowerCase()], {
-                preventSpawnOnJoin: false
-              });
-            }
-            return true;
-          case "SwitchServerManual":
-            const currentServerIp = this.currentServer.socket.remoteAddress;
-            let ip = dimensionsUpdate._0;
-            const port: number = dimensionsUpdate._1;
-            if (ip === "127.0.0.1" && typeof currentServerIp !== "undefined") {
-              ip = currentServerIp;
-            }
-            this.currentServer.client.changeServer({
-              name: `${ip}:${port}`,
-              serverIP: ip,
-              serverPort: port,
-              hidden: false,
-              isVanilla: false,
-            }, {
-              preventSpawnOnJoin: false
-            });
-            return true;
-          default:
-            return true;
+  private handleDimensionsUpdate(packet: RawPacket): boolean {
+    const reader: PacketReader = new PacketReader(packet.data);
+    const messageType: number = reader.readInt16();
+    const messageContent: string = reader.readString();
+
+    // Switch server
+    if (messageType === 2) {
+      if (this.currentServer.client.servers[messageContent.toLowerCase()]) {
+        if (messageContent.toLowerCase() === this.currentServer.name) {
+          this.currentServer.client.sendChatMessage(
+            "[i:3459]CSFT[i:3459] 你当前已经在此服务器了!",
+            "00CED1",
+          );
+        } else {
+          const phrases = this.currentServer.client.options.language.phrases;
+          this.currentServer.client.sendChatMessage(
+            phrases.shiftingToDimension.replace("${name}", messageContent),
+            "00CED1",
+          );
+          this.currentServer.client.changeServer(
+            this.currentServer.client.servers[messageContent.toLowerCase()],
+            {
+              preventSpawnOnJoin: false,
+            },
+          );
         }
+      }
     }
+
+    if (messageType === 3) {
+      const currentServerIp = this.currentServer.socket.remoteAddress;
+      let ip = messageContent;
+      const port: number = reader.readUInt16();
+      if (ip === "127.0.0.1" && typeof currentServerIp !== "undefined") {
+        ip = currentServerIp;
+      }
+      this.currentServer.client.changeServer(
+        {
+          name: `${ip}:${port}`,
+          serverIP: ip,
+          serverPort: port,
+          hidden: false,
+          isVanilla: false,
+        },
+        {
+          preventSpawnOnJoin: false,
+        },
+      );
+    }
+
+    if (messageType === 4) {
+      if (this.currentServer.client.servers[messageContent.toLowerCase()]) {
+        const extraJoinInformation: string = reader.readString();
+        const phrases = this.currentServer.client.options.language.phrases;
+        this.currentServer.client.sendChatMessage(
+          phrases.shiftingToDimension.replace("${name}", messageContent),
+          "00CED1",
+        );
+        this.currentServer.client.changeServer(
+          this.currentServer.client.servers[messageContent.toLowerCase()],
+          {
+            preventSpawnOnJoin: false,
+            extraJoinInformation,
+          },
+        );
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -462,9 +561,14 @@ class TerrariaServerPacketHandler {
     if (npcTypeId === 0 || zeroLife) {
       this.currentServer.entityTracking.NPCs[npcSlotId] = undefined;
     } else {
-      let npc: NPC | undefined = this.currentServer.entityTracking.NPCs[npcSlotId]
+      let npc: NPC | undefined =
+        this.currentServer.entityTracking.NPCs[npcSlotId];
       if (npc === undefined) {
-        this.currentServer.entityTracking.NPCs[npcSlotId] = new NPC(npcSlotId, npcTypeId, life === "Max" ? 1 : life._0);
+        this.currentServer.entityTracking.NPCs[npcSlotId] = new NPC(
+          npcSlotId,
+          npcTypeId,
+          life === "Max" ? 1 : life._0,
+        );
       } else {
         npc.life = life === "Max" ? 1 : life._0;
         npc.type = npcTypeId;
@@ -480,10 +584,17 @@ class TerrariaServerPacketHandler {
    * @param packet The update item drop packet
    * @return Whether or not this packet was handled (and should not be sent)
    */
-  private handleUpdateItemDrop(itemDropUpdate: ItemDropUpdatePacket.t): boolean {
+  private handleUpdateItemDrop(
+    itemDropUpdate: ItemDropUpdatePacket.t,
+  ): boolean {
     const { itemDropId, stack, prefix, itemId } = itemDropUpdate;
     if (itemDropId > 0) {
-      this.currentServer.entityTracking.items[itemDropId] = new Item(itemDropId, stack, prefix, itemId);
+      this.currentServer.entityTracking.items[itemDropId] = new Item(
+        itemDropId,
+        stack,
+        prefix,
+        itemId,
+      );
     } else {
       this.currentServer.entityTracking.items[itemDropId] = undefined;
     }
@@ -512,7 +623,10 @@ class TerrariaServerPacketHandler {
    *
    * @param packet The player inventory slot packet
    */
-  private handlePlayerInventorySlot(inventorySlot: PlayerInventorySlotPacket.t, rawPacket: RawPacket): boolean {
+  private handlePlayerInventorySlot(
+    inventorySlot: PlayerInventorySlotPacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
     let handled = false;
     const { playerId } = inventorySlot;
     if (playerId === this.currentServer.client.player.id) {
@@ -520,8 +634,8 @@ class TerrariaServerPacketHandler {
         this.currentServer.packetQueue.push({
           rawPacket: {
             data: rawPacket.data,
-            packetType: rawPacket.packetType
-          }
+            packetType: rawPacket.packetType,
+          },
         });
         handled = true;
       }
@@ -530,14 +644,30 @@ class TerrariaServerPacketHandler {
     return handled;
   }
 
-  private handlePlayerInfo(playerInfo: PlayerInfoPacket.t, rawPacket: RawPacket): boolean {
-    const nameMismatchesRequireRewrite = this.currentServer.client.options.nameChanges?.mode === "rewrite";
-    const isAboutCurrentClient = playerInfo.playerId === this.currentServer.client.player.id;
-    const isMismatchedName = this.currentServer.client.player.name !== playerInfo.name;
-    const isAllowedToRename = (this.currentServer.client.options.nameChanges?.exclusions.indexOf(this.currentServer.name) ?? -1) > -1;
-    if (nameMismatchesRequireRewrite && isAboutCurrentClient && isMismatchedName) {
+  private handlePlayerInfo(
+    playerInfo: PlayerInfoPacket.t,
+    rawPacket: RawPacket,
+  ): boolean {
+    const nameMismatchesRequireRewrite =
+      this.currentServer.client.options.nameChanges?.mode === "rewrite";
+    const isAboutCurrentClient =
+      playerInfo.playerId === this.currentServer.client.player.id;
+    const isMismatchedName =
+      this.currentServer.client.player.name !== playerInfo.name;
+    const isAllowedToRename =
+      (this.currentServer.client.options.nameChanges?.exclusions.indexOf(
+        this.currentServer.name,
+      ) ?? -1) > -1;
+    if (
+      nameMismatchesRequireRewrite &&
+      isAboutCurrentClient &&
+      isMismatchedName
+    ) {
       if (!isAllowedToRename) {
-        const playerInfoPacket = PlayerInfoPacket.toBuffer({ ...playerInfo, name: this.currentServer.client.player.name });
+        const playerInfoPacket = PlayerInfoPacket.toBuffer({
+          ...playerInfo,
+          name: this.currentServer.client.player.name,
+        });
         if (playerInfoPacket.TAG === "Ok") {
           rawPacket.data = playerInfoPacket._0;
         }
@@ -559,13 +689,14 @@ class TerrariaServerPacketHandler {
             this.currentServer.entityTracking.pylons.push({
               x: x,
               y: y,
-              type: pylonType
+              type: pylonType,
             });
             break;
           case "Removed":
-            this.currentServer.entityTracking.pylons = this.currentServer.entityTracking.pylons.filter(pylon => {
-              pylon.x !== x || pylon.y !== y || pylon.type !== pylonType;
-            });
+            this.currentServer.entityTracking.pylons =
+              this.currentServer.entityTracking.pylons.filter((pylon) => {
+                pylon.x !== x || pylon.y !== y || pylon.type !== pylonType;
+              });
             break;
           case "RequestTeleport":
             break;
@@ -621,6 +752,6 @@ class TerrariaServerPacketHandler {
   private restoreVisuals(client: Client): void {
     client.player.setVisuals();
   }
-};
+}
 
 export default TerrariaServerPacketHandler;

@@ -1,23 +1,26 @@
-import * as Net from 'net';
-import { v4 as uuidv4 } from 'uuid';
-import RawPacket from './packets/rawpacket.js';
-import { getProperIP } from './utils.js';
-import Client from './client.js';
-import ClientArgs from './clientargs.js';
-import ServerDetails from './serverdetails.js';
-import GlobalHandlers from './globalhandlers.js';
-import { ConfigListenServer, ConfigOptions } from './configloader.js';
-import RoutingServer from './routingserver.js';
-import Blacklist from './blacklist.js';
-import GlobalTracking from './globaltracking.js';
-import ListenServerArgs from './listenserverargs.js';
-import NetworkText from '@popstarfreas/packetfactory/networktext';
-import StringUtils from './stringutils.js';
-import ErrorHelper from './errorhelper.js';
-import BlacklistCheckClient from './blacklistcheckclient.js';
-import * as winston from 'winston';
-import { RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
-import { DisconnectPacket, StatusPacket } from 'terraria-packet';
+import * as Net from "net";
+import { v4 as uuidv4 } from "uuid";
+import RawPacket from "./packets/rawpacket.js";
+import { getProperIP } from "./utils.js";
+import Client from "./client.js";
+import ClientArgs from "./clientargs.js";
+import ServerDetails from "./serverdetails.js";
+import GlobalHandlers from "./globalhandlers.js";
+import { ConfigListenServer, ConfigOptions } from "./configloader.js";
+import RoutingServer from "./routingserver.js";
+import Blacklist from "./blacklist.js";
+import GlobalTracking from "./globaltracking.js";
+import ListenServerArgs from "./listenserverargs.js";
+import NetworkText from "@popstarfreas/packetfactory/networktext";
+import StringUtils from "./stringutils.js";
+import ErrorHelper from "./errorhelper.js";
+import BlacklistCheckClient from "./blacklistcheckclient.js";
+import * as winston from "winston";
+import {
+  RawSocketWriteContext,
+  RawSocketWriteReason,
+} from "./extension/index.js";
+import { DisconnectPacket, StatusPacket } from "terraria-packet";
 
 /**
  * Listens on a specified port and routes users balancing amounts between routing servers it handles
@@ -63,26 +66,24 @@ export class ListenServer {
         clientCount: 0,
         disabled: false,
         disabledTimeout: null,
-        failedConnAttempts: 0
+        failedConnAttempts: 0,
       };
     }
-
 
     this.ServerHandleError = this.handleError.bind(this);
     this.ServerHandleStart = this.handleStart.bind(this);
 
     // Listen Server
     this.server = Net.createServer();
-    this.server.on('connection', (socket) => {
-      this.handleSocket(socket)
-        .catch((e) => {
-          if (this.options.log.clientError) {
-            this.logging.error(`Socket Error: ${ErrorHelper.toMessage(e)}`);
-          }
-        });
+    this.server.on("connection", (socket) => {
+      this.handleSocket(socket).catch((e) => {
+        if (this.options.log.clientError) {
+          this.logging.error(`Socket Error: ${ErrorHelper.toMessage(e)}`);
+        }
+      });
     });
     this.server.listen(this.port, this.ServerHandleStart);
-    this.server.on('error', this.ServerHandleError);
+    this.server.on("error", this.ServerHandleError);
 
     if (this.options.connectionRateLimit.enabled) {
       this.startConnectionRateLimitTimer();
@@ -110,7 +111,12 @@ export class ListenServer {
       // Even if the server has been disabled, if we have no current choice, we must use it
       if (!details.disabled || currentClientCount === null) {
         // Favour either lower player count or non-disability
-        if (currentClientCount === null || chosenServer === null || details.clientCount < currentClientCount || this.serversDetails[chosenServer.name].disabled) {
+        if (
+          currentClientCount === null ||
+          chosenServer === null ||
+          details.clientCount < currentClientCount ||
+          this.serversDetails[chosenServer.name].disabled
+        ) {
           chosenServer = this.routingServers[i];
           currentClientCount = details.clientCount;
         }
@@ -141,7 +147,7 @@ export class ListenServer {
     let details: ServerDetails;
     for (let i = 0; i < this.routingServers.length; i++) {
       if (this.serversDetails[this.routingServers[i].name]) {
-        details = this.serversDetails[this.routingServers[i].name]
+        details = this.serversDetails[this.routingServers[i].name];
         details.disabled = false;
         details.failedConnAttempts = 0;
       } else {
@@ -149,7 +155,7 @@ export class ListenServer {
           clientCount: 0,
           disabled: false,
           disabledTimeout: null,
-          failedConnAttempts: 0
+          failedConnAttempts: 0,
         };
       }
     }
@@ -161,13 +167,22 @@ export class ListenServer {
   public shutdown(): void {
     this.logging.info(`Server on ${this.port} is now shutting down.`);
     for (let i: number = 0; i < this.clients.length; i++) {
-      this.clients[i].server.socket.removeListener('data', this.clients[i].ServerHandleData);
-      this.clients[i].server.socket.removeListener('error', this.clients[i].ServerHandleError);
-      this.clients[i].server.socket.removeListener('close', this.clients[i].ServerHandleClose);
+      this.clients[i].server.socket.removeListener(
+        "data",
+        this.clients[i].ServerHandleData,
+      );
+      this.clients[i].server.socket.removeListener(
+        "error",
+        this.clients[i].ServerHandleError,
+      );
+      this.clients[i].server.socket.removeListener(
+        "close",
+        this.clients[i].ServerHandleClose,
+      );
       this.clients[i].disconnect(this.options.language.phrases.close);
     }
     this.clients = [];
-    this.server.removeListener('error', this.ServerHandleError);
+    this.server.removeListener("error", this.ServerHandleError);
     this.server.close();
 
     // Reset counts
@@ -196,14 +211,14 @@ export class ListenServer {
   private writeToSocketWithHooks(
     socket: Net.Socket,
     packet: Buffer,
-    reason: RawSocketWriteContext['reason'],
-    clientArgs?: ClientArgs
+    reason: RawSocketWriteContext["reason"],
+    clientArgs?: ClientArgs,
   ): boolean {
     const context: RawSocketWriteContext = {
       socket: socket,
       remoteAddress: socket.remoteAddress,
       reason: reason,
-      clientArgs: clientArgs
+      clientArgs: clientArgs,
     };
     const packetWrapper = { packet: packet };
 
@@ -211,7 +226,10 @@ export class ListenServer {
     for (const extension of Object.values(this.globalHandlers.extensions)) {
       if (extension.rawSocketWritePreHandler) {
         try {
-          const blocked = extension.rawSocketWritePreHandler(context, packetWrapper);
+          const blocked = extension.rawSocketWritePreHandler(
+            context,
+            packetWrapper,
+          );
           if (blocked) {
             return false;
           }
@@ -255,11 +273,11 @@ export class ListenServer {
   private disconnectClient(
     socket: Net.Socket,
     reason: string,
-    hookReason: RawSocketWriteContext['reason'] = RawSocketWriteReason.Other
+    hookReason: RawSocketWriteContext["reason"] = RawSocketWriteReason.Other,
   ): void {
     let kickPacket = DisconnectPacket.toBuffer({
-      reason: new NetworkText(0, reason)
-    })
+      reason: new NetworkText(0, reason),
+    });
 
     if (!socket.destroyed) {
       switch (kickPacket.TAG) {
@@ -267,7 +285,9 @@ export class ListenServer {
           this.writeToSocketWithHooks(socket, kickPacket._0, hookReason);
           break;
         case "Error":
-          this.logging.error(`Error creating disconnect packet: ${kickPacket._0}`);
+          this.logging.error(
+            `Error creating disconnect packet: ${kickPacket._0}`,
+          );
           break;
       }
 
@@ -303,8 +323,12 @@ export class ListenServer {
    * @param socket The socket of a new client
    */
   private async handleSocket(socket: Net.Socket): Promise<void> {
-    if ((this.options.connectionLimit.enabled && this.enforceConnectionLimit(socket))
-      || this.options.connectionRateLimit.enabled && this.enforceConnectionRateLimit(socket)) {
+    if (
+      (this.options.connectionLimit.enabled &&
+        this.enforceConnectionLimit(socket)) ||
+      (this.options.connectionRateLimit.enabled &&
+        this.enforceConnectionRateLimit(socket))
+    ) {
       socket.removeAllListeners();
       return;
     }
@@ -326,8 +350,7 @@ export class ListenServer {
           }
         }
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.log(error);
     }
 
@@ -360,8 +383,11 @@ export class ListenServer {
       if (counter + 1 > this.options.connectionLimit.connectionLimitPerIP) {
         this.disconnectClient(
           socket,
-          StringUtils.format(this.options.connectionLimit.kickReason, this.options.connectionLimit.connectionLimitPerIP),
-          RawSocketWriteReason.ConnectionLimitExceeded
+          StringUtils.format(
+            this.options.connectionLimit.kickReason,
+            this.options.connectionLimit.connectionLimitPerIP,
+          ),
+          RawSocketWriteReason.ConnectionLimitExceeded,
         );
         connectionDropped = true;
       } else {
@@ -382,7 +408,10 @@ export class ListenServer {
     }
     const count = this.connectRateTracker.get(ip);
     if (typeof count !== "undefined") {
-      if (count + 1 > this.options.connectionRateLimit.connectionRateLimitPerIP) {
+      if (
+        count + 1 >
+        this.options.connectionRateLimit.connectionRateLimitPerIP
+      ) {
         socket.destroy();
         connectionDropped = true;
       } else {
@@ -402,7 +431,9 @@ export class ListenServer {
   private async setupNewSocket(socket: Net.Socket): Promise<void> {
     let chosenServer: RoutingServer | null = this.chooseServer();
     if (chosenServer === null) {
-      this.logging.warn(`No servers available for ListenServer[Port: ${this.port}]`);
+      this.logging.warn(
+        `No servers available for ListenServer[Port: ${this.port}]`,
+      );
       socket.destroy();
       const ip = socket.remoteAddress;
       if (typeof ip !== "undefined") {
@@ -425,7 +456,7 @@ export class ListenServer {
       servers: this.servers,
       options: this.options,
       globalTracking: this.globalTracking,
-      logging: this.logging
+      logging: this.logging,
     };
 
     // When the blacklist is enabled, clients must first send their initial data
@@ -439,7 +470,10 @@ export class ListenServer {
       });
 
       client.setupCallbacks({
-        clientAcceptedCb: (bufferPacket: Buffer, packetsReceived: RawPacket[]) => {
+        clientAcceptedCb: (
+          bufferPacket: Buffer,
+          packetsReceived: RawPacket[],
+        ) => {
           const index = this.checkingClients.indexOf(client);
           if (index > -1) {
             this.checkingClients.splice(index, 1);
@@ -453,14 +487,24 @@ export class ListenServer {
           }
           this.kickBlacklisted(clientArgs);
         },
-        errorCheckingBlacklistCb: (bufferPacket: Buffer, packetsReceived: RawPacket[], e: Error) => {
-          this.logging.error(`Error checking blacklist: ${ErrorHelper.toMessage(e)}`);
+        errorCheckingBlacklistCb: (
+          bufferPacket: Buffer,
+          packetsReceived: RawPacket[],
+          e: Error,
+        ) => {
+          this.logging.error(
+            `Error checking blacklist: ${ErrorHelper.toMessage(e)}`,
+          );
           if (configuration.errorPolicy === "DenyJoining") {
             const index = this.checkingClients.indexOf(client);
             if (index > -1) {
               this.checkingClients.splice(index, 1);
             }
-            this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError, RawSocketWriteReason.BlacklistCheck);
+            this.disconnectClient(
+              socket,
+              this.options.language.phrases.blacklistCheckError,
+              RawSocketWriteReason.BlacklistCheck,
+            );
           } else {
             const index = this.checkingClients.indexOf(client);
             if (index > -1) {
@@ -470,12 +514,18 @@ export class ListenServer {
           }
         },
         packetErrorCheckingBlacklistCb: (e: Error) => {
-          this.logging.error(`Packet error checking blacklist: ${ErrorHelper.toMessage(e)}`);
+          this.logging.error(
+            `Packet error checking blacklist: ${ErrorHelper.toMessage(e)}`,
+          );
           const index = this.checkingClients.indexOf(client);
           if (index > -1) {
             this.checkingClients.splice(index, 1);
           }
-          this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError, RawSocketWriteReason.BlacklistCheck);
+          this.disconnectClient(
+            socket,
+            this.options.language.phrases.blacklistCheckError,
+            RawSocketWriteReason.BlacklistCheck,
+          );
         },
         disconnectCb: () => {
           const index = this.checkingClients.indexOf(client);
@@ -486,7 +536,7 @@ export class ListenServer {
           if (typeof ip !== "undefined") {
             this.decrementConnectionTracker(ip);
           }
-        }
+        },
       });
       this.checkingClients.push(client);
     } else {
@@ -494,12 +544,18 @@ export class ListenServer {
     }
   }
 
-  private setupNewClient(clientArgs: ClientArgs, bufferPacket: Buffer | undefined, packetsAlreadyReceived: RawPacket[]): Client {
+  private setupNewClient(
+    clientArgs: ClientArgs,
+    bufferPacket: Buffer | undefined,
+    packetsAlreadyReceived: RawPacket[],
+  ): Client {
     let client = new Client(clientArgs);
     this.clients.push(client);
 
     if (this.options.log.clientConnect) {
-      this.logging.info(`[Client: ${getProperIP(client.socket.remoteAddress)} connected [${clientArgs.server.name}: ${this.serversDetails[clientArgs.server.name].clientCount + 1}]`);
+      this.logging.info(
+        `[Client: ${getProperIP(client.socket.remoteAddress)} connected [${clientArgs.server.name}: ${this.serversDetails[clientArgs.server.name].clientCount + 1}]`,
+      );
     }
 
     this.hookSocketError(client.socket, client);
@@ -507,7 +563,9 @@ export class ListenServer {
     this.hookSocketClose(client.socket, client);
 
     this.hookSocketData(client.socket, client);
-    client.handleDataSend(Buffer.concat(packetsAlreadyReceived.map((packet) => packet.data)));
+    client.handleDataSend(
+      Buffer.concat(packetsAlreadyReceived.map((packet) => packet.data)),
+    );
     if (bufferPacket !== undefined) {
       client.handleDataSend(bufferPacket);
     }
@@ -522,10 +580,16 @@ export class ListenServer {
    * @return Whether or not the ip is blacklisted
    */
   private kickBlacklisted(client: ClientArgs): void {
-    this.disconnectClient(client.socket, this.options.language.phrases.blacklisted, RawSocketWriteReason.BlacklistCheck);
+    this.disconnectClient(
+      client.socket,
+      this.options.language.phrases.blacklisted,
+      RawSocketWriteReason.BlacklistCheck,
+    );
 
     if (this.options.log.clientBlocked) {
-      this.logging.info(`${process.pid}] Client: ${getProperIP(client.socket.remoteAddress)} was blocked from joining.`);
+      this.logging.info(
+        `${process.pid}] Client: ${getProperIP(client.socket.remoteAddress)} was blocked from joining.`,
+      );
     }
   }
 
@@ -542,13 +606,18 @@ export class ListenServer {
       flags: {
         hideStatusTextPercent: true,
         statusTextHasShadows: true,
-        runCheckBytes: false
-      }
-    })
+        runCheckBytes: false,
+      },
+    });
 
     switch (statusPacket.TAG) {
       case "Ok":
-        this.writeToSocketWithHooks(client.socket, statusPacket._0, RawSocketWriteReason.BlacklistCheck, client);
+        this.writeToSocketWithHooks(
+          client.socket,
+          statusPacket._0,
+          RawSocketWriteReason.BlacklistCheck,
+          client,
+        );
         break;
       case "Error":
         this.logging.error(`Error creating status packet: ${statusPacket._0}`);
@@ -563,12 +632,12 @@ export class ListenServer {
    * @param client The client object associated with the socket
    */
   private hookSocketError(socket: Net.Socket, client: Client): void {
-    socket.once('error', (e: Error) => {
+    socket.once("error", (e: Error) => {
       try {
         client.handleError(e);
       } catch (e) {
         if (this.options.log.clientError) {
-          this.logging.error(`handleError Error: ${ErrorHelper.toMessage(e)}`)
+          this.logging.error(`handleError Error: ${ErrorHelper.toMessage(e)}`);
         }
       }
     });
@@ -581,7 +650,7 @@ export class ListenServer {
    * @param client The client object associated with the socket
    */
   private hookSocketTimeout(socket: Net.Socket, client: Client): void {
-    socket.once('timeout', () => {
+    socket.once("timeout", () => {
       if (this.options.log.clientTimeouts) {
         this.logging.warn(`Socket Timeout: ${client.getName()} ${client.ID}`);
       }
@@ -621,7 +690,10 @@ export class ListenServer {
     }
   }
 
-  private extensionSocketClosePreHandlers(socket: Net.Socket, client: Client): boolean {
+  private extensionSocketClosePreHandlers(
+    socket: Net.Socket,
+    client: Client,
+  ): boolean {
     for (const extension of Object.values(this.globalHandlers.extensions)) {
       if (extension.socketClosePreHandler) {
         try {
@@ -665,7 +737,7 @@ export class ListenServer {
    * @param client The client object associated with the socket
    */
   private hookSocketClose(socket: Net.Socket, client: Client): void {
-    socket.once('close', () => {
+    socket.once("close", () => {
       if (this.extensionSocketClosePreHandlers(socket, client)) {
         return;
       }
@@ -676,8 +748,10 @@ export class ListenServer {
           this.decrementConnectionTracker(ip);
         }
         if (this.options.log.clientDisconnect) {
-          const logMessage = `[${process.pid}] Client: ${getProperIP(ip)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount - 1}]`;
-          this.logging.info(logMessage);
+          //const logMessage = `[${process.pid}] Client: ${getProperIP(ip)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount - 1}]`;
+          //this.logging.info(logMessage);
+          //CSFT
+          //TODO
         }
         client.handleClose();
         for (let i: number = 0; i < this.clients.length; i++) {
@@ -688,7 +762,9 @@ export class ListenServer {
         }
       } catch (e) {
         if (this.options.log.clientError) {
-          this.logging.error(`SocketCloseEvent ERROR: ${ErrorHelper.toMessage(e)}`);
+          this.logging.error(
+            `SocketCloseEvent ERROR: ${ErrorHelper.toMessage(e)}`,
+          );
         }
       }
 
@@ -705,12 +781,14 @@ export class ListenServer {
    * @param client The client object associated with the socket
    */
   private hookSocketData(socket: Net.Socket, client: Client): void {
-    socket.on('data', (data: Buffer) => {
+    socket.on("data", (data: Buffer) => {
       try {
         client.handleDataSend(data);
       } catch (e) {
         if (this.options.log.clientError) {
-          this.logging.error(`HandleDataSend ERROR: ${ErrorHelper.toMessage(e)}`);
+          this.logging.error(
+            `HandleDataSend ERROR: ${ErrorHelper.toMessage(e)}`,
+          );
         }
       }
     });
@@ -724,7 +802,9 @@ export class ListenServer {
    * @param error The error object containing the error information
    */
   private handleError(error: Error) {
-    this.logging.error(` Server on ${this.port} encountered an error: ${ErrorHelper.toMessage(error)}.`);
+    this.logging.error(
+      ` Server on ${this.port} encountered an error: ${ErrorHelper.toMessage(error)}.`,
+    );
   }
 }
 

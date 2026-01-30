@@ -1,16 +1,18 @@
-import { BuffersPackets, getPacketsFromBuffer } from './utils.js';
-import terrariaServerPacketHandler, { PacketSource } from './terrariaserverpackethandler.js';
-import PacketTypes from './packettypes.js';
-import Client from './client.js';
-import * as Net from 'net';
-import Point from './point.js';
-import RawPacket from './packets/rawpacket.js';
-import Entities from './entities.js';
-import ClientState from './clientstate.js';
-import ErrorHelper from './errorhelper.js';
+import { BuffersPackets, getPacketsFromBuffer } from "./utils.js";
+import terrariaServerPacketHandler, {
+  PacketSource,
+} from "./terrariaserverpackethandler.js";
+import PacketTypes from "./packettypes.js";
+import Client from "./client.js";
+import * as Net from "net";
+import Point from "./point.js";
+import RawPacket from "./packets/rawpacket.js";
+import Entities from "./entities.js";
+import ClientState from "./clientstate.js";
+import ErrorHelper from "./errorhelper.js";
 
 interface PacketQueueItem {
-  rawPacket: RawPacket,
+  rawPacket: RawPacket;
 }
 
 /* Used to track information specific to the current server that a client is on
@@ -46,7 +48,7 @@ class TerrariaServer {
     this.name = "";
     this.spawn = {
       x: 0,
-      y: 0
+      y: 0,
     };
     this.bufferPacket = Buffer.allocUnsafe(0);
     this.afterClosed = null;
@@ -54,7 +56,7 @@ class TerrariaServer {
       items: [],
       NPCs: [],
       players: [],
-      pylons: []
+      pylons: [],
     };
     this.isSSC = false;
     this.packetQueue = [];
@@ -73,19 +75,21 @@ class TerrariaServer {
   public sendDirect(buf: Buffer): void {
     if (this.socket.writable) {
       this.socket.write(buf);
-      Object.values(this.client.globalHandlers.extensions).forEach((extension) => {
-        if (extension.sendPacketToServerEvent) {
-          try {
-            extension.sendPacketToServerEvent(this, buf);
-          } catch (error) {
-            if (this.client.options.log.extensionError) {
-              const name = extension.name ?? "unknown";
-              const logMessage = `[${process.pid}] Extension ${name} Server Send Packet Event Error: ${ErrorHelper.toMessage(error)}`;
-              this.client.logging.info(logMessage);
+      Object.values(this.client.globalHandlers.extensions).forEach(
+        (extension) => {
+          if (extension.sendPacketToServerEvent) {
+            try {
+              extension.sendPacketToServerEvent(this, buf);
+            } catch (error) {
+              if (this.client.options.log.extensionError) {
+                const name = extension.name ?? "unknown";
+                const logMessage = `[${process.pid}] Extension ${name} Server Send Packet Event Error: ${ErrorHelper.toMessage(error)}`;
+                this.client.logging.info(logMessage);
+              }
             }
           }
-        }
-      });
+        },
+      );
     }
   }
 
@@ -102,10 +106,14 @@ class TerrariaServer {
       let entireDataInfo: BuffersPackets = getPacketsFromBuffer(entireData);
 
       if (entireDataInfo.type === "InvalidPacketLength") {
-        this.client.logging.error(`Terraria Server Packet Length Error: Received Packet Length ${entireDataInfo.length}`);
-        this.client.sendChatMessage("Disconnected from dimension due to a packet length error. Please try again.");
+        this.client.logging.error(
+          `Terraria Server Packet Length Error: Received Packet Length ${entireDataInfo.length}`,
+        );
+        this.client.sendChatMessage(
+          "Disconnected from dimension due to a packet length error. Please try again.",
+        );
         this.client.disconnectFromServer();
-        return
+        return;
       }
 
       // Update buffer packet to the new incomplete packet (if any)
@@ -118,14 +126,20 @@ class TerrariaServer {
       let packets: RawPacket[] = entireDataInfo.packets;
       packets.forEach((packet: RawPacket) => {
         try {
-          const buf = this.getPacketHandler().handlePacket(this, packet, PacketSource.TerrariaServer);
+          const buf = this.getPacketHandler().handlePacket(
+            this,
+            packet,
+            PacketSource.TerrariaServer,
+          );
           //const buf = packet.data;
           if (buf !== null) {
             allowedPackets.push(buf);
           }
         } catch (e) {
           if (this.client.options.log.tServerError) {
-            this.client.logging.error(`TS handle packet error. PacketType: ${PacketTypes[packet.packetType]} (${packet.packetType}): ${ErrorHelper.toMessage(e)}. Data: ${packet.data.toString("hex")}`);
+            this.client.logging.error(
+              `TS handle packet error. PacketType: ${PacketTypes[packet.packetType]} (${packet.packetType}): ${ErrorHelper.toMessage(e)}. Data: ${packet.data.toString("hex")}`,
+            );
           }
         }
       });
@@ -141,7 +155,9 @@ class TerrariaServer {
       }
     } catch (e) {
       if (this.client.options.log.tServerError) {
-        this.client.logging.error(`TS Handle Data Error: ${ErrorHelper.toMessage(e)}`);
+        this.client.logging.error(
+          `TS Handle Data Error: ${ErrorHelper.toMessage(e)}`,
+        );
       }
     }
   }
@@ -150,7 +166,11 @@ class TerrariaServer {
   public sendWaitingPackets(): void {
     if (!this.socket.destroyed && this.packetQueue.length > 0) {
       for (const packet of this.packetQueue) {
-        const packetData = this.getPacketHandler().handlePacket(this, packet.rawPacket, PacketSource.Dimensions);
+        const packetData = this.getPacketHandler().handlePacket(
+          this,
+          packet.rawPacket,
+          PacketSource.Dimensions,
+        );
         if (packetData !== null) {
           this.client.sendDirect(packetData);
         }
@@ -167,7 +187,7 @@ class TerrariaServer {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.serverDisconnectPreHandler !== 'undefined') {
+      if (typeof handler.serverDisconnectPreHandler !== "undefined") {
         try {
           handled = handler.serverDisconnectPreHandler(this);
           if (handled) {
@@ -193,7 +213,7 @@ class TerrariaServer {
     let handled = false;
     for (let key in handlers) {
       let handler = handlers[key];
-      if (typeof handler.serverDisconnectHandler !== 'undefined') {
+      if (typeof handler.serverDisconnectHandler !== "undefined") {
         try {
           handled = handler.serverDisconnectHandler(this);
           if (handled) {
@@ -213,7 +233,7 @@ class TerrariaServer {
   }
 
   /* Decrements server counts when the socket connection to the TerrariaServer
-   * is closed, sends a message to the client and runs any handlers of this 
+   * is closed, sends a message to the client and runs any handlers of this
    * event through extensions currently loaded */
   public handleClose(): void {
     this.client.connected = false;
@@ -225,7 +245,9 @@ class TerrariaServer {
       }
     } catch (e) {
       if (this.client.options.log.tServerError) {
-        this.client.logging.error(`handleClose ERROR: ${ErrorHelper.toMessage(e)}`);
+        this.client.logging.error(
+          `handleClose ERROR: ${ErrorHelper.toMessage(e)}`,
+        );
       }
     }
 
@@ -244,22 +266,17 @@ class TerrariaServer {
         return;
       }
 
-      let dimensionsList: string = "";
-      let dimensionNames: string[] = Object.keys(this.client.servers);
-      for (var i = 0; i < dimensionNames.length; i++) {
-        let name: string = dimensionNames[i];
-        let hidden: boolean = this.client.servers[name].hidden;
-        if (!hidden) {
-          dimensionsList += (i > 0 ? ", " : " ") + "/" + dimensionNames[i];
-        }
-      }
-
+      //CSFT - 标记
       if (!this.client.wasKicked) {
-        this.client.sendChatMessage(this.client.options.language.phrases.dimensionDropped, "00BFFF");
-        this.client.sendChatMessage(this.client.options.language.phrases.specifyADimensionToTravel + dimensionsList, "00BFFF");
-      } else {
-        this.client.sendChatMessage(this.client.options.language.phrases.specifyADimensionToTravel + dimensionsList, "00BFFF");
-        this.client.wasKicked = false;
+        this.client.sendChatMessage(
+          "[CSFT亚共体]你与服务器断开了连接！\n将在5秒后自动踢出地图..",
+          "FF6A6A",
+        );
+        setTimeout(() => {
+          this.client.disconnect(
+            "[CSFT亚共体]服务器已关闭或无法进入\n请稍后重试...",
+          );
+        }, 5000);
       }
 
       this.client.state = ClientState.Disconnected;
@@ -268,8 +285,8 @@ class TerrariaServer {
 
   /* Checks the type of error, if it is because a server is down, the failed connection attempts
    * property is incremented until it reaches 3 at which point it is marked as closed and will not
-   * be used by clients. 
-   * 
+   * be used by clients.
+   *
    * TODO: Handle non-refused errors when the host itself is offline */
   public handleError(error: Error): void {
     let matches: RegExpMatchArray | null = / E([A-z]*?) /.exec(error.message);
@@ -287,7 +304,9 @@ class TerrariaServer {
     }
 
     if (this.client.options.log.tServerError) {
-      this.client.logging.error(`TerrariaServer Socket Error: ${ErrorHelper.toMessage(error)}`);
+      this.client.logging.error(
+        `TerrariaServer Socket Error: ${ErrorHelper.toMessage(error)}`,
+      );
     }
   }
 }
