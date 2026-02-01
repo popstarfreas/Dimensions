@@ -153,6 +153,8 @@ class ClientPacketHandler {
         case "PlayerStealth":
         case "PlayerDamage":
         case "Zones":
+        case "NpcTalk":
+        case "NpcNameUpdate":
           handled = this.handlePotentialEarlyPacket(rawPacket);
           break;
       }

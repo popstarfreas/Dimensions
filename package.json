@@ -53,11 +53,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@popstarfreas/packetfactory": "^7.1.3",
+    "@popstarfreas/packetfactory": "^7.2.3",
     "@rescript/runtime": "^12.0.0",
     "glob": "^11.0.3",
     "redis": "^3.1.2",
-    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#d70c4c8fe3ba28b3ddb17c5bd44131abbc4372df",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#9ba0a3ff257c3d1e93016e739e2a4c794423c6be",
     "utf8": "^3.0.0",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",

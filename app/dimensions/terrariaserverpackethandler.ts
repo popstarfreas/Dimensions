@@ -553,8 +553,8 @@ class TerrariaServerPacketHandler {
           case "RequestTeleport":
             break;
         }
-
         break;
+
       default:
         break;
     }
