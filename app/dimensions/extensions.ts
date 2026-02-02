@@ -37,7 +37,7 @@ class Extensions {
                         break;
                     case ".mjs":
                         {
-                            const extensionCls: ExtensionConstructor = (await import(path.resolve(file))).default;
+                            const extensionCls: ExtensionConstructor = (await import("file:///" + path.resolve(file))).default;
                             extensionClasses.push(extensionCls);
                         }
                         break;
