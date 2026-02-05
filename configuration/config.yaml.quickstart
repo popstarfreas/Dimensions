@@ -1,0 +1,108 @@
+# Dimensions Quick Start Configuration
+# For detailed configuration options, see config.yaml.example
+# Steps: https://github.com/popstarfreas/Dimensions/wiki/Config#quick-start
+
+servers:
+  # ADD YOUR SERVERS HERE
+  # Example:
+  # - listenPort: 7777
+  #   routingServers:
+  #     - name: lobby
+  #       serverIP: "127.0.0.1"
+  #       serverPort: 7780
+  #       hidden: false
+  #       isVanilla: false
+  []
+
+options:
+  # The number of milliseconds of inactivity before a client socket is destroyed
+  socketTimeout: 15000
+
+  # Whether or not to disable Nagle's Algorithm
+  socketNoDelay: true
+
+  # You can use this when small patches to Terraria are made
+  # that do not break compatibility with the server
+  fakeVersion:
+    enabled: false
+    terrariaVersion: 248
+
+  # Whether or not to enable a "/v2/status"-like http server
+  restApi:
+    enabled: false
+    port: 7880
+    response:
+      name: ""
+      worldName: "Dimensions Generic"
+      terrariaServerPort: 7777
+      hasServerPassword: false
+      maxPlayers: 400
+      version: "1.4.3.6"
+
+  # Whether or not to block invisibility buff
+  blockInvis: false
+
+  # Whether or not to use a blacklist (http service)
+  blacklist:
+    enabled: false
+    hostname: "127.0.0.1"
+    port: 19222
+    apiKey: ""
+    path: "/blacklisted"
+    errorPolicy: "AllowJoining"
+
+  # Logging options
+  log:
+    clientTimeouts: false
+    clientConnect: false
+    clientDisconnect: false
+    clientError: false
+    checkingClientConnect: false
+    checkingClientDisconnect: false
+    checkingClientError: false
+    checkingClientTimeouts: false
+    tServerConnect: false
+    tServerDisconnect: false
+    tServerError: false
+    extensionLoad: true
+    outputToConsole: true
+    outputToFile: true
+    format:
+      console: "PlainText"
+      file: "JSON"
+
+  # Whether to limit connections and what the limit is
+  connectionLimit:
+    enabled: false
+    connectionLimitPerIP: 1
+    kickReason: "You have exceeded the maximum connection limit of {0}"
+
+  # Whether to limit creation of connections
+  connectionRateLimit:
+    enabled: false
+    connectionRateLimitPerIP: 10
+
+  # Whether to use redis for detached reloading
+  redis:
+    enabled: false
+    host: "localhost"
+    port: 6379
+
+  nameChanges:
+    mode: "legacy"
+    exclusions: []
+
+  # Controls which language is used for chat/disconnect messages
+  # Options: english, en, 汉语, zn
+  language: "english"
+
+  # Override specific messages from the chosen language
+  languageOverrides: {}
+
+  # Debuff settings when switching dimensions
+  debuffOnSwitch:
+    enabled: true
+
+  # What happens when a terraria server kicks a client
+  disconnectOnKick:
+    type: "never"
