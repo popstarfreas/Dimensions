@@ -55,7 +55,7 @@
   "dependencies": {
     "@popstarfreas/packetfactory": "^7.2.3",
     "@rescript/runtime": "^12.0.0",
-    "glob": "^11.0.3",
+    "glob": "^12.0.0",
     "redis": "^3.1.2",
     "terraria-packet": "github:popstarfreas/rescript-terrariapacket#9ba0a3ff257c3d1e93016e739e2a4c794423c6be",
     "utf8": "^3.0.0",
