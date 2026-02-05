@@ -8,7 +8,7 @@ cp -r build release/build
 cp package.json release/package.json
 cp pnpm-lock.yaml release/pnpm-lock.yaml
 mkdir release/configuration
-cp config.yaml.example release/configuration/config.yaml.example
+cp configuration/config.yaml.example release/configuration/config.yaml.example
 cd release/build
 mkdir -p node_modules
 cd node_modules
