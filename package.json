@@ -60,7 +60,7 @@
     "terraria-packet": "github:popstarfreas/rescript-terrariapacket#b8a0d9d67b4fe7c29bacebd11a5ba68a9c57dcaa",
     "utf8": "^3.0.0",
     "uuid": "^11.1.0",
-    "winston": "^3.17.0",
+    "winston": "^3.19.0",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
