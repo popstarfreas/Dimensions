@@ -12,8 +12,8 @@ importers:
         specifier: ^7.2.3
         version: 7.2.3
       '@rescript/runtime':
-        specifier: ^12.0.0
-        version: 12.0.0
+        specifier: ^12.1.0
+        version: 12.1.0
       glob:
         specifier: ^11.0.3
         version: 11.1.0
@@ -127,8 +127,8 @@ packages:
   '@rescript/runtime@12.0.0':
     resolution: {integrity: sha512-STRbYHT5rnW61vWn2+Bdtj620XaprnoBSbPbkvOYZ+Zs8nfqtpBjhNw+JNpGQLXf73crk6MhxFGPxL2o5vb8TQ==}
 
-  '@rescript/runtime@12.0.1':
-    resolution: {integrity: sha512-pMoWvllPFK0cl87vMYBVvll+DaAdPAsRuLIIJa+Q8LMhcS7cqpaZVflU3LbH+U/kv3vWaUYIfLBObwGnXw/CDg==}
+  '@rescript/runtime@12.1.0':
+    resolution: {integrity: sha512-bvr9RfvBD+JS/6foWCA4l2fLXmUXN0KGqylXQPHt09QxUghqgoCiaWVHaHSx5dOIk/jAPlGQ7zB5yVeMas/EFQ==}
 
   '@rescript/win32-x64@12.0.0':
     resolution: {integrity: sha512-kkqj4kQGbni5YglWoPm76M6hUuzKJHDEiLce5EZxW2Q4FrkS9dNRgm02c2Ck1cz/uKCS3m+ZoKQGIMMXTvo5Jw==}
@@ -516,7 +516,7 @@ snapshots:
 
   '@rescript/runtime@12.0.0': {}
 
-  '@rescript/runtime@12.0.1': {}
+  '@rescript/runtime@12.1.0': {}
 
   '@rescript/win32-x64@12.0.0':
     optional: true
@@ -791,7 +791,7 @@ snapshots:
     dependencies:
       '@popstarfreas/packetfactory': 7.2.3
       '@rescript/core': 1.6.1(rescript@12.0.0)
-      '@rescript/runtime': 12.0.1
+      '@rescript/runtime': 12.1.0
     transitivePeerDependencies:
       - rescript
 
