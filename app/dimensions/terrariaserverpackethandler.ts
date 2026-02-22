@@ -300,6 +300,7 @@ class TerrariaServerPacketHandler {
         .setType(PacketTypes.GetSectionOrRequestSync)
         .packSingle(-1)
         .packSingle(-1)
+        .packByte(0)
         .data;
       this.currentServer.sendDirect(getSection);
 
