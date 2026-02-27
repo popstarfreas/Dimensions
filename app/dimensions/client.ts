@@ -239,6 +239,10 @@ class Client {
     return this.player.name;
   }
 
+  public getTrackedPlayerCount(): number {
+    return Object.keys(this.globalTracking.names).length;
+  }
+
   public handleDataSend(encodedData: Buffer): void {
     try {
       // Add Buffer Packet (incomplete packet from last data)

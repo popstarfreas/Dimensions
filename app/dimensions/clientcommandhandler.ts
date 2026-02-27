@@ -74,11 +74,7 @@ export class ClientCommandHandler {
    * @return Whether or not the who command was handled
    */
   private handleWho(client: Client): boolean {
-    let total: number = 0;
-    let keys: string[] = Object.keys(client.serversDetails);
-    for (let i: number = 0, len = keys.length; i < len; i++) {
-      total += client.serversDetails[keys[i]].clientCount;
-    }
+    const total = client.getTrackedPlayerCount();
 
     // Try to make it come after the normal response
     setTimeout(function() {
