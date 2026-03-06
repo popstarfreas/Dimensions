@@ -13,6 +13,7 @@ interface BlacklistOkResponse {
 }
 
 type BlacklistResponse = ["Ok", BlacklistOkResponse] | ["Forbidden"];
+const BLACKLIST_REQUEST_TIMEOUT_MS = 10000;
 
 /**
  * This is the built-in dimensions blacklist integration. It is built for Dark Gaming's API but you can
@@ -42,10 +43,12 @@ class Blacklist {
                     uuid: uuid
                 }
             }));
-            http.get({
+
+            const req = http.get({
                 hostname: requestUrl.hostname,
                 port: this.configuration.port,
                 path: requestUrl.path,
+                timeout: BLACKLIST_REQUEST_TIMEOUT_MS,
                 headers: {
                     token: this.configuration.apiKey
                 }
@@ -58,7 +61,12 @@ class Blacklist {
                 res.on("end", () => {
                     this.parseResponse(data, resolve, reject);
                 });
-            }).on('error', (e) => {
+            });
+
+            req.on('timeout', () => {
+                req.destroy(new Error(`Blacklist request timed out after ${BLACKLIST_REQUEST_TIMEOUT_MS}ms`));
+            });
+            req.on('error', (e) => {
                 reject(e);
             });
         });
