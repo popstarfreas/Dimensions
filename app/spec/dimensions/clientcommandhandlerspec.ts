@@ -19,10 +19,10 @@ describe("ClientCommandHandler", () => {
     let serverB: RoutingServer;
     let socket: Net.Socket;
     let tcpServer: Net.Server;
-    let serversDetails;
+    let serversDetails: any;
     let globalHandlers;
     let servers;
-    let globalTracking;
+    let globalTracking: any;
     let client: Client;
     // @ts-ignore
     let server: TerrariaServer;
@@ -202,6 +202,24 @@ describe("ClientCommandHandler", () => {
             let command = client.globalHandlers.command.parseCommand("/who");
             let handled = client.globalHandlers.command.handle(command, client);
             expect(handled).toBe(false);
+        });
+
+        it("should use tracked player names for who count", (done: DoneFn) => {
+            serversDetails.servera.clientCount = 8;
+            serversDetails.serverb.clientCount = 9;
+            globalTracking.names = { one: true, two: true };
+
+            const handler = (data: string) => {
+                if (data.indexOf("There are 2 players across all Dimensions") === -1) {
+                    return;
+                }
+                clientSocketDataHandlers = clientSocketDataHandlers.filter(h => h !== handler);
+                done();
+            };
+            clientSocketDataHandlers.push(handler);
+
+            let command = client.globalHandlers.command.parseCommand("/who");
+            client.globalHandlers.command.handle(command, client);
         });
 
         it("should send the user a user count", (done: DoneFn) => {

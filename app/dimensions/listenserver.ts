@@ -303,8 +303,19 @@ export class ListenServer {
    * @param socket The socket of a new client
    */
   private async handleSocket(socket: Net.Socket): Promise<void> {
-    if ((this.options.connectionLimit.enabled && this.enforceConnectionLimit(socket))
-      || this.options.connectionRateLimit.enabled && this.enforceConnectionRateLimit(socket)) {
+    const socketIp = socket.remoteAddress;
+
+    if (this.options.connectionLimit.enabled && this.enforceConnectionLimit(socket)) {
+      socket.removeAllListeners();
+      return;
+    }
+
+    if (this.options.connectionRateLimit.enabled && this.enforceConnectionRateLimit(socket)) {
+      // If connectionLimit accepted this socket first, rollback its tracker entry
+      // when rate limit later rejects the same connection.
+      if (this.options.connectionLimit.enabled && typeof socketIp !== "undefined") {
+        this.decrementConnectionTracker(socketIp);
+      }
       socket.removeAllListeners();
       return;
     }
@@ -400,13 +411,13 @@ export class ListenServer {
    * the socket. Also checking if the ip address of this socket is blacklisted.
    */
   private async setupNewSocket(socket: Net.Socket): Promise<void> {
+    const socketIp = socket.remoteAddress;
     let chosenServer: RoutingServer | null = this.chooseServer();
     if (chosenServer === null) {
       this.logging.warn(`No servers available for ListenServer[Port: ${this.port}]`);
       socket.destroy();
-      const ip = socket.remoteAddress;
-      if (typeof ip !== "undefined") {
-        this.decrementConnectionTracker(ip);
+      if (typeof socketIp !== "undefined") {
+        this.decrementConnectionTracker(socketIp);
       }
       return;
     }
@@ -482,9 +493,8 @@ export class ListenServer {
           if (index > -1) {
             this.checkingClients.splice(index, 1);
           }
-          const ip = clientArgs.socket.remoteAddress;
-          if (typeof ip !== "undefined") {
-            this.decrementConnectionTracker(ip);
+          if (typeof socketIp !== "undefined") {
+            this.decrementConnectionTracker(socketIp);
           }
         }
       });
@@ -671,7 +681,7 @@ export class ListenServer {
       }
 
       try {
-        const ip = socket.remoteAddress;
+        const ip = client.ip || socket.remoteAddress;
         if (typeof ip !== "undefined") {
           this.decrementConnectionTracker(ip);
         }
