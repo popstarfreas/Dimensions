@@ -8,6 +8,7 @@ import ClientPacketHandler from '../../dimensions/clientpackethandler.js';
 import TerrariaServerPacketHandler from '../../dimensions/terrariaserverpackethandler.js';
 import { ConfigOptions } from '../../dimensions/configloader.js';
 import * as Language from '../../dimensions/language.js';
+import { Parser } from 'terraria-packet';
 
 describe("ListenServer", () => {
     let listenServer!: ListenServer;
@@ -122,17 +123,158 @@ describe("ListenServer", () => {
         connectRateTracker.set(ip, 1);
 
         const removeAllListeners = jasmine.createSpy("removeAllListeners");
+        const once = jasmine.createSpy("once");
+        const end = jasmine.createSpy("end");
         const destroy = jasmine.createSpy("destroy");
         const socket = {
             remoteAddress: ip,
             removeAllListeners,
-            destroy
+            once,
+            end,
+            destroy,
+            destroyed: false,
+            writable: true
         } as unknown as Net.Socket;
 
         await (listenServer as any).handleSocket(socket);
 
         expect(connectionsTracker.has(ip)).toBe(false);
         expect(removeAllListeners).toHaveBeenCalled();
+        expect(end).toHaveBeenCalled();
+        expect(destroy).not.toHaveBeenCalled();
+
+        const disconnectPacket = end.calls.mostRecent().args[0];
+        const parsed = Parser.parse(disconnectPacket, true);
+        expect(parsed.TAG).toBe("Ok");
+        if (parsed.TAG === "Ok") {
+            expect(parsed._0.TAG).toBe("Disconnect");
+        }
+    });
+
+    it("should send a disconnect packet when no routing server is available", async () => {
+        const ip = "127.0.0.1";
+        const once = jasmine.createSpy("once");
+        const end = jasmine.createSpy("end");
+        const destroy = jasmine.createSpy("destroy");
+        const socket = {
+            remoteAddress: ip,
+            once,
+            end,
+            destroy,
+            destroyed: false,
+            writable: true
+        } as unknown as Net.Socket;
+
+        spyOn(listenServer as any, "chooseServer").and.returnValue(null);
+
+        await (listenServer as any).handleSocket(socket);
+
+        expect(connectionsTracker.has(ip)).toBe(false);
+        expect(end).toHaveBeenCalled();
+        expect(destroy).not.toHaveBeenCalled();
+
+        const disconnectPacket = end.calls.mostRecent().args[0];
+        const parsed = Parser.parse(disconnectPacket, true);
+        expect(parsed.TAG).toBe("Ok");
+        if (parsed.TAG === "Ok") {
+            expect(parsed._0.TAG).toBe("Disconnect");
+        }
+    });
+
+    it("should run raw socket write post hooks after ending a rejected socket", async () => {
+        const events: string[] = [];
+        (listenServer as any).globalHandlers.extensions = {
+            recorder: {
+                name: "recorder",
+                version: "test",
+                author: "test",
+                reloadable: false,
+                rawSocketWritePreHandler: () => {
+                    events.push("pre");
+                    return false;
+                },
+                rawSocketWritePostHandler: () => {
+                    events.push("post");
+                }
+            }
+        };
+
+        const ip = "127.0.0.1";
+        const socket = {
+            remoteAddress: ip,
+            once: jasmine.createSpy("once"),
+            end: jasmine.createSpy("end").and.callFake(() => {
+                events.push("end");
+            }),
+            destroy: jasmine.createSpy("destroy"),
+            destroyed: false,
+            writable: true
+        } as unknown as Net.Socket;
+
+        spyOn(listenServer as any, "chooseServer").and.returnValue(null);
+
+        await (listenServer as any).handleSocket(socket);
+
+        expect(events).toEqual(["pre", "end", "post"]);
+    });
+
+    it("should destroy a rejected socket when a raw socket write pre hook blocks the disconnect packet", async () => {
+        (listenServer as any).globalHandlers.extensions = {
+            blocker: {
+                name: "blocker",
+                version: "test",
+                author: "test",
+                reloadable: false,
+                rawSocketWritePreHandler: () => true
+            }
+        };
+
+        const ip = "127.0.0.1";
+        const end = jasmine.createSpy("end");
+        const destroy = jasmine.createSpy("destroy");
+        const socket = {
+            remoteAddress: ip,
+            end,
+            destroy,
+            destroyed: false,
+            writable: true
+        } as unknown as Net.Socket;
+
+        spyOn(listenServer as any, "chooseServer").and.returnValue(null);
+
+        await (listenServer as any).handleSocket(socket);
+
+        expect(end).not.toHaveBeenCalled();
         expect(destroy).toHaveBeenCalled();
+    });
+
+    it("should force close a rejected socket if it does not close after the disconnect packet is written", () => {
+        jasmine.clock().install();
+        try {
+            const end = jasmine.createSpy("end").and.callFake((_packet: Buffer, callback?: () => void) => {
+                if (callback) {
+                    callback();
+                }
+            });
+            const destroy = jasmine.createSpy("destroy");
+            const socket = {
+                remoteAddress: "127.0.0.1",
+                once: jasmine.createSpy("once"),
+                end,
+                destroy,
+                destroyed: false,
+                writable: true
+            } as unknown as Net.Socket;
+
+            (listenServer as any).disconnectClient(socket, "Rejected");
+
+            expect(end).toHaveBeenCalled();
+            jasmine.clock().tick(2999);
+            expect(destroy).not.toHaveBeenCalled();
+            jasmine.clock().tick(1);
+            expect(destroy).toHaveBeenCalled();
+        } finally {
+            jasmine.clock().uninstall();
+        }
     });
 });

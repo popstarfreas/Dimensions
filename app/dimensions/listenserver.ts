@@ -19,6 +19,8 @@ import * as winston from 'winston';
 import { RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
 import { DisconnectPacket, StatusPacket } from 'terraria-packet';
 
+const FORCE_SOCKET_CLOSE_TIMEOUT_MS = 3000;
+
 /**
  * Listens on a specified port and routes users balancing amounts between routing servers it handles
  */
@@ -193,12 +195,12 @@ export class ListenServer {
    * Writes to a socket with extension hook support.
    * Used for writes that occur before a Client object exists.
    */
-  private writeToSocketWithHooks(
+  private prepareSocketPacketWithHooks(
     socket: Net.Socket,
     packet: Buffer,
     reason: RawSocketWriteContext['reason'],
     clientArgs?: ClientArgs
-  ): boolean {
+  ): { context: RawSocketWriteContext, packetWrapper: { packet: Buffer } } | null {
     const context: RawSocketWriteContext = {
       socket: socket,
       remoteAddress: socket.remoteAddress,
@@ -213,7 +215,7 @@ export class ListenServer {
         try {
           const blocked = extension.rawSocketWritePreHandler(context, packetWrapper);
           if (blocked) {
-            return false;
+            return null;
           }
         } catch (error) {
           if (this.options.log.extensionError) {
@@ -225,9 +227,13 @@ export class ListenServer {
       }
     }
 
-    // Perform the write
-    socket.write(packetWrapper.packet);
+    return { context, packetWrapper };
+  }
 
+  private runRawSocketWritePostHandlers(
+    context: RawSocketWriteContext,
+    packetWrapper: { packet: Buffer }
+  ): void {
     // Run post-handlers
     for (const extension of Object.values(this.globalHandlers.extensions)) {
       if (extension.rawSocketWritePostHandler) {
@@ -242,7 +248,21 @@ export class ListenServer {
         }
       }
     }
+  }
 
+  private writeToSocketWithHooks(
+    socket: Net.Socket,
+    packet: Buffer,
+    reason: RawSocketWriteContext['reason'],
+    clientArgs?: ClientArgs
+  ): boolean {
+    const prepared = this.prepareSocketPacketWithHooks(socket, packet, reason, clientArgs);
+    if (prepared === null) {
+      return false;
+    }
+
+    socket.write(prepared.packetWrapper.packet);
+    this.runRawSocketWritePostHandlers(prepared.context, prepared.packetWrapper);
     return true;
   }
 
@@ -264,17 +284,34 @@ export class ListenServer {
     if (!socket.destroyed) {
       switch (kickPacket.TAG) {
         case "Ok":
-          this.writeToSocketWithHooks(socket, kickPacket._0, hookReason);
+          const prepared = this.prepareSocketPacketWithHooks(socket, kickPacket._0, hookReason);
+          if (prepared === null) {
+            socket.destroy();
+            return;
+          }
+
+          const forceCloseTimeout = setTimeout(() => {
+            if (!socket.destroyed) {
+              socket.destroy();
+            }
+          }, FORCE_SOCKET_CLOSE_TIMEOUT_MS);
+          forceCloseTimeout.unref?.();
+          socket.once('close', () => {
+            clearTimeout(forceCloseTimeout);
+          });
+
+          if (socket.writable) {
+            socket.end(prepared.packetWrapper.packet);
+            this.runRawSocketWritePostHandlers(prepared.context, prepared.packetWrapper);
+          } else {
+            socket.destroy();
+          }
           break;
         case "Error":
           this.logging.error(`Error creating disconnect packet: ${kickPacket._0}`);
+          socket.destroy();
           break;
       }
-
-      // Allow time for client to receive and process kick packet
-      setTimeout(() => {
-        socket.destroy();
-      }, 1000);
     }
   }
 
@@ -394,7 +431,7 @@ export class ListenServer {
     const count = this.connectRateTracker.get(ip);
     if (typeof count !== "undefined") {
       if (count + 1 > this.options.connectionRateLimit.connectionRateLimitPerIP) {
-        socket.destroy();
+        this.disconnectClient(socket, this.options.language.phrases.connectionRateLimitExceeded, RawSocketWriteReason.Other);
         connectionDropped = true;
       } else {
         this.connectRateTracker.set(ip, count + 1);
@@ -415,7 +452,7 @@ export class ListenServer {
     let chosenServer: RoutingServer | null = this.chooseServer();
     if (chosenServer === null) {
       this.logging.warn(`No servers available for ListenServer[Port: ${this.port}]`);
-      socket.destroy();
+      this.disconnectClient(socket, this.options.language.phrases.noServersAvailable, RawSocketWriteReason.Other);
       if (typeof socketIp !== "undefined") {
         this.decrementConnectionTracker(socketIp);
       }

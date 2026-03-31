@@ -24,6 +24,8 @@ export interface LanguagePhrasesOverrides {
   blacklistCheckError?: string,
   invalidPacketLength?: string,
   close?: string,
+  connectionRateLimitExceeded?: string,
+  noServersAvailable?: string,
 }
 
 interface LanguagePhrases {
@@ -45,6 +47,8 @@ interface LanguagePhrases {
   blacklistCheckError: string,
   invalidPacketLength: string,
   close: string,
+  connectionRateLimitExceeded: string,
+  noServersAvailable: string,
 }
 
 export const english: LanguageDefinition = {
@@ -72,6 +76,8 @@ export const english: LanguageDefinition = {
     // This is just on the assumption that in production you are not permanently
     // closing the server, but rather restarting it.
     close: "The server is being restarted. Please rejoin.",
+    connectionRateLimitExceeded: "Too many connection attempts. Please wait and try again.",
+    noServersAvailable: "No servers are currently available. Please try again.",
   },
 };
 
@@ -100,5 +106,9 @@ export const chinese: LanguageDefinition = {
     invalidPacketLength: "客户端违反协议：数据包长度无效。",
     // TODO: This is google translated, should be reviewed by native speaker
     close: "服务器正在重新启动。 请重新加入。",
+    // TODO: This is google translated, should be reviewed by native speaker
+    connectionRateLimitExceeded: "连接请求过于频繁。请稍候再试。",
+    // TODO: This is google translated, should be reviewed by native speaker
+    noServersAvailable: "当前没有可用的服务器。请稍后重试。",
   },
 };

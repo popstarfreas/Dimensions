@@ -156,6 +156,8 @@ options:
   # - dimensionsCommandName
   # - specifyADimensionToTravel
   # - dimensionDropped
+  # - connectionRateLimitExceeded
+  # - noServersAvailable
   #
   # Example:
   # languageOverrides:

@@ -237,6 +237,11 @@ class TerrariaServer {
       return;
     }
 
+    if (this.client.disconnecting) {
+      this.client.state = ClientState.Disconnected;
+      return;
+    }
+
     if (this.afterClosed !== null) {
       this.afterClosed(this.client);
     } else {

@@ -96,7 +96,8 @@ options:
   # Options: english, en, 汉语, zn
   language: "english"
 
-  # Override specific messages from the chosen language
+  # Override specific messages from the chosen language, such as
+  # close, connectionRateLimitExceeded, or noServersAvailable
   languageOverrides: {}
 
   # Debuff settings when switching dimensions

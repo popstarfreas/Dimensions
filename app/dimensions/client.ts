@@ -31,6 +31,7 @@ interface PacketQueueItem {
  * This class handles switching servers and passing data of a single client
  */
 class Client {
+  private static readonly FORCE_DISCONNECT_TIMEOUT_MS = 3000;
   public ID: string;
   public options: ConfigOptions;
   public servers: { [id: string]: RoutingServer };
@@ -43,6 +44,7 @@ class Client {
   public state: ClientState;
   private initialConnectionAlreadyCreated: boolean;
   public ingame: boolean;
+  public disconnecting: boolean;
   public UUID: string;
   public waitingCharacterRestore: boolean;
   public wasKicked: boolean;
@@ -56,6 +58,7 @@ class Client {
   private globalTracking: GlobalTracking;
   private bufferPacket: Buffer;
   private extraJoinInformation: string | undefined;
+  private disconnectTimeout: NodeJS.Timeout | null;
 
   // Queued packets while connecting to a server
   private queuedPacketsWhileConnecting: RawPacket[] = [];
@@ -120,6 +123,7 @@ class Client {
 
     // A boolean of whether the current client has made it in-game (they can see minimap, world, tiles, their inventory)
     this.ingame = false;
+    this.disconnecting = false;
 
     // UUID of client
     this.UUID = "";
@@ -151,6 +155,7 @@ class Client {
     this.packetQueue = [];
 
     this.version = "unknown";
+    this.disconnectTimeout = null;
   }
 
   /**
@@ -178,6 +183,10 @@ class Client {
    * @param reason The reason for the disconnect
    */
   public disconnect(reason: NetworkText | string) {
+    if (this.disconnecting || this.socket.destroyed) {
+      return;
+    }
+
     if (typeof reason === 'string') {
       reason = new NetworkText(0, reason);
     }
@@ -188,18 +197,43 @@ class Client {
 
     switch (disconnect.TAG) {
       case "Ok":
-        this.sendDirect(disconnect._0);
+        this.disconnecting = true;
+        this.connected = false;
+        this.socket.pause();
+        this.scheduleForcedDisconnect();
+
+        if (this.socket.writable) {
+          this.socket.end(disconnect._0);
+          this.notifySendPacketToClientEvent(disconnect._0);
+        } else {
+          this.socket.destroy();
+        }
         break;
       case "Error":
         this.logging.error(`Error creating disconnect packet: ${disconnect._0}`);
+        this.disconnecting = true;
+        this.connected = false;
+        this.socket.destroy();
         break;
     }
-    this.socket.pause();
+  }
 
-    // Don't disconnect instantly otherwise it will show 'Lost Connection' on client
-    setTimeout(() => {
-      this.socket.destroy();
-    }, 500);
+  private scheduleForcedDisconnect(): void {
+    this.clearForcedDisconnect();
+    this.disconnectTimeout = setTimeout(() => {
+      if (!this.socket.destroyed) {
+        this.socket.destroy();
+      }
+      this.disconnectTimeout = null;
+    }, Client.FORCE_DISCONNECT_TIMEOUT_MS);
+    this.disconnectTimeout.unref?.();
+  }
+
+  private clearForcedDisconnect(): void {
+    if (this.disconnectTimeout !== null) {
+      clearTimeout(this.disconnectTimeout);
+      this.disconnectTimeout = null;
+    }
   }
 
   /**
@@ -552,22 +586,26 @@ class Client {
    * @param buf 
    */
   public sendDirect(buf: Buffer): void {
-    if (this.socket.writable) {
+    if (!this.disconnecting && this.socket.writable) {
       this.socket.write(buf);
-      Object.values(this.globalHandlers.extensions).forEach((extension) => {
-        if (extension.sendPacketToClientEvent) {
-          try {
-            extension.sendPacketToClientEvent(this, buf);
-          } catch (error) {
-            if (this.options.log.extensionError) {
-              const name = extension.name ?? "unknown";
-              const logMessage = `[${process.pid}] Extension ${name} Client Send Packet Event Error: ${ErrorHelper.toMessage(error)}`;
-              this.logging.info(logMessage);
-            }
+      this.notifySendPacketToClientEvent(buf);
+    }
+  }
+
+  private notifySendPacketToClientEvent(buf: Buffer): void {
+    Object.values(this.globalHandlers.extensions).forEach((extension) => {
+      if (extension.sendPacketToClientEvent) {
+        try {
+          extension.sendPacketToClientEvent(this, buf);
+        } catch (error) {
+          if (this.options.log.extensionError) {
+            const name = extension.name ?? "unknown";
+            const logMessage = `[${process.pid}] Extension ${name} Client Send Packet Event Error: ${ErrorHelper.toMessage(error)}`;
+            this.logging.info(logMessage);
           }
         }
-      });
-    }
+      }
+    });
   }
 
   public disconnectFromServer(): void {
@@ -596,6 +634,8 @@ class Client {
   }
 
   public handleClose(): void {
+    this.clearForcedDisconnect();
+
     if (!this.server.socket.destroyed) {
       this.server.afterClosed = null;
       this.server.socket.destroy();

@@ -4,7 +4,6 @@ import NPC from './npc.js';
 import TerrariaServer from './terrariaserver.js';
 import Client from './client.js';
 import RawPacket from './packets/rawpacket.js';
-import * as Net from 'net';
 import Item from './item.js';
 import Player from './player.js';
 import ClientState from './clientstate.js';
@@ -29,7 +28,6 @@ export enum PacketSource {
  */
 class TerrariaServerPacketHandler {
   private currentServer!: TerrariaServer;
-  private socket?: Net.Socket;
   //private index = 0;
 
   /**
@@ -216,7 +214,13 @@ class TerrariaServerPacketHandler {
     reason = new NetworkText(disconnect.reason.mode, disconnect.reason.text);
 
     if (!client.ingame) {
+      client.wasKicked = true;
+      client.connected = false;
       client.disconnect(reason);
+      if (!this.currentServer.socket.destroyed) {
+        this.currentServer.socket.destroy();
+      }
+      return true;
     } else {
       var color = "C8FF00";
       var message = client.options.language.phrases.dimensionDisconnectedYou;
@@ -241,8 +245,8 @@ class TerrariaServerPacketHandler {
       client.wasKicked = true;
       client.connected = false;
 
-      if (this.socket) {
-        this.socket.destroy();
+      if (!this.currentServer.socket.destroyed) {
+        this.currentServer.socket.destroy();
       }
     }
 

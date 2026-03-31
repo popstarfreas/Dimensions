@@ -14,6 +14,10 @@ import GlobalHandlers from '../../dimensions/globalhandlers.js';
 import ServerDetails from '../../dimensions/serverdetails.js';
 import { Dictionary } from '../../dimensions/dictionary.js';
 import * as Language from '../../dimensions/language.js';
+import PacketTypes from '../../dimensions/packettypes.js';
+import { PacketSource } from '../../dimensions/terrariaserverpackethandler.js';
+import { DisconnectPacket, Parser } from 'terraria-packet';
+import NetworkText from '@popstarfreas/packetfactory/networktext';
 type DoneFn = (err?: unknown) => void;
 
 describe("client", () => {
@@ -259,5 +263,80 @@ describe("client", () => {
         client.changeServer(serverB);
 
         expect(client.server.name).toBe(serverB.name);
+    });
+
+    it("should force close the client socket if it does not close after a disconnect packet is written", () => {
+        jasmine.clock().install();
+        try {
+            const sendPacketToClientEvent = jasmine.createSpy("sendPacketToClientEvent");
+            globalHandlers.extensions = {
+                recorder: {
+                    name: "recorder",
+                    version: "test",
+                    author: "test",
+                    reloadable: false,
+                    sendPacketToClientEvent
+                }
+            };
+
+            const end = spyOn(socket, "end").and.callFake(function (this: Net.Socket, ...args: any[]) {
+                const callback = args.find((arg) => typeof arg === "function");
+                if (callback) {
+                    callback();
+                }
+                return this;
+            });
+            const destroy = spyOn(socket, "destroy").and.callThrough();
+
+            client.disconnect("Rejected");
+
+            expect(end).toHaveBeenCalled();
+            expect(sendPacketToClientEvent).toHaveBeenCalled();
+            jasmine.clock().tick(2999);
+            expect(destroy).not.toHaveBeenCalled();
+            jasmine.clock().tick(1);
+            expect(destroy).toHaveBeenCalled();
+        } finally {
+            jasmine.clock().uninstall();
+        }
+    });
+
+    it("should not send follow-up chat packets after an early backend kick", (done: DoneFn) => {
+        const receivedPackets: Buffer[] = [];
+        clientSocketDataHandlers.push((data: string) => {
+            receivedPackets.push(Buffer.from(data, "hex"));
+        });
+
+        const disconnectPacket = DisconnectPacket.toBuffer({
+            reason: new NetworkText(0, "Server rejected join")
+        });
+
+        if (disconnectPacket.TAG === "Error") {
+            done(new Error(String(disconnectPacket._0)));
+            return;
+        }
+
+        client.server.name = serverA.name;
+        client.server.isVanilla = serverA.isVanilla;
+
+        clientSocket.once("close", () => {
+            expect(receivedPackets.length).toBe(1);
+
+            const parsed = Parser.parse(receivedPackets[0], true);
+            expect(parsed.TAG).toBe("Ok");
+            if (parsed.TAG === "Ok") {
+                expect(parsed._0.TAG).toBe("Disconnect");
+                if (parsed._0.TAG === "Disconnect") {
+                    expect(parsed._0._0.reason.text).toBe("Server rejected join");
+                }
+            }
+            done();
+        });
+
+        globalHandlers.terrariaServerPacketHandler.handlePacket(client.server, {
+            packetType: PacketTypes.Disconnect,
+            data: disconnectPacket._0
+        }, PacketSource.TerrariaServer);
+        client.server.handleClose();
     });
 });
