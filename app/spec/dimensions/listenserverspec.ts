@@ -9,6 +9,7 @@ import TerrariaServerPacketHandler from '../../dimensions/terrariaserverpacketha
 import { ConfigOptions } from '../../dimensions/configloader.js';
 import * as Language from '../../dimensions/language.js';
 import { Parser } from 'terraria-packet';
+import { DisconnectReasonCodes, makeDisconnectReason } from '../../dimensions/disconnectreason.js';
 
 describe("ListenServer", () => {
     let listenServer!: ListenServer;
@@ -276,5 +277,43 @@ describe("ListenServer", () => {
         } finally {
             jasmine.clock().uninstall();
         }
+    });
+
+    it("should log a Dimensions disconnect reason without throwing when server details are missing", () => {
+        (listenServer as any).options.log.clientDisconnect = true;
+        const info = spyOn((listenServer as any).logging, "info");
+        const closeHandlers: Array<() => void> = [];
+        const socket = {
+            remoteAddress: "127.0.0.1",
+            once: (event: string, callback: () => void) => {
+                if (event === "close") {
+                    closeHandlers.push(callback);
+                }
+                return socket;
+            },
+            removeAllListeners: jasmine.createSpy("removeAllListeners"),
+        } as unknown as Net.Socket;
+        const client = {
+            ID: "client-id",
+            ip: "127.0.0.1",
+            server: { name: "missing" },
+            countIncremented: true,
+            handleClose: jasmine.createSpy("handleClose"),
+            getDimensionsDisconnectReason: () => makeDisconnectReason(
+                DisconnectReasonCodes.ClientSocketClosed,
+                "client socket closed"
+            ),
+        };
+
+        (listenServer as any).hookSocketClose(socket, client);
+        closeHandlers[0]!();
+
+        expect(client.handleClose).toHaveBeenCalled();
+        expect(info).toHaveBeenCalled();
+        const args = info.calls.mostRecent().args;
+        expect(args[0]).toContain("disconnected from Dimensions");
+        expect(args[0]).toContain(DisconnectReasonCodes.ClientSocketClosed);
+        expect(args[0]).toContain("missing: unknown");
+        expect((args as any)[1].reasonCode).toBe(DisconnectReasonCodes.ClientSocketClosed);
     });
 });

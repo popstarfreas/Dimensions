@@ -8,6 +8,7 @@ import Item from './item.js';
 import Player from './player.js';
 import ClientState from './clientstate.js';
 import ErrorHelper from './errorhelper.js';
+import { DisconnectReasonCodes, makeDisconnectReason } from './disconnectreason.js';
 
 import { WorldInfoPacket, PlayerInfoPacket, NpcUpdatePacket, ItemDropUpdatePacket, PlayerSpawnPacket, NetModuleLoadPacket, DisconnectPacket, PlayerActivePacket, PlayerInventorySlotPacket, DimensionsUpdatePacket, Parser, } from "terraria-packet";
 import NetworkText from '@popstarfreas/packetfactory/networktext';
@@ -212,6 +213,10 @@ class TerrariaServerPacketHandler {
 
     let reason = new NetworkText(0, "Unknown Reason");
     reason = new NetworkText(disconnect.reason.mode, disconnect.reason.text);
+    this.currentServer.setDisconnectReason(makeDisconnectReason(
+      DisconnectReasonCodes.ServerDisconnectPacket,
+      reason.text
+    ));
 
     if (!client.ingame) {
       client.wasKicked = true;

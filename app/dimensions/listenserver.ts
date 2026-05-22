@@ -18,6 +18,12 @@ import BlacklistCheckClient from './blacklistcheckclient.js';
 import * as winston from 'winston';
 import { RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
 import { DisconnectPacket, StatusPacket } from 'terraria-packet';
+import {
+  DisconnectReason,
+  DisconnectReasonCodes,
+  formatDisconnectReason,
+  makeDisconnectReason,
+} from './disconnectreason.js';
 
 const FORCE_SOCKET_CLOSE_TIMEOUT_MS = 3000;
 
@@ -275,13 +281,17 @@ export class ListenServer {
   private disconnectClient(
     socket: Net.Socket,
     reason: string,
-    hookReason: RawSocketWriteContext['reason'] = RawSocketWriteReason.Other
+    hookReason: RawSocketWriteContext['reason'] = RawSocketWriteReason.Other,
+    disconnectReason: DisconnectReason = makeDisconnectReason(DisconnectReasonCodes.RawSocketDisconnect, reason)
   ): void {
     let kickPacket = DisconnectPacket.toBuffer({
       reason: new NetworkText(0, reason)
     })
 
     if (!socket.destroyed) {
+      const ip = socket.remoteAddress;
+      this.logDimensionsDisconnect(ip, "pre-client", "unknown", disconnectReason);
+
       switch (kickPacket.TAG) {
         case "Ok":
           const prepared = this.prepareSocketPacketWithHooks(socket, kickPacket._0, hookReason);
@@ -409,7 +419,11 @@ export class ListenServer {
         this.disconnectClient(
           socket,
           StringUtils.format(this.options.connectionLimit.kickReason, this.options.connectionLimit.connectionLimitPerIP),
-          RawSocketWriteReason.ConnectionLimitExceeded
+          RawSocketWriteReason.ConnectionLimitExceeded,
+          makeDisconnectReason(
+            DisconnectReasonCodes.ConnectionLimitExceeded,
+            `connection limit exceeded: ${this.options.connectionLimit.connectionLimitPerIP}`
+          )
         );
         connectionDropped = true;
       } else {
@@ -431,7 +445,15 @@ export class ListenServer {
     const count = this.connectRateTracker.get(ip);
     if (typeof count !== "undefined") {
       if (count + 1 > this.options.connectionRateLimit.connectionRateLimitPerIP) {
-        this.disconnectClient(socket, this.options.language.phrases.connectionRateLimitExceeded, RawSocketWriteReason.Other);
+        this.disconnectClient(
+          socket,
+          this.options.language.phrases.connectionRateLimitExceeded,
+          RawSocketWriteReason.Other,
+          makeDisconnectReason(
+            DisconnectReasonCodes.ConnectionRateLimitExceeded,
+            `connection rate limit exceeded: ${this.options.connectionRateLimit.connectionRateLimitPerIP}/s`
+          )
+        );
         connectionDropped = true;
       } else {
         this.connectRateTracker.set(ip, count + 1);
@@ -452,7 +474,12 @@ export class ListenServer {
     let chosenServer: RoutingServer | null = this.chooseServer();
     if (chosenServer === null) {
       this.logging.warn(`No servers available for ListenServer[Port: ${this.port}]`);
-      this.disconnectClient(socket, this.options.language.phrases.noServersAvailable, RawSocketWriteReason.Other);
+      this.disconnectClient(
+        socket,
+        this.options.language.phrases.noServersAvailable,
+        RawSocketWriteReason.Other,
+        makeDisconnectReason(DisconnectReasonCodes.NoServersAvailable, "no routing servers available")
+      );
       if (typeof socketIp !== "undefined") {
         this.decrementConnectionTracker(socketIp);
       }
@@ -508,7 +535,12 @@ export class ListenServer {
             if (index > -1) {
               this.checkingClients.splice(index, 1);
             }
-            this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError, RawSocketWriteReason.BlacklistCheck);
+            this.disconnectClient(
+              socket,
+              this.options.language.phrases.blacklistCheckError,
+              RawSocketWriteReason.BlacklistCheck,
+              makeDisconnectReason(DisconnectReasonCodes.BlacklistCheckError, ErrorHelper.toMessage(e))
+            );
           } else {
             const index = this.checkingClients.indexOf(client);
             if (index > -1) {
@@ -523,7 +555,12 @@ export class ListenServer {
           if (index > -1) {
             this.checkingClients.splice(index, 1);
           }
-          this.disconnectClient(socket, this.options.language.phrases.blacklistCheckError, RawSocketWriteReason.BlacklistCheck);
+          this.disconnectClient(
+            socket,
+            this.options.language.phrases.blacklistCheckError,
+            RawSocketWriteReason.BlacklistCheck,
+            makeDisconnectReason(DisconnectReasonCodes.BlacklistCheckError, ErrorHelper.toMessage(e))
+          );
         },
         disconnectCb: () => {
           const index = this.checkingClients.indexOf(client);
@@ -569,7 +606,12 @@ export class ListenServer {
    * @return Whether or not the ip is blacklisted
    */
   private kickBlacklisted(client: ClientArgs): void {
-    this.disconnectClient(client.socket, this.options.language.phrases.blacklisted, RawSocketWriteReason.BlacklistCheck);
+    this.disconnectClient(
+      client.socket,
+      this.options.language.phrases.blacklisted,
+      RawSocketWriteReason.BlacklistCheck,
+      makeDisconnectReason(DisconnectReasonCodes.Blacklisted, "client is blacklisted")
+    );
 
     if (this.options.log.clientBlocked) {
       this.logging.info(`${process.pid}] Client: ${getProperIP(client.socket.remoteAddress)} was blocked from joining.`);
@@ -629,6 +671,10 @@ export class ListenServer {
    */
   private hookSocketTimeout(socket: Net.Socket, client: Client): void {
     socket.once('timeout', () => {
+      client.setDimensionsDisconnectReason(makeDisconnectReason(
+        DisconnectReasonCodes.ClientSocketTimeout,
+        "client socket timed out"
+      ));
       if (this.options.log.clientTimeouts) {
         this.logging.warn(`Socket Timeout: ${client.getName()} ${client.ID}`);
       }
@@ -705,6 +751,38 @@ export class ListenServer {
     }
   }
 
+  private getClientCountAfterDisconnect(client: Client): number | "unknown" {
+    const details = this.serversDetails[client.server.name];
+    if (!details) {
+      return "unknown";
+    }
+
+    const pendingDecrement = client.countIncremented ? 1 : 0;
+    return Math.max(0, details.clientCount - pendingDecrement);
+  }
+
+  private logDimensionsDisconnect(
+    ip: string | undefined,
+    serverName: string,
+    clientCount: number | "unknown",
+    reason: DisconnectReason
+  ): void {
+    if (!this.options.log.clientDisconnect) {
+      return;
+    }
+
+    const clientIp = getProperIP(ip) ?? "unknown";
+    const logMessage = `[${process.pid}] Client: ${clientIp} disconnected from Dimensions (${formatDisconnectReason(reason)}) ${serverName}: ${clientCount}]`;
+    this.logging.info(logMessage, {
+      disconnectScope: "dimensions",
+      reasonCode: reason.code,
+      reasonDetail: reason.detail,
+      clientIp,
+      serverName,
+      clientCount,
+    });
+  }
+
   /**
    * Hook the socket close and pass it into the client object
    *
@@ -723,8 +801,8 @@ export class ListenServer {
           this.decrementConnectionTracker(ip);
         }
         if (this.options.log.clientDisconnect) {
-          const logMessage = `[${process.pid}] Client: ${getProperIP(ip)} disconnected ${client.server.name}: ${this.serversDetails[client.server.name].clientCount - 1}]`;
-          this.logging.info(logMessage);
+          const serverName = client.server.name || "unknown";
+          this.logDimensionsDisconnect(ip, serverName, this.getClientCountAfterDisconnect(client), client.getDimensionsDisconnectReason());
         }
         client.handleClose();
         for (let i: number = 0; i < this.clients.length; i++) {

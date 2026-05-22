@@ -1,4 +1,4 @@
-import { BuffersPackets, getPacketsFromBuffer } from './utils.js';
+import { BuffersPackets, getPacketsFromBuffer, getProperIP } from './utils.js';
 import terrariaServerPacketHandler, { PacketSource } from './terrariaserverpackethandler.js';
 import PacketTypes from './packettypes.js';
 import Client from './client.js';
@@ -8,6 +8,13 @@ import RawPacket from './packets/rawpacket.js';
 import Entities from './entities.js';
 import ClientState from './clientstate.js';
 import ErrorHelper from './errorhelper.js';
+import {
+  DisconnectReason,
+  DisconnectReasonCodes,
+  formatDisconnectReason,
+  makeDisconnectReason,
+  serverSocketErrorReason,
+} from './disconnectreason.js';
 
 interface PacketQueueItem {
   rawPacket: RawPacket,
@@ -32,6 +39,7 @@ class TerrariaServer {
   public isSSC!: boolean;
   public packetQueue!: PacketQueueItem[];
   private bufferPacket!: Buffer;
+  private disconnectReason: DisconnectReason | null = null;
 
   constructor(socket: Net.Socket, client: Client) {
     this.socket = socket;
@@ -58,6 +66,7 @@ class TerrariaServer {
     };
     this.isSSC = false;
     this.packetQueue = [];
+    this.disconnectReason = null;
   }
 
   public getPacketHandler(): terrariaServerPacketHandler {
@@ -104,6 +113,10 @@ class TerrariaServer {
       if (entireDataInfo.type === "InvalidPacketLength") {
         this.client.logging.error(`Terraria Server Packet Length Error: Received Packet Length ${entireDataInfo.length}`);
         this.client.sendChatMessage("Disconnected from dimension due to a packet length error. Please try again.");
+        this.setDisconnectReason(makeDisconnectReason(
+          DisconnectReasonCodes.ServerInvalidPacketLength,
+          `backend sent invalid packet length ${entireDataInfo.length}`
+        ));
         this.client.disconnectFromServer();
         return
       }
@@ -136,6 +149,10 @@ class TerrariaServer {
             this.client.sendDirect(buf);
           }
         } else {
+          this.setDisconnectReason(makeDisconnectReason(
+            DisconnectReasonCodes.ClientDisconnectedFromDimensions,
+            "client socket was already closed"
+          ));
           this.socket.destroy();
         }
       }
@@ -229,9 +246,7 @@ class TerrariaServer {
       }
     }
 
-    if (this.client.options.log.tServerDisconnect) {
-      this.client.logging.info(`TerrariaServer socket closed. [${this.name}]`);
-    }
+    this.logDisconnect();
 
     if (this.handledByPreCloseHandlers()) {
       return;
@@ -277,8 +292,12 @@ class TerrariaServer {
    * 
    * TODO: Handle non-refused errors when the host itself is offline */
   public handleError(error: Error): void {
-    let matches: RegExpMatchArray | null = / E([A-z]*?) /.exec(error.message);
-    let type: string = matches !== null && matches.length > 1 ? matches[1] : "";
+    this.setDisconnectReason(serverSocketErrorReason(error));
+    let type: string = (error as Error & { code?: unknown }).code as string;
+    if (typeof type !== "string") {
+      let matches: RegExpMatchArray | null = / E([A-z]*?) /.exec(error.message);
+      type = matches !== null && matches.length > 1 ? matches[1] : "";
+    }
     let serverDetails = this.client.serversDetails[this.name];
 
     if (type === "CONNREFUSED" || type === "TIMEDOUT") {
@@ -294,6 +313,47 @@ class TerrariaServer {
     if (this.client.options.log.tServerError) {
       this.client.logging.error(`TerrariaServer Socket Error: ${ErrorHelper.toMessage(error)}`);
     }
+  }
+
+  public setDisconnectReason(reason: DisconnectReason, overwrite = false): void {
+    if (overwrite || this.disconnectReason === null) {
+      this.disconnectReason = reason;
+    }
+  }
+
+  private getDisconnectReason(): DisconnectReason {
+    return this.disconnectReason ?? makeDisconnectReason(
+      DisconnectReasonCodes.ServerSocketClosed,
+      "backend socket closed"
+    );
+  }
+
+  private getClientCountForLog(): number | "unknown" {
+    const details = this.client.serversDetails[this.name];
+    if (!details) {
+      return "unknown";
+    }
+
+    return Math.max(0, details.clientCount);
+  }
+
+  public logDisconnect(reason: DisconnectReason = this.getDisconnectReason()): void {
+    if (!this.client.options.log.tServerDisconnect) {
+      return;
+    }
+
+    const ip = getProperIP(this.client.ip || this.client.socket.remoteAddress) ?? "unknown";
+    const serverName = this.name || "unknown";
+    const clientCount = this.getClientCountForLog();
+    const logMessage = `[${process.pid}] Client: ${ip} disconnected from dimension (${formatDisconnectReason(reason)}) ${serverName}: ${clientCount}]`;
+    this.client.logging.info(logMessage, {
+      disconnectScope: "dimension",
+      reasonCode: reason.code,
+      reasonDetail: reason.detail,
+      clientIp: ip,
+      serverName,
+      clientCount,
+    });
   }
 }
 

@@ -19,6 +19,13 @@ import ClearUtils from './clearutils.js';
 import { PacketSource } from './terrariaserverpackethandler.js';
 import * as winston from 'winston';
 import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
+import {
+  clientSocketErrorReason,
+  detailFromDisconnectMessage,
+  DisconnectReason,
+  DisconnectReasonCodes,
+  makeDisconnectReason,
+} from './disconnectreason.js';
 
 import { DisconnectPacket, NetModuleLoadPacket, PlayerBuffAddPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
@@ -59,6 +66,7 @@ class Client {
   private bufferPacket: Buffer;
   private extraJoinInformation: string | undefined;
   private disconnectTimeout: NodeJS.Timeout | null;
+  private dimensionsDisconnectReason: DisconnectReason | null;
 
   // Queued packets while connecting to a server
   private queuedPacketsWhileConnecting: RawPacket[] = [];
@@ -156,6 +164,7 @@ class Client {
 
     this.version = "unknown";
     this.disconnectTimeout = null;
+    this.dimensionsDisconnectReason = null;
   }
 
   /**
@@ -186,6 +195,11 @@ class Client {
     if (this.disconnecting || this.socket.destroyed) {
       return;
     }
+
+    this.setDimensionsDisconnectReason(makeDisconnectReason(
+      DisconnectReasonCodes.DimensionsDisconnectPacket,
+      detailFromDisconnectMessage(reason)
+    ));
 
     if (typeof reason === 'string') {
       reason = new NetworkText(0, reason);
@@ -234,6 +248,19 @@ class Client {
       clearTimeout(this.disconnectTimeout);
       this.disconnectTimeout = null;
     }
+  }
+
+  public setDimensionsDisconnectReason(reason: DisconnectReason, overwrite = false): void {
+    if (overwrite || this.dimensionsDisconnectReason === null) {
+      this.dimensionsDisconnectReason = reason;
+    }
+  }
+
+  public getDimensionsDisconnectReason(): DisconnectReason {
+    return this.dimensionsDisconnectReason ?? makeDisconnectReason(
+      DisconnectReasonCodes.ClientSocketClosed,
+      "client socket closed"
+    );
   }
 
   /**
@@ -574,6 +601,10 @@ class Client {
 
     // Close the TerrariaServer socket completely
     if (!this.server.socket.destroyed) {
+      this.server.setDisconnectReason(makeDisconnectReason(
+        DisconnectReasonCodes.DimensionSwitch,
+        `switching from ${this.server.name} to ${name}`
+      ));
       this.server.socket.destroy();
     } else {
       this.server.afterClosed(this);
@@ -609,6 +640,11 @@ class Client {
   }
 
   public disconnectFromServer(): void {
+    this.server.setDisconnectReason(makeDisconnectReason(
+      DisconnectReasonCodes.ClientLeftDimension,
+      "client left dimension"
+    ));
+
     // Client is now not connected to a server
     this.connected = false;
 
@@ -619,6 +655,8 @@ class Client {
       this.countIncremented = false;
     }
 
+    this.server.logDisconnect();
+
     this.server.socket.destroy();
 
     // Remove data and error listeners on TerrariaServer socket
@@ -628,6 +666,7 @@ class Client {
   }
 
   public handleError(e: Error): void {
+    this.setDimensionsDisconnectReason(clientSocketErrorReason(e));
     if (this.options.log.clientError) {
       this.logging.error(`Client Socket Error: ${ErrorHelper.toMessage(e)}`)
     }
@@ -638,6 +677,10 @@ class Client {
 
     if (!this.server.socket.destroyed) {
       this.server.afterClosed = null;
+      this.server.setDisconnectReason(makeDisconnectReason(
+        DisconnectReasonCodes.ClientDisconnectedFromDimensions,
+        "client disconnected from Dimensions"
+      ));
       this.server.socket.destroy();
     }
 

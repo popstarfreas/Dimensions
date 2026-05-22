@@ -18,6 +18,7 @@ import PacketTypes from '../../dimensions/packettypes.js';
 import { PacketSource } from '../../dimensions/terrariaserverpackethandler.js';
 import { DisconnectPacket, Parser } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
+import { DisconnectReasonCodes } from '../../dimensions/disconnectreason.js';
 type DoneFn = (err?: unknown) => void;
 
 describe("client", () => {
@@ -299,6 +300,32 @@ describe("client", () => {
         } finally {
             jasmine.clock().uninstall();
         }
+    });
+
+    it("should track the reason for an explicit Dimensions disconnect", () => {
+        client.disconnect("Rejected");
+
+        const reason = client.getDimensionsDisconnectReason();
+        expect(reason.code).toBe(DisconnectReasonCodes.DimensionsDisconnectPacket);
+        expect(reason.detail).toBe("Rejected");
+    });
+
+    it("should log a backend timeout reason when a dimension socket closes after timing out", () => {
+        config.log.tServerDisconnect = true;
+        const info = spyOn(client.logging, "info");
+        const error = Object.assign(new Error("connect ETIMEDOUT 127.0.0.1:7777"), { code: "ETIMEDOUT" });
+
+        client.countIncremented = true;
+        client.serversDetails[serverA.name].clientCount = 1;
+        client.server.handleError(error);
+        client.server.handleClose();
+
+        expect(info).toHaveBeenCalled();
+        const args = info.calls.mostRecent().args;
+        expect(args[0]).toContain("disconnected from dimension");
+        expect(args[0]).toContain(DisconnectReasonCodes.ServerSocketTimeout);
+        expect(args[0]).toContain(`${serverA.name}: 0`);
+        expect((args as any)[1].reasonCode).toBe(DisconnectReasonCodes.ServerSocketTimeout);
     });
 
     it("should not send follow-up chat packets after an early backend kick", (done: DoneFn) => {
