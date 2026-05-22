@@ -1,17 +1,15 @@
-# Major Changes
- * Dimensions is now an ESM module. Source files have moved from `src/node_modules` to `src`
-  * For backwards compatibility, the `src/node_modules` path is exported in the package.json and is also symlinked to the new location, best effort has been made to keep this compatible with existing extensions but there is the possibility of accidental breakages. New extensions should use ESM.
- * Configuration is now done via a YAML file in `configuration/config.yaml` this is the recommended approach for new configuration files or for deployment in k8s
-  * Legacy config.js is still supported for backwards compatibility, but is not recommended for new deployments
- * Client IDs are now UUIDs instead of numbers - you can now use these as proper unique identifiers for that client's particular session
- * This project now uses pnpm instead of npm. To ensure the right dependencies are installed, please use `pnpm install` instead of `npm install` or if you do not have pnpm, you might be able to use `corepack pnpm install`
-
 # Features
- * Packet parsing now relies more on the `terraria-packet` dependency - this is just to unify our parsing into one implementation
-  *  Use `packetfactory` for buffer reader/writers - for anyone relying on dimensions for these, we recommend to move to use `packetfactory` as dimensions has
- * Blacklist now has hooks
- * Handlers for client/terrariaserver packets now get passed in PacketSource, this tells the extension whether the packet is directly from the client/server or whether it is from dimensions itself 
+ * Add structured disconnect reasons to dimension and Dimensions disconnect logs, including reason codes, details, and structured log metadata.
+  * Disconnect logs now distinguish cases such as explicit Dimensions disconnect packets, backend disconnect packets, client socket errors/timeouts, backend socket errors/timeouts/resets/refusals, dimension switches, blacklist failures, connection limits, connection rate limits, no available routing servers, and invalid backend packet lengths.
+ * Support `serverName` in `SwitchServerManual` dimension update packets so manual switches can preserve a provided target server name instead of always using `ip:port`.
 
 # Bugfixes
- * Fix client counts getting out of sync with actual number of clients
- * Fix some packets from dimensions not beint sent through handlers
+ * Fix client count handling when server details are missing during backend disconnect cleanup.
+ * Fix backend failed-connection attempt handling to use socket error codes and avoid assuming server details exist.
+ * Fix utility packet-buffering spec names so Jasmine 6 no longer reports duplicate spec names.
+ * Fix the TypeScript 6 build configuration by explicitly setting `rootDir` and global type packages.
+
+# Dependencies
+ * Update `terraria-packet` for the new `SwitchServerManual` packet payload shape.
+ * Update dependencies for audit and maintenance, including `glob` 13, TypeScript 6, Jasmine 6, `@rescript/runtime` 12.2, `uuid` 11.1.1, `yaml` 2.8.4, and refreshed `@types` packages.
+ * Remove `@types/glob`, as modern `glob` provides its own TypeScript declarations.
