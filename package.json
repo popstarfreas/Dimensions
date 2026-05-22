@@ -57,7 +57,7 @@
     "@rescript/runtime": "^12.2.0",
     "glob": "^13.0.6",
     "redis": "^3.1.2",
-    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#478b280e80f8a7be0bb235791d1e5d743be2f035",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#396bc430fbff3c8d700ee6dd016bc8e36419730b",
     "utf8": "^3.0.0",
     "uuid": "^11.1.1",
     "winston": "^3.19.0",

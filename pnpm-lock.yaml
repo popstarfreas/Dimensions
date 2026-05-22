@@ -17,18 +17,12 @@ importers:
       glob:
         specifier: ^13.0.6
         version: 13.0.6
-      jasmine:
-        specifier: ^6.2.0
-        version: 6.2.0
       redis:
         specifier: ^3.1.2
         version: 3.1.2
       terraria-packet:
-        specifier: github:popstarfreas/rescript-terrariapacket#478b280e80f8a7be0bb235791d1e5d743be2f035
-        version: https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/478b280e80f8a7be0bb235791d1e5d743be2f035(rescript@12.2.0)
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
+        specifier: github:popstarfreas/rescript-terrariapacket#396bc430fbff3c8d700ee6dd016bc8e36419730b
+        version: https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/396bc430fbff3c8d700ee6dd016bc8e36419730b(rescript@12.2.0)
       utf8:
         specifier: ^3.0.0
         version: 3.0.0
@@ -60,9 +54,15 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
+      jasmine:
+        specifier: ^6.2.0
+        version: 6.2.0
       mitm:
         specifier: ^1.7.3
         version: 1.7.3
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
 
 packages:
 
@@ -277,8 +277,8 @@ packages:
   string_decoder@1.3.0:
     resolution: {integrity: sha512-hkRX8U1WjJFd8LsDJ2yQ/wWWxaopEsABU1XfkM8A+j0+85JAGppt16cr1Whg6KIbb4okU6Mql6BOj+uup/wKeA==}
 
-  terraria-packet@https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/478b280e80f8a7be0bb235791d1e5d743be2f035:
-    resolution: {tarball: https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/478b280e80f8a7be0bb235791d1e5d743be2f035}
+  terraria-packet@https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/396bc430fbff3c8d700ee6dd016bc8e36419730b:
+    resolution: {tarball: https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/396bc430fbff3c8d700ee6dd016bc8e36419730b}
     version: 1.0.0
 
   text-hex@1.0.0:
@@ -511,7 +511,7 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
-  terraria-packet@https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/478b280e80f8a7be0bb235791d1e5d743be2f035(rescript@12.2.0):
+  terraria-packet@https://codeload.github.com/popstarfreas/rescript-terrariapacket/tar.gz/396bc430fbff3c8d700ee6dd016bc8e36419730b(rescript@12.2.0):
     dependencies:
       '@popstarfreas/packetfactory': 7.2.3
       '@rescript/core': 1.6.1(rescript@12.2.0)

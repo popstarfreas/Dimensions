@@ -418,13 +418,14 @@ class TerrariaServerPacketHandler {
             return true;
           case "SwitchServerManual":
             const currentServerIp = this.currentServer.socket.remoteAddress;
-            let ip = dimensionsUpdate._0;
-            const port: number = dimensionsUpdate._1;
+            let ip = dimensionsUpdate._0.ip;
+            const port: number = dimensionsUpdate._0.port;
             if (ip === "127.0.0.1" && typeof currentServerIp !== "undefined") {
               ip = currentServerIp;
             }
+            const serverName = dimensionsUpdate._0.serverName ?? `${ip}:${port}`;
             this.currentServer.client.changeServer({
-              name: `${ip}:${port}`,
+              name: serverName,
               serverIP: ip,
               serverPort: port,
               hidden: false,
