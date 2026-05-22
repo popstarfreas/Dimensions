@@ -300,7 +300,7 @@ class TerrariaServer {
     }
     let serverDetails = this.client.serversDetails[this.name];
 
-    if (type === "CONNREFUSED" || type === "TIMEDOUT") {
+    if (serverDetails && (type === "ECONNREFUSED" || type === "ETIMEDOUT" || type === "CONNREFUSED" || type === "TIMEDOUT")) {
       if (!serverDetails.disabled && ++serverDetails.failedConnAttempts >= 3) {
         serverDetails.disabled = true;
         serverDetails.disabledTimeout = setTimeout(() => {
