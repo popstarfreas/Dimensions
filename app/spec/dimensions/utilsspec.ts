@@ -2,7 +2,7 @@ import * as utils from "../../dimensions/utils.js";
 import BufferWriter from '@popstarfreas/packetfactory/bufferwriter';
 
 describe("utils", () => {
-    it("should correctly buffer an incomplete packet", () => {
+    it("should correctly buffer an incomplete packet with partial data", () => {
         const buf = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(4).packByte(0).data;
         const res = utils.getPacketsFromBuffer(buf);
         if (res.type !== "ValidPackets") {
@@ -12,7 +12,7 @@ describe("utils", () => {
         expect(res.bufferPacket.toString("hex")).toEqual(buf.toString("hex"));
     });
 
-    it("should correctly buffer an incomplete packet", () => {
+    it("should correctly buffer an incomplete packet with only a length header", () => {
         const buf = new BufferWriter(Buffer.allocUnsafe(2)).packUInt16(4).data;
         const res = utils.getPacketsFromBuffer(buf);
         if (res.type !== "ValidPackets") {
@@ -22,7 +22,7 @@ describe("utils", () => {
         expect(res.bufferPacket.toString("hex")).toEqual(buf.toString("hex"));
     });
 
-    it("should correctly buffer an incomplete packet", () => {
+    it("should correctly buffer an incomplete packet after reading a complete packet", () => {
         const bufA = new BufferWriter(Buffer.allocUnsafe(3)).packUInt16(3).packByte(0).data;
         const bufB = new BufferWriter(Buffer.allocUnsafe(2)).packUInt16(4).data;
         const res = utils.getPacketsFromBuffer(Buffer.concat([bufA, bufB]));
