@@ -236,7 +236,7 @@ class TerrariaServer {
     this.client.connected = false;
 
     try {
-      if (this.client.countIncremented) {
+      if (this.client.countIncremented && this.client.serversDetails[this.name]) {
         this.client.serversDetails[this.name].clientCount--;
         this.client.countIncremented = false;
       }
