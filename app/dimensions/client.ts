@@ -474,6 +474,28 @@ class Client {
     }
   }
 
+  private sendQueuedPacketsWhileConnecting(): void {
+    if (this.queuedPacketsWhileConnecting.length === 0) {
+      return;
+    }
+
+    const queuedPackets = this.queuedPacketsWhileConnecting;
+    this.queuedPacketsWhileConnecting = [];
+
+    for (const packet of queuedPackets) {
+      try {
+        const data = this.getPacketHandler().handlePacket(this, packet);
+        if (data !== null) {
+          this.server.sendDirect(data);
+        }
+      } catch (e) {
+        if (this.options.log.clientError) {
+          this.logging.error(`Client handle queued packet error. PacketType: ${PacketTypes[packet.packetType]} (${packet.packetType}): ${ErrorHelper.toMessage(e)}. Data: ${packet.data.toString("hex")}`);
+        }
+      }
+    }
+  }
+
   /* Handles switching from one server to another */
   public changeServer(server: RoutingServer, options?: ChangeServerOptions): void {
     this.extraJoinInformation = options?.extraJoinInformation;
@@ -596,6 +618,7 @@ class Client {
         }
         this.state = ClientState.ConnectionSwitchEstablished;
         this.connected = true;
+        this.sendQueuedPacketsWhileConnecting();
       });
     };
 
