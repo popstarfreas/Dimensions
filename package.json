@@ -59,7 +59,7 @@
     "redis": "^3.1.2",
     "terraria-packet": "github:popstarfreas/rescript-terrariapacket#396bc430fbff3c8d700ee6dd016bc8e36419730b",
     "utf8": "^3.0.0",
-    "uuid": "^11.1.1",
+    "uuid": "^14.0.0",
     "winston": "^3.19.0",
     "yaml": "^2.8.4"
   },
