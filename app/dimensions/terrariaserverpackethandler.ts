@@ -10,7 +10,7 @@ import ClientState from './clientstate.js';
 import ErrorHelper from './errorhelper.js';
 import { DisconnectReasonCodes, makeDisconnectReason } from './disconnectreason.js';
 
-import { WorldInfoPacket, PlayerInfoPacket, NpcUpdatePacket, ItemDropUpdatePacket, PlayerSpawnPacket, NetModuleLoadPacket, DisconnectPacket, PlayerActivePacket, PlayerInventorySlotPacket, DimensionsUpdatePacket, Parser, } from "terraria-packet";
+import { WorldInfoPacket, PlayerInfoPacket, NpcUpdatePacket, ItemDropUpdatePacket, PlayerSpawnPacket, NetModuleLoadPacket, DisconnectPacket, PlayerActivePacket, PlayerInventorySlotPacket, DimensionsUpdatePacket, PingPacket, Parser, } from "terraria-packet";
 import NetworkText from '@popstarfreas/packetfactory/networktext';
 import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 
@@ -339,6 +339,8 @@ class TerrariaServerPacketHandler {
    */
   private handleCompleteConnectionAndSpawn(): boolean {
     let server: TerrariaServer = this.currentServer;
+    const completedDimensionSwitch = server.client.state === ClientState.FinalisingSwitch;
+
     if (this.currentServer.client.state === ClientState.FinalisingSwitch) {
       this.currentServer.client.state = ClientState.FinishinedSendingInventory;
       let spawnPlayer = PlayerSpawnPacket.toBuffer({
@@ -373,6 +375,12 @@ class TerrariaServerPacketHandler {
       server.sendWaitingPackets();
       server.client.sendExtraInformation();
 
+      // I have seen that dimension switching causes the client to stop sending pings,
+      // this addresses that by triggering the client to send them again
+      if (completedDimensionSwitch) {
+        this.sendDimensionSwitchPingResponse(server);
+      }
+
       for (let key in server.client.globalHandlers.extensions) {
         const e = server.client.globalHandlers.extensions[key];
         if (e.clientFullyConnectedHandler) {
@@ -391,6 +399,23 @@ class TerrariaServerPacketHandler {
 
     this.currentServer.client.ingame = true;
     return false;
+  }
+
+  private sendDimensionSwitchPingResponse(server: TerrariaServer): void {
+    const ping = PingPacket.toBuffer(undefined);
+    if (ping.TAG === "Error") {
+      server.client.logging.error(`Error creating dimension switch ping packet: ${ping._0}`);
+      return;
+    }
+
+    const packet = {
+      packetType: PacketTypes.Ping,
+      data: ping._0,
+    };
+    const processedData = server.getPacketHandler().handlePacket(server, packet, PacketSource.Dimensions);
+    if (processedData !== null) {
+      server.client.sendDirect(processedData);
+    }
   }
 
   /**
