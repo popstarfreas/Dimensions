@@ -4,6 +4,8 @@
  * Support `serverName` in `SwitchServerManual` dimension update packets so manual switches can preserve a provided target server name instead of always using `ip:port`.
 
 # Bugfixes
+ * Fix dimension switches to drain client packets queued during backend reconnection once the new server connection is established.
+ * Fix dimension switches to restore client ping flow after spawn completion so clients keep sending pings after switching dimensions.
  * Fix client count handling when server details are missing during backend disconnect cleanup.
  * Fix backend failed-connection attempt handling to use socket error codes and avoid assuming server details exist.
  * Fix utility packet-buffering spec names so Jasmine 6 no longer reports duplicate spec names.
