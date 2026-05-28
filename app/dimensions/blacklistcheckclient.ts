@@ -3,12 +3,13 @@ import RawPacket from './packets/rawpacket.js';
 import { getPacketsFromBuffer, BuffersPackets } from './utils.js';
 import { getProperIP } from './utils.js';
 import Blacklist from './blacklist.js';
-import { Parser, PlayerSlotSetPacket } from 'terraria-packet';
+import NetworkText from '@popstarfreas/packetfactory/networktext';
+import { Parser, PlayerSlotSetPacket, StatusPacket } from 'terraria-packet';
 import { BlacklistCheckContext, BlacklistCheckState, RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
 import ErrorHelper from './errorhelper.js';
 
 enum ClientState {
-    StartOfConnection,
+    WaitingForConnectRequest,
     AssignedClientId,
     SentPlayerInfo,
     SentUuid,
@@ -28,7 +29,7 @@ interface BlacklistCheckCallbackArgs {
 }
 
 class BlacklistCheckClient {
-    private state: ClientState = ClientState.StartOfConnection;
+    private state: ClientState = ClientState.WaitingForConnectRequest;
     private name: string | undefined;
     private bufferPacket: Buffer = Buffer.alloc(0);
     private packetsReceived: RawPacket[] = [];
@@ -39,7 +40,6 @@ class BlacklistCheckClient {
     private disposed: boolean = false;
 
     constructor(private settings: BlacklistCheckClientArgs) {
-        this.state = ClientState.AssignedClientId;
     }
 
     setupCallbacks(args: BlacklistCheckCallbackArgs) {
@@ -58,15 +58,6 @@ class BlacklistCheckClient {
             args.disconnectCb();
             this.dispose()
         })
-        const playerSlotSetPacket = PlayerSlotSetPacket.toBuffer({
-            playerSlotId: 0,
-            serverWantsToRunCheckBytesInClientLoopThread: true,
-        });
-        if (playerSlotSetPacket.TAG === "Error") {
-            this.settings.clientArgs.logging.error(`Error creating player slot set packet: ${playerSlotSetPacket._0}`);
-            return;
-        }
-        this.writeToSocket(playerSlotSetPacket._0, RawSocketWriteReason.BlacklistCheckClientSetup);
     }
 
     handleData(data: Buffer) {
@@ -116,10 +107,26 @@ class BlacklistCheckClient {
         const packet = packetResult._0;
 
         switch (packet.TAG) {
+            case "ConnectRequest":
+                if (this.state !== ClientState.WaitingForConnectRequest) {
+                    this.dispose()
+                    this.packetErrorCheckingBlacklistCb(new Error("Connect request packet received after assigning client ID"))
+                    return
+                }
+                const connectRequestResult = packet._0.VAL();
+                if (connectRequestResult.TAG === "Error") {
+                    this.dispose()
+                    this.packetErrorCheckingBlacklistCb(new Error("Connect request packet could not be parsed. Error: " + connectRequestResult._0.context))
+                    return
+                }
+
+                this.state = ClientState.AssignedClientId;
+                this.sendBlacklistCheckSetupPackets();
+                break;
             case "PlayerInfo":
                 if (this.state !== ClientState.AssignedClientId) {
                     this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Client info packet received before assigning client ID"))
+                    this.packetErrorCheckingBlacklistCb(new Error("Client info packet received before connect request"))
                     return
                 }
                 const playerInfoResult = packet._0.VAL();
@@ -181,6 +188,48 @@ class BlacklistCheckClient {
 
         // Run post-handlers
         this.runPostHandlers(rawPacket);
+    }
+
+    private sendBlacklistCheckSetupPackets(): void {
+        this.sendCheckingStatus();
+        this.sendPlayerSlotSet();
+    }
+
+    private sendCheckingStatus(): void {
+        const statusPacket = StatusPacket.toBuffer({
+            max: 0,
+            text: new NetworkText(0, "Checking access..."),
+            flags: {
+                hideStatusTextPercent: true,
+                statusTextHasShadows: true,
+                runCheckBytes: false
+            }
+        });
+
+        switch (statusPacket.TAG) {
+            case "Ok":
+                this.writeToSocket(statusPacket._0, RawSocketWriteReason.BlacklistCheck);
+                break;
+            case "Error":
+                this.settings.clientArgs.logging.error(`Error creating status packet: ${statusPacket._0}`);
+                break;
+        }
+    }
+
+    private sendPlayerSlotSet(): void {
+        const playerSlotSetPacket = PlayerSlotSetPacket.toBuffer({
+            playerSlotId: 0,
+            serverWantsToRunCheckBytesInClientLoopThread: false,
+        });
+
+        switch (playerSlotSetPacket.TAG) {
+            case "Ok":
+                this.writeToSocket(playerSlotSetPacket._0, RawSocketWriteReason.BlacklistCheckClientSetup);
+                break;
+            case "Error":
+                this.settings.clientArgs.logging.error(`Error creating player slot set packet: ${playerSlotSetPacket._0}`);
+                break;
+        }
     }
 
     handleError(err: Error) {

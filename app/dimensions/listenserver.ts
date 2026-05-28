@@ -17,7 +17,7 @@ import ErrorHelper from './errorhelper.js';
 import BlacklistCheckClient from './blacklistcheckclient.js';
 import * as winston from 'winston';
 import { RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
-import { DisconnectPacket, StatusPacket } from 'terraria-packet';
+import { DisconnectPacket } from 'terraria-packet';
 import {
   DisconnectReason,
   DisconnectReasonCodes,
@@ -256,22 +256,6 @@ export class ListenServer {
     }
   }
 
-  private writeToSocketWithHooks(
-    socket: Net.Socket,
-    packet: Buffer,
-    reason: RawSocketWriteContext['reason'],
-    clientArgs?: ClientArgs
-  ): boolean {
-    const prepared = this.prepareSocketPacketWithHooks(socket, packet, reason, clientArgs);
-    if (prepared === null) {
-      return false;
-    }
-
-    socket.write(prepared.packetWrapper.packet);
-    this.runRawSocketWritePostHandlers(prepared.context, prepared.packetWrapper);
-    return true;
-  }
-
   /**
    * Sends the client the disconnect packet and then drops the connection
    *
@@ -507,7 +491,6 @@ export class ListenServer {
     // and then get checked before they are allowed to connect to a server
     if (this.options.blacklist.enabled && this.blacklist) {
       const configuration = this.options.blacklist;
-      this.sendCheckingIp(clientArgs);
       let client = new BlacklistCheckClient({
         blacklist: this.blacklist,
         clientArgs,
@@ -615,33 +598,6 @@ export class ListenServer {
 
     if (this.options.log.clientBlocked) {
       this.logging.info(`${process.pid}] Client: ${getProperIP(client.socket.remoteAddress)} was blocked from joining.`);
-    }
-  }
-
-  /**
-   * Tells the client that its information is being checked
-   *
-   * @param client The client whose information is being checked
-   */
-  private sendCheckingIp(client: ClientArgs): void {
-    const msg = "Checking access...";
-    let statusPacket = StatusPacket.toBuffer({
-      max: 0,
-      text: new NetworkText(0, msg),
-      flags: {
-        hideStatusTextPercent: true,
-        statusTextHasShadows: true,
-        runCheckBytes: false
-      }
-    })
-
-    switch (statusPacket.TAG) {
-      case "Ok":
-        this.writeToSocketWithHooks(client.socket, statusPacket._0, RawSocketWriteReason.BlacklistCheck, client);
-        break;
-      case "Error":
-        this.logging.error(`Error creating status packet: ${statusPacket._0}`);
-        break;
     }
   }
 
