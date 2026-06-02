@@ -1,7 +1,7 @@
 import * as Net from 'net';
 import * as winston from 'winston';
 import ListenServer from '../../dimensions/listenserver.js';
-import ListenServerArgs from '../../dimensions/listenserverargs.js';
+import ListenServerArgs, { ConnectionRateLimitEntry } from '../../dimensions/listenserverargs.js';
 import RoutingServer from '../../dimensions/routingserver.js';
 import ClientCommandHandler from '../../dimensions/clientcommandhandler.js';
 import ClientPacketHandler from '../../dimensions/clientpackethandler.js';
@@ -14,7 +14,7 @@ import { DisconnectReasonCodes, makeDisconnectReason } from '../../dimensions/di
 describe("ListenServer", () => {
     let listenServer!: ListenServer;
     let connectionsTracker!: Map<string, number>;
-    let connectRateTracker!: Map<string, number>;
+    let connectRateTracker!: Map<string, ConnectionRateLimitEntry>;
 
     beforeEach(() => {
         connectionsTracker = new Map();
@@ -68,7 +68,8 @@ describe("ListenServer", () => {
             },
             connectionRateLimit: {
                 enabled: true,
-                connectionRateLimitPerIP: 1
+                connectionRateLimitPerIP: 1,
+                connectionRateLimitWindowSeconds: 10
             },
             redis: {
                 enabled: false,
@@ -121,7 +122,10 @@ describe("ListenServer", () => {
 
     it("should rollback the connection tracker when rate limit rejects a socket", async () => {
         const ip = "127.0.0.1";
-        connectRateTracker.set(ip, 1);
+        connectRateTracker.set(ip, {
+            count: 1,
+            expiresAtMs: Date.now() + 10000,
+        });
 
         const removeAllListeners = jasmine.createSpy("removeAllListeners");
         const once = jasmine.createSpy("once");
@@ -150,6 +154,53 @@ describe("ListenServer", () => {
         if (parsed.TAG === "Ok") {
             expect(parsed._0.TAG).toBe("Disconnect");
         }
+    });
+
+    it("should reject a second rate-limited connection within the configured window", () => {
+        const ip = "127.0.0.1";
+        const before = Date.now();
+        const socket = {
+            remoteAddress: ip,
+            once: jasmine.createSpy("once"),
+            end: jasmine.createSpy("end"),
+            destroy: jasmine.createSpy("destroy"),
+            destroyed: false,
+            writable: true
+        } as unknown as Net.Socket;
+
+        expect((listenServer as any).enforceConnectionRateLimit(socket)).toBe(false);
+        const entry = connectRateTracker.get(ip);
+        expect(entry).toBeDefined();
+        expect(entry!.count).toBe(1);
+        expect(entry!.expiresAtMs).toBeGreaterThanOrEqual(before + 10000);
+        expect(entry!.expiresAtMs).toBeLessThanOrEqual(Date.now() + 10000);
+
+        expect((listenServer as any).enforceConnectionRateLimit(socket)).toBe(true);
+        expect(socket.end).toHaveBeenCalled();
+        expect(connectRateTracker.get(ip)!.count).toBe(1);
+    });
+
+    it("should allow a rate-limited IP after the configured window expires", () => {
+        const ip = "127.0.0.1";
+        connectRateTracker.set(ip, {
+            count: 1,
+            expiresAtMs: Date.now() - 1,
+        });
+        const socket = {
+            remoteAddress: ip,
+            once: jasmine.createSpy("once"),
+            end: jasmine.createSpy("end"),
+            destroy: jasmine.createSpy("destroy"),
+            destroyed: false,
+            writable: true
+        } as unknown as Net.Socket;
+
+        expect((listenServer as any).enforceConnectionRateLimit(socket)).toBe(false);
+        const entry = connectRateTracker.get(ip);
+        expect(entry).toBeDefined();
+        expect(entry!.count).toBe(1);
+        expect(entry!.expiresAtMs).toBeGreaterThan(Date.now());
+        expect(socket.end).not.toHaveBeenCalled();
     });
 
     it("should send a disconnect packet when no routing server is available", async () => {

@@ -80,7 +80,8 @@ options:
   # Whether to limit creation of connections
   connectionRateLimit:
     enabled: false
-    connectionRateLimitPerIP: 10
+    connectionRateLimitPerIP: 1
+    connectionRateLimitWindowSeconds: 10
 
   # Whether to use redis for detached reloading
   redis:

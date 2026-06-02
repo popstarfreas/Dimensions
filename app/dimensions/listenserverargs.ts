@@ -6,6 +6,11 @@ import Blacklist from './blacklist.js';
 import { ConfigOptions, ConfigListenServer } from './configloader.js';
 import * as winston from 'winston';
 
+export interface ConnectionRateLimitEntry {
+  count: number;
+  expiresAtMs: number;
+}
+
 export interface ListenServerArgs {
   info: ConfigListenServer;
   serversDetails: { [id: string]: ServerDetails };
@@ -16,7 +21,7 @@ export interface ListenServerArgs {
   logging: winston.Logger;
   blacklist?: Blacklist;
   connectionsTracker: Map<string, number>;
-  connectRateTracker: Map<string, number>;
+  connectRateTracker: Map<string, ConnectionRateLimitEntry>;
 };
 
 export default ListenServerArgs;

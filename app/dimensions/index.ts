@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as redis from 'redis';
 import ErrorHelper from './errorhelper.js';
 import RoutingServer from './routingserver.js';
-import ListenServerArgs from './listenserverargs.js';
+import ListenServerArgs, { ConnectionRateLimitEntry } from './listenserverargs.js';
 import ListenServer from './listenserver.js';
 import { ConfigSettings, ConfigOptions, reloadConfig, usingOldConfig, oldConfigFilePath, configurationDirectory } from './configloader.js';
 import ClientCommandHandler from './clientcommandhandler.js';
@@ -37,7 +37,7 @@ class Dimensions {
   private logging: winston.Logger;
   private blacklist?: Blacklist;
   private connectionsTracker: Map<string, number> = new Map();
-  private connectRateTracker: Map<string, number> = new Map();
+  private connectRateTracker: Map<string, ConnectionRateLimitEntry> = new Map();
   private extensionStorage: Map<string, any> = new Map();
   private hotReloadTimeout: NodeJS.Timeout | null = null;
 

@@ -92,9 +92,16 @@ export interface ConnectionLimit {
   kickReason: string;
 }
 
+export interface UnvalidatedConnectionRateLimit {
+  enabled: boolean;
+  connectionRateLimitPerIP: number;
+  connectionRateLimitWindowSeconds?: number;
+}
+
 export interface ConnectionRateLimit {
   enabled: boolean;
   connectionRateLimitPerIP: number;
+  connectionRateLimitWindowSeconds: number;
 }
 
 export interface RedisConfig {
@@ -142,7 +149,7 @@ export interface UnvalidatedConfigOptions {
   blacklist: UnvalidatedBlackList;
   log: LogOptions;
   connectionLimit: ConnectionLimit;
-  connectionRateLimit: ConnectionRateLimit;
+  connectionRateLimit: UnvalidatedConnectionRateLimit;
   redis: RedisConfig;
   nameChanges?: NameChanges;
   language?: string;
@@ -221,11 +228,16 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
   const debuffOnSwitch = { enabled: true, buffTypes: [ /* Webbed */ 149, /* Stoned */ 156], debuffTimeInSeconds: 5 }
   const disconnectOnKick: DisconnectOnKick = { type: "never" };
   const blacklist: BlackList = { enabled: false };
+  const connectionRateLimit: ConnectionRateLimit = {
+    ...unvalidatedConfig.options.connectionRateLimit,
+    connectionRateLimitWindowSeconds: unvalidatedConfig.options.connectionRateLimit.connectionRateLimitWindowSeconds ?? 1,
+  };
   let validatedConfig: Config = {
     servers: unvalidatedConfig.servers,
     options: {
       ...unvalidatedConfig.options,
       blacklist,
+      connectionRateLimit,
       debuffOnSwitch,
       disconnectOnKick,
       language: Language.english,
@@ -238,6 +250,11 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
       assert.ok(unvalidatedConfig.options.nameChanges.mode === "legacy" || unvalidatedConfig.options.nameChanges.mode === "rewrite", "nameChanges.mode must be either 'legacy' or 'rewrite'");
       assert.ok(Array.isArray(unvalidatedConfig.options.nameChanges.exclusions), "nameChanges.exclusions must be an array");
     }
+
+    assert.ok(
+      Number.isFinite(connectionRateLimit.connectionRateLimitWindowSeconds) && connectionRateLimit.connectionRateLimitWindowSeconds > 0,
+      "connectionRateLimit.connectionRateLimitWindowSeconds must be greater than 0"
+    );
 
     if (typeof unvalidatedConfig.options.debuffOnSwitch !== "undefined") {
       if (!unvalidatedConfig.options.debuffOnSwitch.enabled) {

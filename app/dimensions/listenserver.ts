@@ -18,6 +18,7 @@ import BlacklistCheckClient from './blacklistcheckclient.js';
 import * as winston from 'winston';
 import { RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
 import { DisconnectPacket } from 'terraria-packet';
+import { ConnectionRateLimitEntry } from './listenserverargs.js';
 import {
   DisconnectReason,
   DisconnectReasonCodes,
@@ -45,7 +46,7 @@ export class ListenServer {
   private logging: winston.Logger;
   private blacklist?: Blacklist;
   private connectionsTracker: Map<string, number>;
-  private connectRateTracker: Map<string, number>;
+  private connectRateTracker: Map<string, ConnectionRateLimitEntry>;
   private limiterInterval: NodeJS.Timeout | null = null;
 
   ServerHandleError: (error: Error) => void;
@@ -99,8 +100,16 @@ export class ListenServer {
 
   private startConnectionRateLimitTimer() {
     this.limiterInterval = setInterval(() => {
-      this.connectRateTracker.clear();
+      this.clearExpiredConnectionRateLimitEntries();
     }, 1000);
+  }
+
+  private clearExpiredConnectionRateLimitEntries(now = Date.now()): void {
+    for (const [ip, entry] of this.connectRateTracker) {
+      if (entry.expiresAtMs <= now) {
+        this.connectRateTracker.delete(ip);
+      }
+    }
   }
 
   /**
@@ -426,24 +435,34 @@ export class ListenServer {
     if (typeof ip === "undefined") {
       return connectionDropped;
     }
-    const count = this.connectRateTracker.get(ip);
-    if (typeof count !== "undefined") {
-      if (count + 1 > this.options.connectionRateLimit.connectionRateLimitPerIP) {
-        this.disconnectClient(
-          socket,
-          this.options.language.phrases.connectionRateLimitExceeded,
-          RawSocketWriteReason.Other,
-          makeDisconnectReason(
-            DisconnectReasonCodes.ConnectionRateLimitExceeded,
-            `connection rate limit exceeded: ${this.options.connectionRateLimit.connectionRateLimitPerIP}/s`
-          )
-        );
-        connectionDropped = true;
-      } else {
-        this.connectRateTracker.set(ip, count + 1);
-      }
+
+    const now = Date.now();
+    const windowMs = this.options.connectionRateLimit.connectionRateLimitWindowSeconds * 1000;
+    const countLimit = this.options.connectionRateLimit.connectionRateLimitPerIP;
+    const countWindow = `${countLimit}/${this.options.connectionRateLimit.connectionRateLimitWindowSeconds}s`;
+    const entry = this.connectRateTracker.get(ip);
+
+    if (typeof entry === "undefined" || entry.expiresAtMs <= now) {
+      this.connectRateTracker.set(ip, {
+        count: 1,
+        expiresAtMs: now + windowMs,
+      });
+      return connectionDropped;
+    }
+
+    if (entry.count + 1 > countLimit) {
+      this.disconnectClient(
+        socket,
+        this.options.language.phrases.connectionRateLimitExceeded,
+        RawSocketWriteReason.Other,
+        makeDisconnectReason(
+          DisconnectReasonCodes.ConnectionRateLimitExceeded,
+          `connection rate limit exceeded: ${countWindow}`
+        )
+      );
+      connectionDropped = true;
     } else {
-      this.connectRateTracker.set(ip, 1);
+      entry.count += 1;
     }
 
     return connectionDropped;
