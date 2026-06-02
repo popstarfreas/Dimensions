@@ -112,7 +112,8 @@ options:
   # Whether to limit creation of connections
   connectionRateLimit:
     enabled: false
-    connectionRateLimitPerIP: 10  # num of new connections per second per ip
+    connectionRateLimitPerIP: 1  # num of new connections per window per ip
+    connectionRateLimitWindowSeconds: 10
 
   # Whether to use redis for detached reloading
   redis:

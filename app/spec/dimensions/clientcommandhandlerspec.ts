@@ -71,7 +71,8 @@ describe("ClientCommandHandler", () => {
             },
             connectionRateLimit: {
                 enabled: false,
-                connectionRateLimitPerIP: 5
+                connectionRateLimitPerIP: 5,
+                connectionRateLimitWindowSeconds: 1
             },
             redis: {
                 enabled: false,
