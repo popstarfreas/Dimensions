@@ -2,6 +2,7 @@
   "name": "@popstarfreas/dimensions",
   "version": "7.1.0-alpha.3",
   "type": "module",
+  "packageManager": "pnpm@10.29.3",
   "repository": {
     "type": "git",
     "url": "git://github.com/popstarfreas/Dimensions.git"

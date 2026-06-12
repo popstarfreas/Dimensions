@@ -14,6 +14,7 @@ interface NativeTcpRttResult {
 
 interface NativeTcpRttAddon {
   getTcpRttMicros(fd: number): NativeTcpRttResult;
+  getTcpRttMicrosByEndpoint?: (localAddress: string, localPort: number, remoteAddress: string, remotePort: number) => NativeTcpRttResult;
 }
 
 type SocketWithHandle = Net.Socket & {
@@ -25,6 +26,28 @@ type SocketWithHandle = Net.Socket & {
 function getSocketFd(socket: Net.Socket): number | null {
   const fd = (socket as SocketWithHandle)._handle?.fd;
   return typeof fd === "number" && Number.isFinite(fd) ? fd : null;
+}
+
+function getSocketEndpoint(socket: Net.Socket): { localAddress: string, localPort: number, remoteAddress: string, remotePort: number } | null {
+  const localAddress = socket.localAddress;
+  const localPort = socket.localPort;
+  const remoteAddress = socket.remoteAddress;
+  const remotePort = socket.remotePort;
+  if (
+    typeof localAddress !== "string" ||
+    typeof localPort !== "number" ||
+    typeof remoteAddress !== "string" ||
+    typeof remotePort !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    localAddress,
+    localPort,
+    remoteAddress,
+    remotePort,
+  };
 }
 
 function getPackageRoot(): string {
@@ -55,6 +78,10 @@ class NativeTcpRttProvider implements TcpRttProvider {
       return unavailableTcpRttSample(this.loadError ?? "native TCP RTT addon unavailable");
     }
 
+    if (process.platform === "win32") {
+      return this.sampleWindows(socket);
+    }
+
     const fd = getSocketFd(socket);
     if (fd === null) {
       return unavailableTcpRttSample("socket file descriptor unavailable");
@@ -63,6 +90,30 @@ class NativeTcpRttProvider implements TcpRttProvider {
     let result: NativeTcpRttResult;
     try {
       result = this.addon.getTcpRttMicros(fd);
+    } catch (e) {
+      return unavailableTcpRttSample(ErrorHelper.toMessage(e));
+    }
+
+    if (!result.available || typeof result.rttMicros !== "number") {
+      return unavailableTcpRttSample(result.error ?? "TCP RTT unavailable");
+    }
+
+    return tcpInfoSample(result.rttMicros);
+  }
+
+  private sampleWindows(socket: Net.Socket): TcpRttSample {
+    if (this.addon?.getTcpRttMicrosByEndpoint === undefined) {
+      return unavailableTcpRttSample("native TCP RTT addon does not support Windows endpoint lookup");
+    }
+
+    const endpoint = getSocketEndpoint(socket);
+    if (endpoint === null) {
+      return unavailableTcpRttSample("socket endpoint unavailable");
+    }
+
+    let result: NativeTcpRttResult;
+    try {
+      result = this.addon.getTcpRttMicrosByEndpoint(endpoint.localAddress, endpoint.localPort, endpoint.remoteAddress, endpoint.remotePort);
     } catch (e) {
       return unavailableTcpRttSample(ErrorHelper.toMessage(e));
     }

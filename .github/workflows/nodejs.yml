@@ -14,14 +14,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.29.3
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-    - name: npm install, build, and test
+        cache: pnpm
+    - name: pnpm install, build, and test
       run: |
-        npm install
-        npm run test
+        pnpm install --frozen-lockfile
+        pnpm test
       env:
         CI: true
 
@@ -35,14 +39,18 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.29.3
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+        cache: pnpm
     - name: Build native prebuild
       run: |
-        npm install
-        npm run native:prebuild
+        pnpm install --frozen-lockfile
+        pnpm native:prebuild
       env:
         CI: true
     - uses: actions/upload-artifact@v4

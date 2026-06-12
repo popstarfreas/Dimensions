@@ -12,8 +12,7 @@ cp native-addon/binding.gyp release/native-addon/binding.gyp
 cp native-addon/tcp_rtt.cc release/native-addon/tcp_rtt.cc
 if [ -d native-addon/prebuilds ]; then
   cp -r native-addon/prebuilds release/native-addon/prebuilds
-fi
-if [ -d native-addon/build/Release ]; then
+elif [ -d native-addon/build/Release ]; then
   mkdir -p release/native-addon/build
   cp -r native-addon/build/Release release/native-addon/build/Release
 fi
