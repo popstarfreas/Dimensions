@@ -26,6 +26,7 @@ import {
   DisconnectReasonCodes,
   makeDisconnectReason,
 } from './disconnectreason.js';
+import { TcpRttSample, unavailableTcpRttSample } from './tcprtt/types.js';
 
 import { DisconnectPacket, NetModuleLoadPacket, PlayerBuffAddPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
@@ -62,6 +63,11 @@ class Client {
   public packetQueue: PacketQueueItem[];
   public logging: winston.Logger;
   public version: string;
+  public tcpRtt: TcpRttSample;
+  public clientTcpRtt: TcpRttSample;
+  public serverTcpRtt: TcpRttSample;
+  public overallTcpRtt: TcpRttSample;
+  public playerIdAssigned: boolean;
   private globalTracking: GlobalTracking;
   private bufferPacket: Buffer;
   private extraJoinInformation: string | undefined;
@@ -165,6 +171,11 @@ class Client {
     this.version = "unknown";
     this.disconnectTimeout = null;
     this.dimensionsDisconnectReason = null;
+    this.tcpRtt = unavailableTcpRttSample();
+    this.clientTcpRtt = this.tcpRtt;
+    this.serverTcpRtt = unavailableTcpRttSample();
+    this.overallTcpRtt = unavailableTcpRttSample();
+    this.playerIdAssigned = false;
   }
 
   /**
@@ -174,6 +185,19 @@ class Client {
    */
   public getPacketHandler(): ClientPacketHandler {
     return this.globalHandlers.clientPacketHandler;
+  }
+
+  public setTcpRttSample(sample: TcpRttSample): void {
+    this.tcpRtt = sample;
+    this.clientTcpRtt = sample;
+  }
+
+  public setServerTcpRttSample(sample: TcpRttSample): void {
+    this.serverTcpRtt = sample;
+  }
+
+  public setOverallTcpRttSample(sample: TcpRttSample): void {
+    this.overallTcpRtt = sample;
   }
 
   public sendExtraInformation(): void {

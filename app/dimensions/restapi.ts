@@ -31,6 +31,41 @@ export interface ApiResponse {
     players: string[] | string;
 }
 
+export interface RttApiResponse {
+    status: number;
+    players: Array<{
+        id: string;
+        uuid: string;
+        name: string;
+        ip: string;
+        server: string;
+        playerId: number | null;
+        available: boolean;
+        rttMs: number | null;
+        rttMicros: number | null;
+        clientRtt: {
+            rttMs: number | null;
+            rttMicros: number | null;
+            updatedAt: number | null;
+            available: boolean;
+        };
+        serverRtt: {
+            rttMs: number | null;
+            rttMicros: number | null;
+            updatedAt: number | null;
+            available: boolean;
+        };
+        overallRtt: {
+            rttMs: number | null;
+            rttMicros: number | null;
+            updatedAt: number | null;
+            available: boolean;
+        };
+        updatedAt: number | null;
+        source: string;
+    }>;
+}
+
 export interface ServersDetails {
     [id: string]: ServerDetails;
 }
@@ -50,8 +85,9 @@ class RestApi {
     private openSockets: { [id: string]: Net.Socket };
     private response?: RestApiResponse;
     private logging: winston.Logger;
+    private rttEndpointEnabled: boolean;
 
-    constructor(port: number, globalTracking: GlobalTracking, serversDetails: ServersDetails, servers: RoutingServers, response: RestApiResponse | undefined, logging: winston.Logger) {
+    constructor(port: number, globalTracking: GlobalTracking, serversDetails: ServersDetails, servers: RoutingServers, response: RestApiResponse | undefined, logging: winston.Logger, rttEndpointEnabled: boolean) {
         this.servers = servers;
         this.port = port;
         this.globalTracking = globalTracking;
@@ -59,6 +95,7 @@ class RestApi {
         this.response = response;
         this.openSockets = {};
         this.logging = logging;
+        this.rttEndpointEnabled = rttEndpointEnabled;
 
         this.createServer();
         this.logging.info(`RestApi on ${port} started.`);
@@ -76,7 +113,8 @@ class RestApi {
     /* Used by the reload command to check if the port has changed, and if so
      * will close existing connections and the socket server, then start a new
      * one using the new port */
-    public handleReload(port: number): void {
+    public handleReload(port: number, rttEndpointEnabled: boolean): void {
+        this.rttEndpointEnabled = rttEndpointEnabled;
         if (this.port !== port) {
             const socketIds = Object.keys(this.openSockets);
             let id: string;
@@ -92,12 +130,16 @@ class RestApi {
         }
     }
 
-    /* Responds to a new socket with the /v2/status-like response and then closes
-     * the connection */
+    /* Responds to a new socket with a routed API response and then closes the connection. */
     private handleSocket(socket: Net.Socket): void {
         const id: string = uuid.v4();
         this.openSockets[id] = socket;
+        let requestHandled = false;
+        let fallbackTimeout: NodeJS.Timeout | null = null;
         socket.on("close", () => {
+            if (fallbackTimeout !== null) {
+                clearTimeout(fallbackTimeout);
+            }
             delete this.openSockets[id];
         });
 
@@ -106,10 +148,56 @@ class RestApi {
         });
 
         socket.setEncoding("utf8");
-        this.sendInformation(socket)
-            .then(() => {
-                socket.destroy();
-            });
+        socket.once("data", (request) => {
+            requestHandled = true;
+            if (fallbackTimeout !== null) {
+                clearTimeout(fallbackTimeout);
+            }
+            this.handleRequest(socket, request.toString())
+                .then(() => {
+                    socket.destroy();
+                });
+        });
+
+        fallbackTimeout = setTimeout(() => {
+            if (requestHandled || socket.destroyed) {
+                return;
+            }
+
+            this.sendInformation(socket)
+                .then(() => {
+                    socket.destroy();
+                });
+        }, 100);
+        fallbackTimeout.unref();
+    }
+
+    private async handleRequest(socket: Net.Socket, request: string): Promise<void> {
+        const path = this.getRequestPath(request);
+        if (path === "/dimensions/rtt") {
+            if (this.rttEndpointEnabled) {
+                this.sendTcpRttInformation(socket);
+            } else {
+                this.sendJson(socket, 404, { status: 404, error: "TCP RTT endpoint disabled" });
+            }
+            return;
+        }
+
+        await this.sendInformation(socket);
+    }
+
+    private getRequestPath(request: string): string {
+        const firstLine = request.split(/\r?\n/, 1)[0] ?? "";
+        const match = /^GET\s+([^\s]+)\s+HTTP\/\d(?:\.\d)?$/i.exec(firstLine);
+        if (match === null) {
+            return "/v2/status";
+        }
+
+        try {
+            return new URL(match[1], "http://dimensions.local").pathname;
+        } catch (e) {
+            return "/v2/status";
+        }
     }
 
     /* Generates a /v2/status-like response using the tracking server counts and player names
@@ -155,7 +243,61 @@ class RestApi {
         // response.players = playerNames;
 
         response.playercount = playerNames.length;
-        socket.write("HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: *\nContent-Type:application/json; charset=utf-8\n\n" + JSON.stringify(response));
+        this.sendJson(socket, 200, response);
+    }
+
+    private sendTcpRttInformation(socket: Net.Socket): void {
+        const response: RttApiResponse = {
+            status: 200,
+            players: Object.values(this.globalTracking.tcpRtt.clients).map((client) => ({
+                id: client.id,
+                uuid: client.uuid,
+                name: client.name,
+                ip: client.ip,
+                server: client.server,
+                playerId: client.playerId,
+                available: client.available,
+                rttMs: client.rttMs,
+                rttMicros: client.rttMicros,
+                clientRtt: {
+                    rttMs: client.clientRtt.rttMs,
+                    rttMicros: client.clientRtt.rttMicros,
+                    updatedAt: client.clientRtt.updatedAt,
+                    available: client.clientRtt.available,
+                },
+                serverRtt: {
+                    rttMs: client.serverRtt.rttMs,
+                    rttMicros: client.serverRtt.rttMicros,
+                    updatedAt: client.serverRtt.updatedAt,
+                    available: client.serverRtt.available,
+                },
+                overallRtt: {
+                    rttMs: client.overallRtt.rttMs,
+                    rttMicros: client.overallRtt.rttMicros,
+                    updatedAt: client.overallRtt.updatedAt,
+                    available: client.overallRtt.available,
+                },
+                updatedAt: client.updatedAt,
+                source: client.source,
+            }))
+        };
+
+        this.sendJson(socket, 200, response);
+    }
+
+    private sendJson(socket: Net.Socket, statusCode: number, response: unknown): void {
+        socket.write(`HTTP/1.1 ${statusCode} ${this.getStatusText(statusCode)}\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: application/json; charset=utf-8\r\n\r\n${JSON.stringify(response)}`);
+    }
+
+    private getStatusText(statusCode: number): string {
+        switch (statusCode) {
+            case 200:
+                return "OK";
+            case 404:
+                return "Not Found";
+            default:
+                return "OK";
+        }
     }
 
     public close(): void {

@@ -5,21 +5,55 @@ on: [push, pull_request]
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest]
         node-version: [20.x, 22.x, 24.x]
 
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.29.3
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-    - name: npm install, build, and test
+        cache: pnpm
+    - name: pnpm install, build, and test
       run: |
-        npm install
-        npm run test
+        pnpm install --frozen-lockfile
+        pnpm test
       env:
         CI: true
+
+  prebuild:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.29.3
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: pnpm
+    - name: Build native prebuild
+      run: |
+        pnpm install --frozen-lockfile
+        pnpm native:prebuild
+      env:
+        CI: true
+    - uses: actions/upload-artifact@v4
+      with:
+        name: tcp-rtt-prebuild-${{ runner.os }}
+        path: native-addon/prebuilds

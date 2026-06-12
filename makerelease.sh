@@ -7,6 +7,15 @@ mkdir release
 cp -r build release/build
 cp package.json release/package.json
 cp pnpm-lock.yaml release/pnpm-lock.yaml
+mkdir release/native-addon
+cp native-addon/binding.gyp release/native-addon/binding.gyp
+cp native-addon/tcp_rtt.cc release/native-addon/tcp_rtt.cc
+if [ -d native-addon/prebuilds ]; then
+  cp -r native-addon/prebuilds release/native-addon/prebuilds
+elif [ -d native-addon/build/Release ]; then
+  mkdir -p release/native-addon/build
+  cp -r native-addon/build/Release release/native-addon/build/Release
+fi
 mkdir release/configuration
 cp configuration/config.yaml.example release/configuration/config.yaml.example
 cd release/build

@@ -70,6 +70,15 @@ options:
       maxPlayers: 400
       version: "1.4.3.6"
 
+  # Measures proxy-to-client TCP RTT using OS TCP socket info.
+  # Requires a supported native addon build for the current platform.
+  tcpRtt:
+    enabled: false
+    sampleIntervalMs: 2000
+    exportToServers: true
+    restApiEndpoint: true
+    pingCommandPassThrough: false
+
   # Whether or not to block invisibility buff.
   # This was added here because TShock's version is broken
   blockInvis: false
@@ -159,6 +168,8 @@ options:
   # - dimensionDropped
   # - connectionRateLimitExceeded
   # - noServersAvailable
+  # - currentTcpRtt
+  # - tcpRttUnavailable
   #
   # Example:
   # languageOverrides:

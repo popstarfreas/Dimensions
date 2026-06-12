@@ -86,6 +86,22 @@ export interface RestApi {
   response?: RestApiResponse;
 }
 
+export interface UnvalidatedTcpRttOptions {
+  enabled?: boolean;
+  sampleIntervalMs?: number;
+  exportToServers?: boolean;
+  restApiEndpoint?: boolean;
+  pingCommandPassThrough?: boolean;
+}
+
+export interface TcpRttOptions {
+  enabled: boolean;
+  sampleIntervalMs: number;
+  exportToServers: boolean;
+  restApiEndpoint: boolean;
+  pingCommandPassThrough: boolean;
+}
+
 export interface ConnectionLimit {
   enabled: boolean;
   connectionLimitPerIP: number;
@@ -151,6 +167,7 @@ export interface UnvalidatedConfigOptions {
   connectionLimit: ConnectionLimit;
   connectionRateLimit: UnvalidatedConnectionRateLimit;
   redis: RedisConfig;
+  tcpRtt?: UnvalidatedTcpRttOptions;
   nameChanges?: NameChanges;
   language?: string;
   languageOverrides?: Language.LanguagePhrasesOverrides;
@@ -170,6 +187,7 @@ export interface ConfigOptions {
   connectionLimit: ConnectionLimit;
   connectionRateLimit: ConnectionRateLimit;
   redis: RedisConfig;
+  tcpRtt: TcpRttOptions;
   nameChanges?: NameChanges;
   language: Language.LanguageDefinition,
   debuffOnSwitch: DebuffOnSwitch;
@@ -228,6 +246,13 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
   const debuffOnSwitch = { enabled: true, buffTypes: [ /* Webbed */ 149, /* Stoned */ 156], debuffTimeInSeconds: 5 }
   const disconnectOnKick: DisconnectOnKick = { type: "never" };
   const blacklist: BlackList = { enabled: false };
+  const tcpRtt: TcpRttOptions = {
+    enabled: unvalidatedConfig.options.tcpRtt?.enabled ?? false,
+    sampleIntervalMs: unvalidatedConfig.options.tcpRtt?.sampleIntervalMs ?? 2000,
+    exportToServers: unvalidatedConfig.options.tcpRtt?.exportToServers ?? true,
+    restApiEndpoint: unvalidatedConfig.options.tcpRtt?.restApiEndpoint ?? true,
+    pingCommandPassThrough: unvalidatedConfig.options.tcpRtt?.pingCommandPassThrough ?? false,
+  };
   const connectionRateLimit: ConnectionRateLimit = {
     ...unvalidatedConfig.options.connectionRateLimit,
     connectionRateLimitWindowSeconds: unvalidatedConfig.options.connectionRateLimit.connectionRateLimitWindowSeconds ?? 1,
@@ -238,6 +263,7 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
       ...unvalidatedConfig.options,
       blacklist,
       connectionRateLimit,
+      tcpRtt,
       debuffOnSwitch,
       disconnectOnKick,
       language: Language.english,
@@ -254,6 +280,11 @@ function validateConfig(unvalidatedConfig: UnvalidatedConfig): Config {
     assert.ok(
       Number.isFinite(connectionRateLimit.connectionRateLimitWindowSeconds) && connectionRateLimit.connectionRateLimitWindowSeconds > 0,
       "connectionRateLimit.connectionRateLimitWindowSeconds must be greater than 0"
+    );
+
+    assert.ok(
+      Number.isFinite(tcpRtt.sampleIntervalMs) && tcpRtt.sampleIntervalMs > 0,
+      "tcpRtt.sampleIntervalMs must be greater than 0"
     );
 
     if (typeof unvalidatedConfig.options.debuffOnSwitch !== "undefined") {

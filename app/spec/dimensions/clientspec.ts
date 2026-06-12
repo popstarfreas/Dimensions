@@ -88,6 +88,13 @@ describe("client", () => {
                 host: "localhost",
                 port: 6379
             },
+            tcpRtt: {
+                enabled: false,
+                sampleIntervalMs: 2000,
+                exportToServers: true,
+                restApiEndpoint: true,
+                pingCommandPassThrough: false
+            },
             language: Language.english,
             debuffOnSwitch: { enabled: false },
             disconnectOnKick: { type: "never" },
@@ -145,7 +152,10 @@ describe("client", () => {
         };
 
         globalTracking = {
-            names: {}
+            names: {},
+            tcpRtt: {
+                clients: {}
+            }
         };
 
         let clientArgs: ClientArgs = {

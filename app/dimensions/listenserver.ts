@@ -25,6 +25,7 @@ import {
   formatDisconnectReason,
   makeDisconnectReason,
 } from './disconnectreason.js';
+import TcpRttMonitor from './tcprtt/tcprttmonitor.js';
 
 const FORCE_SOCKET_CLOSE_TIMEOUT_MS = 3000;
 
@@ -47,6 +48,7 @@ export class ListenServer {
   private blacklist?: Blacklist;
   private connectionsTracker: Map<string, number>;
   private connectRateTracker: Map<string, ConnectionRateLimitEntry>;
+  private tcpRttMonitor?: TcpRttMonitor;
   private limiterInterval: NodeJS.Timeout | null = null;
 
   ServerHandleError: (error: Error) => void;
@@ -66,6 +68,7 @@ export class ListenServer {
     this.blacklist = args.blacklist;
     this.connectionsTracker = args.connectionsTracker;
     this.connectRateTracker = args.connectRateTracker;
+    this.tcpRttMonitor = args.tcpRttMonitor;
 
     for (var i = 0; i < this.routingServers.length; i++) {
       this.serversDetails[this.routingServers[i].name] = {
@@ -181,6 +184,7 @@ export class ListenServer {
       this.clients[i].server.socket.removeListener('data', this.clients[i].ServerHandleData);
       this.clients[i].server.socket.removeListener('error', this.clients[i].ServerHandleError);
       this.clients[i].server.socket.removeListener('close', this.clients[i].ServerHandleClose);
+      this.tcpRttMonitor?.unregister(this.clients[i]);
       this.clients[i].disconnect(this.options.language.phrases.close);
     }
     this.clients = [];
@@ -597,6 +601,7 @@ export class ListenServer {
     if (bufferPacket !== undefined) {
       client.handleDataSend(bufferPacket);
     }
+    this.tcpRttMonitor?.register(client);
     this.extensionClientConnectEvent(client);
     return client;
   }
@@ -779,6 +784,7 @@ export class ListenServer {
           const serverName = client.server.name || "unknown";
           this.logDimensionsDisconnect(ip, serverName, this.getClientCountAfterDisconnect(client), client.getDimensionsDisconnectReason());
         }
+        this.tcpRttMonitor?.unregister(client);
         client.handleClose();
         for (let i: number = 0; i < this.clients.length; i++) {
           if (this.clients[i].ID === client.ID) {
