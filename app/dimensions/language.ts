@@ -26,6 +26,8 @@ export interface LanguagePhrasesOverrides {
   close?: string,
   connectionRateLimitExceeded?: string,
   noServersAvailable?: string,
+  currentTcpRtt?: string,
+  tcpRttUnavailable?: string,
 }
 
 interface LanguagePhrases {
@@ -49,6 +51,8 @@ interface LanguagePhrases {
   close: string,
   connectionRateLimitExceeded: string,
   noServersAvailable: string,
+  currentTcpRtt: string,
+  tcpRttUnavailable: string,
 }
 
 export const english: LanguageDefinition = {
@@ -78,6 +82,8 @@ export const english: LanguageDefinition = {
     close: "The server is being restarted. Please rejoin.",
     connectionRateLimitExceeded: "Too many connection attempts. Please wait and try again.",
     noServersAvailable: "No servers are currently available. Please try again.",
+    currentTcpRtt: "Current TCP RTT: ${clientRtt} (proxy), ${serverRtt} (terraria server), ${overallRtt} (overall).",
+    tcpRttUnavailable: "TCP RTT is currently unavailable.",
   },
 };
 
@@ -110,5 +116,9 @@ export const chinese: LanguageDefinition = {
     connectionRateLimitExceeded: "连接请求过于频繁。请稍候再试。",
     // TODO: This is google translated, should be reviewed by native speaker
     noServersAvailable: "当前没有可用的服务器。请稍后重试。",
+    // TODO: This is google translated, should be reviewed by native speaker
+    currentTcpRtt: "当前 TCP RTT：${clientRtt}（代理），${serverRtt}（服务器），${overallRtt}（总计）。",
+    // TODO: This is google translated, should be reviewed by native speaker
+    tcpRttUnavailable: "当前无法获取 TCP RTT。",
   },
 };

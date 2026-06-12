@@ -11,6 +11,7 @@ import { ConfigOptions } from '../../dimensions/configloader.js';
 import * as winston from 'winston';
 import ClientState from '../../dimensions/clientstate.js';
 import * as Language from '../../dimensions/language.js';
+import { tcpInfoSample, unavailableTcpRttSample } from '../../dimensions/tcprtt/types.js';
 type DoneFn = (err?: unknown) => void;
 
 describe("ClientCommandHandler", () => {
@@ -79,6 +80,13 @@ describe("ClientCommandHandler", () => {
                 host: "localhost",
                 port: 6379
             },
+            tcpRtt: {
+                enabled: false,
+                sampleIntervalMs: 2000,
+                exportToServers: true,
+                restApiEndpoint: true,
+                pingCommandPassThrough: false
+            },
             language: Language.english,
             debuffOnSwitch: { enabled: false },
             disconnectOnKick: { type: "never" },
@@ -136,7 +144,10 @@ describe("ClientCommandHandler", () => {
         };
 
         globalTracking = {
-            names: {}
+            names: {},
+            tcpRtt: {
+                clients: {}
+            }
         };
 
         let clientArgs: ClientArgs = {
@@ -235,6 +246,64 @@ describe("ClientCommandHandler", () => {
             clientSocketDataHandlers.push(handler);
             let command = client.globalHandlers.command.parseCommand("/who");
             client.globalHandlers.command.handle(command, client);
+        });
+    });
+
+    describe("ping", () => {
+        it("should send the current TCP RTT to the player", (done: DoneFn) => {
+            client.setTcpRttSample(tcpInfoSample(42700, 123456789));
+            client.setServerTcpRttSample(tcpInfoSample(5300, 123456790));
+            client.setOverallTcpRttSample(tcpInfoSample(48000, 123456790));
+
+            const handler = (data: string) => {
+                if (data.indexOf("Current TCP RTT: 43ms (proxy), 5.3ms (terraria server), 48ms (overall).") === -1) {
+                    return;
+                }
+                clientSocketDataHandlers = clientSocketDataHandlers.filter(h => h !== handler);
+                done();
+            };
+            clientSocketDataHandlers.push(handler);
+
+            let command = client.globalHandlers.command.parseCommand("/ping");
+            let handled = client.globalHandlers.command.handle(command, client);
+            expect(handled).toBe(true);
+        });
+
+        it("should say TCP RTT is unavailable when no sample exists", (done: DoneFn) => {
+            client.setTcpRttSample(unavailableTcpRttSample());
+
+            const handler = (data: string) => {
+                if (data.indexOf("TCP RTT is currently unavailable.") === -1) {
+                    return;
+                }
+                clientSocketDataHandlers = clientSocketDataHandlers.filter(h => h !== handler);
+                done();
+            };
+            clientSocketDataHandlers.push(handler);
+
+            let command = client.globalHandlers.command.parseCommand("/ping");
+            let handled = client.globalHandlers.command.handle(command, client);
+            expect(handled).toBe(true);
+        });
+
+        it("should let ping pass through to the Terraria server when configured", (done: DoneFn) => {
+            client.options.tcpRtt.pingCommandPassThrough = true;
+            client.setTcpRttSample(tcpInfoSample(51000, 123456789));
+            client.setServerTcpRttSample(tcpInfoSample(9000, 123456790));
+            client.setOverallTcpRttSample(tcpInfoSample(60000, 123456790));
+
+            const handler = (data: string) => {
+                if (data.indexOf("Current TCP RTT: 51ms (proxy), 9.0ms (terraria server), 60ms (overall).") === -1) {
+                    return;
+                }
+                clientSocketDataHandlers = clientSocketDataHandlers.filter(h => h !== handler);
+                done();
+            };
+            clientSocketDataHandlers.push(handler);
+
+            let command = client.globalHandlers.command.parseCommand("/ping");
+            let handled = client.globalHandlers.command.handle(command, client);
+            expect(handled).toBe(false);
         });
     });
 

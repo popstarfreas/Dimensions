@@ -39,6 +39,14 @@ options:
       maxPlayers: 400
       version: "1.4.3.6"
 
+  # Measures proxy-to-client TCP RTT when enabled.
+  tcpRtt:
+    enabled: false
+    sampleIntervalMs: 2000
+    exportToServers: true
+    restApiEndpoint: true
+    pingCommandPassThrough: false
+
   # Whether or not to block invisibility buff
   blockInvis: false
 

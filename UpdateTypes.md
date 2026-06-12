@@ -13,7 +13,6 @@ Gamemodes uses this to specify what mode the user has joined for.
 | Info        | Size | Datatype |
 | ----------- | ---- | -------- |
 | Type        | 2    | Int16    |
-| Join Mode   | ?    | String   |
 
 ## [2] Switch Server
 Terraria Servers use this to tell Dimensions to switch the clients Dimension
@@ -27,5 +26,21 @@ Terraria Servers use this to tell Dimensions to switch the clients Dimension
 | -------------- | ---- | -------- |
 | Type           | 2    | Int16    |
 | Server IP      | ?    | String   |
-| Server Port    | ?    | UInt16   |
+| Server Port    | 2    | UInt16   |
+| Server Name    | ?    | String   |
 Terraria Servers use this to tell Dimension to switch the client to a specific ip/port that is not in the Dimensions config.
+
+`Server Name` is optional and only present when bytes remain after `Server Port`.
+
+## [6] RTT Update
+Dimensions sends this to a Terraria Server to report the current TCP RTT values measured by the proxy.
+Unavailable RTT values are encoded as `-1`.
+
+| Info               | Size | Datatype |
+| ------------------ | ---- | -------- |
+| Type               | 2    | Int16    |
+| Player ID          | 1    | Byte     |
+| Client RTT Micros  | 4    | Int32    |
+| Server RTT Micros  | 4    | Int32    |
+| Overall RTT Micros | 4    | Int32    |
+| Updated At         | 8    | UInt64   |

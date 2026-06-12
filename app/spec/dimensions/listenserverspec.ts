@@ -76,6 +76,13 @@ describe("ListenServer", () => {
                 host: "localhost",
                 port: 6379
             },
+            tcpRtt: {
+                enabled: false,
+                sampleIntervalMs: 2000,
+                exportToServers: true,
+                restApiEndpoint: true,
+                pingCommandPassThrough: false
+            },
             language: Language.english,
             debuffOnSwitch: { enabled: false },
             disconnectOnKick: { type: "never" },
@@ -106,7 +113,10 @@ describe("ListenServer", () => {
             },
             options,
             globalTracking: {
-                names: {}
+                names: {},
+                tcpRtt: {
+                    clients: {}
+                }
             },
             logging: winston.createLogger({ silent: true }),
             connectionsTracker,

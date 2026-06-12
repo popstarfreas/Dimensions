@@ -43,7 +43,10 @@
   },
   "scripts": {
     "start": "cd ./build && node ./index.js",
-    "build": "tsc -p ./",
+    "build": "tsc -p ./ && npm run build:native",
+    "build:ts": "tsc -p ./",
+    "build:native": "node-gyp rebuild -C native-addon",
+    "native:prebuild": "cd native-addon && prebuildify --napi --strip",
     "bstart": "npm run build && npm run start",
     "bstart-debug": "npm run build && cd ./build && node-debug ./index.js && cd ../",
     "test": "npm run build && jasmine --config=jasmine.json",
@@ -56,8 +59,9 @@
     "@popstarfreas/packetfactory": "^7.2.3",
     "@rescript/runtime": "^12.2.0",
     "glob": "^13.0.6",
+    "node-gyp-build": "^4.8.4",
     "redis": "^3.1.2",
-    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#396bc430fbff3c8d700ee6dd016bc8e36419730b",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#59941d46897ca13ebe3b0252f0a20af50e109dca",
     "utf8": "^3.0.0",
     "uuid": "^11.1.1",
     "winston": "^3.19.0",
@@ -70,8 +74,10 @@
     "@types/redis": "^2.8.32",
     "@types/utf8": "^3.0.3",
     "@types/uuid": "^10.0.0",
-    "mitm": "^1.7.3",
     "jasmine": "^6.2.0",
+    "mitm": "^1.7.3",
+    "node-gyp": "^12.4.0",
+    "prebuildify": "^6.0.1",
     "typescript": "^6.0.3"
   }
 }

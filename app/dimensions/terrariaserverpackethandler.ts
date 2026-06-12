@@ -266,6 +266,7 @@ class TerrariaServerPacketHandler {
    */
   private handleContinueConnecting(playerId: number): boolean {
     this.currentServer.client.player.id = playerId;
+    this.currentServer.client.playerIdAssigned = true;
 
     // Send IP Address
     if (!this.currentServer.isVanilla) {

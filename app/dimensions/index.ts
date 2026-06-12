@@ -18,6 +18,7 @@ import Blacklist from './blacklist.js';
 import { Dictionary } from './dictionary.js';
 import * as winston from 'winston';
 import { pathToFileURL } from 'url';
+import TcpRttMonitor from './tcprtt/tcprttmonitor.js';
 
 async function importFresh(modulePath: string): Promise<any> {
   const url = pathToFileURL(modulePath).href;
@@ -40,6 +41,7 @@ class Dimensions {
   private connectRateTracker: Map<string, ConnectionRateLimitEntry> = new Map();
   private extensionStorage: Map<string, any> = new Map();
   private hotReloadTimeout: NodeJS.Timeout | null = null;
+  private tcpRttMonitor: TcpRttMonitor;
 
   private constructor(logging: winston.Logger) {
     this.options = ConfigSettings.options;
@@ -57,8 +59,12 @@ class Dimensions {
     };
 
     this.globalTracking = {
-      names: {}
+      names: {},
+      tcpRtt: {
+        clients: {}
+      }
     };
+    this.tcpRttMonitor = new TcpRttMonitor(this.globalTracking, this.handlers, this.options.tcpRtt, this.logging);
   }
 
   public static async create(logging: winston.Logger): Promise<Dimensions> {
@@ -74,7 +80,7 @@ class Dimensions {
 
     // Starts a new RestAPI server. This mimics the status output of tShock's RestAPI and puts in the total count and all player names from all Dimensions
     if (instance.options.restApi.enabled) {
-      instance.restApi = new RestApi(instance.options.restApi.port, instance.globalTracking, instance.serversDetails, instance.servers, instance.options.restApi.response, instance.logging);
+      instance.restApi = new RestApi(instance.options.restApi.port, instance.globalTracking, instance.serversDetails, instance.servers, instance.options.restApi.response, instance.logging, instance.options.tcpRtt.restApiEndpoint);
     }
 
     if (instance.options.hotReload) {
@@ -154,7 +160,8 @@ class Dimensions {
         servers: this.servers,
         serversDetails: this.serversDetails,
         connectionsTracker: this.connectionsTracker,
-        connectRateTracker: this.connectRateTracker
+        connectRateTracker: this.connectRateTracker,
+        tcpRttMonitor: this.tcpRttMonitor
       };
       this.listenServers[listenKey] = new ListenServer(args);
     }
@@ -299,8 +306,9 @@ class Dimensions {
     try {
       let ConfigSettings = reloadConfig()
       if (ConfigSettings.options.restApi.enabled) {
-        this.restApi?.handleReload(ConfigSettings.options.restApi.port);
+        this.restApi?.handleReload(ConfigSettings.options.restApi.port, ConfigSettings.options.tcpRtt.restApiEndpoint);
       }
+      this.tcpRttMonitor.updateOptions(ConfigSettings.options.tcpRtt);
 
       let currentRoster: Dictionary<number> = {};
       let runAfterFinished: Array<ReloadTask> = [];
@@ -358,7 +366,8 @@ class Dimensions {
           servers: this.servers,
           serversDetails: this.serversDetails,
           connectionsTracker: this.connectionsTracker,
-          connectRateTracker: this.connectRateTracker
+          connectRateTracker: this.connectRateTracker,
+          tcpRttMonitor: this.tcpRttMonitor
         };
         this.listenServers[runAfterFinished[i].key] = new ListenServer(args);
         for (let j: number = 0; j < runAfterFinished[i].server.routingServers.length; j++) {
@@ -386,6 +395,7 @@ class Dimensions {
       this.restApi.close();
     }
 
+    this.tcpRttMonitor.close();
     this.unloadExtensions();
 
     Object.values(this.listenServers).forEach(server => server.shutdown());

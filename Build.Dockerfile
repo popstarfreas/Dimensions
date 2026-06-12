@@ -1,8 +1,9 @@
 FROM node:lts AS build
-RUN apt-get update && apt-get install -y zip jq
+RUN apt-get update && apt-get install -y zip jq python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY pnpm-lock.yaml /app
 COPY package.json /app
+COPY native-addon /app/native-addon
 RUN corepack pnpm install
 RUN mkdir /app/app
 COPY app /app/app

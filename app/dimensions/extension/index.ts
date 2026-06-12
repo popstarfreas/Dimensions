@@ -6,6 +6,7 @@ import TerrariaServer from '../terrariaserver.js';
 import { Socket } from 'net';
 import RawPacket from '../packets/rawpacket.js';
 import ClientArgs from '../clientargs.js';
+import { TcpRttSample } from '../tcprtt/types.js';
 export { PacketSource } from '../terrariaserverpackethandler.js';
 
 export interface PacketHandler {
@@ -23,6 +24,7 @@ export type SendPacketToServerEvent = (server: TerrariaServer, packet: Buffer) =
 export type SocketConnectPreHandler = (socket: Socket) => Promise<boolean>;
 export type SocketConnectPostHandler = (socket: Socket) => void;
 export type ClientFullyConnectedHandler = (client: Client) => void;
+export type ClientTcpRttUpdateEvent = (client: Client, sample: TcpRttSample) => void;
 export type SocketClosePreHandler = (socket: Socket, client: Client) => boolean;
 export type SocketClosePostHandler = (socket: Socket, client: Client) => void;
 
@@ -108,6 +110,7 @@ export interface Extension<T = undefined> {
     socketConnectPostHandler?: SocketConnectPostHandler;
 
     clientFullyConnectedHandler?: ClientFullyConnectedHandler;
+    clientTcpRttUpdateEvent?: ClientTcpRttUpdateEvent;
 
     sendPacketToClientEvent?: SendPacketToClientEvent;
     sendPacketToServerEvent?: SendPacketToServerEvent;

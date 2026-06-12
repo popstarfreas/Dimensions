@@ -1,5 +1,6 @@
 import Client from './client.js';
 import ClientState from './clientstate.js';
+import { TcpRttSample } from './tcprtt/types.js';
 
 export interface Command {
   name: string;
@@ -35,7 +36,9 @@ export class ClientCommandHandler {
    */
   public handle(command: Command, client: Client): boolean {
     let handled: boolean = false;
-    if (client.servers[command.name]) {
+    if (command.name === "ping") {
+      handled = this.handlePing(client);
+    } else if (client.servers[command.name]) {
       if (client.server.name.toLowerCase() == command.name && client.connected) {
         client.sendChatMessage(client.options.language.phrases.youAreAlreadyInthatDimension);
       } else {
@@ -118,6 +121,44 @@ export class ClientCommandHandler {
     client.disconnectFromServer();
     client.sendChatMessage(client.options.language.phrases.youEnteredTheVoid);
     return true;
+  }
+
+  private handlePing(client: Client): boolean {
+    if (!client.clientTcpRtt.available || client.clientTcpRtt.rttMs === null) {
+      client.sendChatMessage(client.options.language.phrases.tcpRttUnavailable);
+      return !client.options.tcpRtt.pingCommandPassThrough;
+    }
+
+    client.sendChatMessage(this.formatPingMessage(client.options.language.phrases.currentTcpRtt, client));
+    return !client.options.tcpRtt.pingCommandPassThrough;
+  }
+
+  private formatPingMessage(template: string, client: Client): string {
+    return template
+      .replace(/\$\{clientRtt\}/g, this.formatRttSample(client.clientTcpRtt))
+      .replace(/\$\{serverRtt\}/g, this.formatRttSample(client.serverTcpRtt))
+      .replace(/\$\{overallRtt\}/g, this.formatRttSample(client.overallTcpRtt))
+      .replace(/\$\{rtt\}/g, this.formatRttSample(client.clientTcpRtt));
+  }
+
+  private formatRttSample(sample: TcpRttSample): string {
+    if (sample.rttMs === null) {
+      return "Unavailable";
+    }
+
+    return `${this.formatRttMs(sample.rttMs)}ms`;
+  }
+
+  private formatRttMs(rttMs: number): string {
+    if (rttMs < 1) {
+      return rttMs.toFixed(2);
+    }
+
+    if (rttMs < 10) {
+      return rttMs.toFixed(1);
+    }
+
+    return Math.round(rttMs).toString();
   }
 };
 
