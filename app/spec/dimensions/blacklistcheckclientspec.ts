@@ -5,7 +5,7 @@ import Blacklist from '../../dimensions/blacklist.js';
 import BlacklistCheckClient from '../../dimensions/blacklistcheckclient.js';
 import ClientArgs from '../../dimensions/clientargs.js';
 import RawPacket from '../../dimensions/packets/rawpacket.js';
-import { ClientUuidPacket, ConnectRequestPacket, Parser, PlayerInfoPacket } from 'terraria-packet';
+import { ClientUuidPacket, ConnectRequestPacket, HostTokenPacket, LoadoutSwitchPacket, Parser, PlayerBuffsSetPacket, PlayerHealthPacket, PlayerInfoPacket, PlayerInventorySlotPacket, PlayerManaPacket, WorldDataRequestPacket } from 'terraria-packet';
 
 describe("BlacklistCheckClient", () => {
     const uuid = "29be7f8f-25ae-4c10-9664-6f7c783cba32";
@@ -48,6 +48,18 @@ describe("BlacklistCheckClient", () => {
         return {
             checkInformation: jasmine.createSpy("checkInformation").and.returnValue(Promise.resolve(isBlacklisted))
         } as unknown as Blacklist & { checkInformation: jasmine.Spy };
+    }
+
+    function makePendingBlacklist(): Blacklist & { checkInformation: jasmine.Spy; resolve: (isBlacklisted: boolean) => void } {
+        let resolve!: (isBlacklisted: boolean) => void;
+        const promise = new Promise<boolean>((promiseResolve) => {
+            resolve = promiseResolve;
+        });
+
+        return {
+            checkInformation: jasmine.createSpy("checkInformation").and.returnValue(promise),
+            resolve
+        } as unknown as Blacklist & { checkInformation: jasmine.Spy; resolve: (isBlacklisted: boolean) => void };
     }
 
     function makeClient(socket = makeSocket(), blacklist = makeBlacklist()) {
@@ -117,6 +129,74 @@ describe("BlacklistCheckClient", () => {
         return unwrapBuffer(ClientUuidPacket.toBuffer({ uuid }));
     }
 
+    function playerBuffsSetPacket(): Buffer {
+        return unwrapBuffer(PlayerBuffsSetPacket.toBuffer({
+            playerId: 0,
+            buffs: Array(22).fill(0)
+        }));
+    }
+
+    function playerHealthPacket(): Buffer {
+        return unwrapBuffer(PlayerHealthPacket.toBuffer({
+            playerId: 0,
+            health: 100,
+            maxHealth: 100
+        }));
+    }
+
+    function playerManaPacket(): Buffer {
+        return unwrapBuffer(PlayerManaPacket.toBuffer({
+            playerId: 0,
+            mana: 20,
+            maxMana: 20
+        }));
+    }
+
+    function loadoutSwitchPacket(): Buffer {
+        return unwrapBuffer(LoadoutSwitchPacket.toBuffer({
+            playerId: 0,
+            loadout: 0,
+            hideVisibleAccessory: Array(16).fill(false)
+        } as LoadoutSwitchPacket.t));
+    }
+
+    function playerInventorySlotPacket(): Buffer {
+        return unwrapBuffer(PlayerInventorySlotPacket.toBuffer({
+            playerId: 0,
+            slot: 0,
+            stack: 0,
+            prefix: 0,
+            itemType: 0,
+            favorited: false,
+            blocked: false
+        }));
+    }
+
+    function hostTokenPacket(): Buffer {
+        return unwrapBuffer(HostTokenPacket.toBuffer({
+            token: "host-token"
+        }));
+    }
+
+    function worldDataRequestPacket(): Buffer {
+        return unwrapBuffer(WorldDataRequestPacket.toBuffer(undefined));
+    }
+
+    function playerPlatformInfoPacket(): Buffer {
+        const packet = Buffer.alloc(5);
+        packet.writeUInt16LE(5, 0);
+        packet.writeUInt8(163, 2);
+        packet.writeUInt8(0, 3);
+        packet.writeUInt8(7, 4);
+        return packet;
+    }
+
+    function oversizedIncompletePacket(): Buffer {
+        const packet = Buffer.alloc(4097);
+        packet.writeUInt16LE(5000, 0);
+        return packet;
+    }
+
     function parseServerPacketTag(packet: Buffer): string {
         const parsed = Parser.parse(packet, true);
         if (parsed.TAG === "Error") {
@@ -172,12 +252,93 @@ describe("BlacklistCheckClient", () => {
         ]);
     });
 
+    it("queues expected join startup packets received while the post-UUID blacklist check is pending", async () => {
+        const blacklist = makePendingBlacklist();
+        const { client, accepted } = makeClient(makeSocket(), blacklist);
+
+        client.handleData(Buffer.concat([
+            connectRequestPacket(),
+            playerInfoPacket(),
+            clientUuidPacket()
+        ]));
+        client.handleData(Buffer.concat([
+            playerHealthPacket(),
+            playerManaPacket(),
+            playerBuffsSetPacket(),
+            loadoutSwitchPacket(),
+            playerInventorySlotPacket(),
+            hostTokenPacket(),
+            worldDataRequestPacket(),
+            playerPlatformInfoPacket()
+        ]));
+        blacklist.resolve(false);
+        await Promise.resolve();
+
+        expect(accepted.length).toBe(1);
+        expect(accepted[0].packetsReceived.map(packet => parseClientPacketTag(packet.data))).toEqual([
+            "ConnectRequest",
+            "PlayerInfo",
+            "ClientUuid",
+            "PlayerHealth",
+            "PlayerMana",
+            "PlayerBuffsSet",
+            "LoadoutSwitch",
+            "PlayerInventorySlot",
+            "HostToken",
+            "WorldDataRequest",
+            "PlayerPlatformInfo"
+        ]);
+    });
+
     it("rejects PlayerInfo before ConnectRequest", () => {
         const { client, socket, callbacks } = makeClient();
 
         client.handleData(playerInfoPacket());
 
         expect(callbacks.packetErrorCheckingBlacklistCb).toHaveBeenCalledOnceWith(jasmine.any(Error));
+        expect(socket.write).not.toHaveBeenCalled();
+    });
+
+    it("rejects non-handshake packet spam before blacklist acceptance", async () => {
+        const { client, blacklist, callbacks, accepted } = makeClient();
+        const spamPackets = Array.from({ length: 1000 }, playerBuffsSetPacket);
+
+        client.handleData(Buffer.concat([
+            connectRequestPacket(),
+            ...spamPackets
+        ]));
+        await Promise.resolve();
+
+        expect(callbacks.packetErrorCheckingBlacklistCb).toHaveBeenCalledOnceWith(jasmine.any(Error));
+        expect(blacklist.checkInformation).not.toHaveBeenCalled();
+        expect(accepted.length).toBe(0);
+    });
+
+    it("rejects excessive post-UUID startup packets while blacklist acceptance is pending", async () => {
+        const blacklist = makePendingBlacklist();
+        const { client, callbacks, accepted } = makeClient(makeSocket(), blacklist);
+        const spamPackets = Array.from({ length: 1000 }, playerBuffsSetPacket);
+
+        client.handleData(Buffer.concat([
+            connectRequestPacket(),
+            playerInfoPacket(),
+            clientUuidPacket()
+        ]));
+        client.handleData(Buffer.concat(spamPackets));
+        blacklist.resolve(false);
+        await Promise.resolve();
+
+        expect(callbacks.packetErrorCheckingBlacklistCb).toHaveBeenCalledOnceWith(jasmine.any(Error));
+        expect(accepted.length).toBe(0);
+    });
+
+    it("rejects oversized incomplete pre-auth packet buffers", () => {
+        const { client, socket, blacklist, callbacks } = makeClient();
+
+        client.handleData(oversizedIncompletePacket());
+
+        expect(callbacks.packetErrorCheckingBlacklistCb).toHaveBeenCalledOnceWith(jasmine.any(Error));
+        expect(blacklist.checkInformation).not.toHaveBeenCalled();
         expect(socket.write).not.toHaveBeenCalled();
     });
 });

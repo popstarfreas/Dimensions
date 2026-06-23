@@ -15,6 +15,20 @@ enum ClientState {
     SentUuid,
 }
 
+const MAX_PRE_AUTH_PACKETS = 512;
+const MAX_PRE_AUTH_PACKET_BYTES = 64 * 1024;
+const MAX_PRE_AUTH_BUFFER_BYTES = 4096;
+const EXPECTED_POST_UUID_PACKET_TAGS = new Set([
+    "PlayerHealth",
+    "PlayerMana",
+    "PlayerBuffsSet",
+    "LoadoutSwitch",
+    "PlayerInventorySlot",
+    "HostToken",
+    "WorldDataRequest",
+    "PlayerPlatformInfo",
+]);
+
 interface BlacklistCheckClientArgs {
     blacklist: Blacklist,
     clientArgs: ClientArgs,
@@ -33,6 +47,7 @@ class BlacklistCheckClient {
     private name: string | undefined;
     private bufferPacket: Buffer = Buffer.alloc(0);
     private packetsReceived: RawPacket[] = [];
+    private packetsReceivedBytes: number = 0;
     private clientAcceptedCb!: (bufferPacket: Buffer, packetsReceived: RawPacket[]) => void;
     private clientBlacklistedCb!: () => void;
     private errorCheckingBlacklistCb!: (bufferPacket: Buffer, packetsReceived: RawPacket[], e: Error) => void;
@@ -61,6 +76,10 @@ class BlacklistCheckClient {
     }
 
     handleData(data: Buffer) {
+        if (this.disposed) {
+            return;
+        }
+
         let bufferPacket = this.bufferPacket;
         let entireData = Buffer.concat([bufferPacket, data]);
 
@@ -68,8 +87,12 @@ class BlacklistCheckClient {
         let entireDataInfo: BuffersPackets = getPacketsFromBuffer(entireData);
 
         if (entireDataInfo.type === "InvalidPacketLength") {
-            this.dispose()
-            this.packetErrorCheckingBlacklistCb(new Error(`Invalid packet length ${entireDataInfo.length}`))
+            this.rejectPacket(new Error(`Invalid packet length ${entireDataInfo.length}`))
+            return
+        }
+
+        if (entireDataInfo.bufferPacket.length > MAX_PRE_AUTH_BUFFER_BYTES) {
+            this.rejectPacket(new Error("Pre-auth packet buffer exceeded maximum size"))
             return
         }
 
@@ -77,8 +100,6 @@ class BlacklistCheckClient {
         this.bufferPacket = entireDataInfo.bufferPacket;
 
         const packets: RawPacket[] = entireDataInfo.packets;
-        this.packetsReceived.push(...packets);
-
         for (const packet of packets) {
             this.handlePacket(packet);
         }
@@ -96,12 +117,7 @@ class BlacklistCheckClient {
 
         const packetResult = Parser.parseLazy(rawPacket.data, false)
         if (packetResult.TAG === "Error") {
-            // I saw mobile send this and do not know why
-            if (rawPacket.packetType == 163) {
-                return
-            }
-            this.dispose()
-            this.packetErrorCheckingBlacklistCb(new Error(`Error parsing packet: ${packetResult._0}`))
+            this.rejectPacket(new Error(`Error parsing packet: ${packetResult._0}`))
             return
         }
         const packet = packetResult._0;
@@ -109,14 +125,15 @@ class BlacklistCheckClient {
         switch (packet.TAG) {
             case "ConnectRequest":
                 if (this.state !== ClientState.WaitingForConnectRequest) {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Connect request packet received after assigning client ID"))
+                    this.rejectPacket(new Error("Connect request packet received after assigning client ID"))
                     return
                 }
                 const connectRequestResult = packet._0.VAL();
                 if (connectRequestResult.TAG === "Error") {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Connect request packet could not be parsed. Error: " + connectRequestResult._0.context))
+                    this.rejectPacket(new Error("Connect request packet could not be parsed. Error: " + connectRequestResult._0.context))
+                    return
+                }
+                if (!this.queuePreAuthPacket(rawPacket)) {
                     return
                 }
 
@@ -125,14 +142,15 @@ class BlacklistCheckClient {
                 break;
             case "PlayerInfo":
                 if (this.state !== ClientState.AssignedClientId) {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Client info packet received before connect request"))
+                    this.rejectPacket(new Error("Client info packet received before connect request"))
                     return
                 }
                 const playerInfoResult = packet._0.VAL();
                 if (playerInfoResult.TAG === "Error") {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Client info packet could not be parsed. Error: " + playerInfoResult._0.context))
+                    this.rejectPacket(new Error("Client info packet could not be parsed. Error: " + playerInfoResult._0.context))
+                    return
+                }
+                if (!this.queuePreAuthPacket(rawPacket)) {
                     return
                 }
                 const playerInfo = playerInfoResult._0;
@@ -142,26 +160,25 @@ class BlacklistCheckClient {
                 break;
             case "ClientUuid":
                 if (this.state !== ClientState.SentPlayerInfo) {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Client UUID packet received before player info"))
+                    this.rejectPacket(new Error("Client UUID packet received before player info"))
                     return
                 }
                 const clientUuidResult = packet._0.VAL();
                 const ip = getProperIP(this.settings.clientArgs.socket.remoteAddress);
                 if (clientUuidResult.TAG === "Error") {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Client UUID packet could not be parsed. Error: " + clientUuidResult._0.context))
+                    this.rejectPacket(new Error("Client UUID packet could not be parsed. Error: " + clientUuidResult._0.context))
                     return
                 }
                 const clientUuid = clientUuidResult._0;
                 if (this.name === undefined) {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Client name missing"))
+                    this.rejectPacket(new Error("Client name missing"))
                     return
                 }
                 if (ip === undefined) {
-                    this.dispose()
-                    this.packetErrorCheckingBlacklistCb(new Error("Client IP could not be parsed"))
+                    this.rejectPacket(new Error("Client IP could not be parsed"))
+                    return
+                }
+                if (!this.queuePreAuthPacket(rawPacket)) {
                     return
                 }
                 this.state = ClientState.SentUuid;
@@ -184,10 +201,45 @@ class BlacklistCheckClient {
                     this.errorCheckingBlacklistCb(this.bufferPacket, this.packetsReceived, e)
                 })
                 break;
+            default:
+                if (this.state === ClientState.SentUuid && EXPECTED_POST_UUID_PACKET_TAGS.has(packet.TAG)) {
+                    if (!this.queuePreAuthPacket(rawPacket)) {
+                        return
+                    }
+                    break;
+                }
+                this.rejectPacket(new Error(`Unexpected packet before blacklist check completed: ${packet.TAG}`))
+                return
         }
 
         // Run post-handlers
         this.runPostHandlers(rawPacket);
+    }
+
+    private queuePreAuthPacket(rawPacket: RawPacket): boolean {
+        if (this.packetsReceived.length >= MAX_PRE_AUTH_PACKETS) {
+            this.rejectPacket(new Error("Pre-auth packet count exceeded maximum"))
+            return false;
+        }
+
+        const nextBytes = this.packetsReceivedBytes + rawPacket.data.length;
+        if (nextBytes > MAX_PRE_AUTH_PACKET_BYTES) {
+            this.rejectPacket(new Error("Pre-auth packet bytes exceeded maximum"))
+            return false;
+        }
+
+        this.packetsReceived.push(rawPacket);
+        this.packetsReceivedBytes = nextBytes;
+        return true;
+    }
+
+    private rejectPacket(e: Error): void {
+        if (this.disposed) {
+            return;
+        }
+
+        this.dispose()
+        this.packetErrorCheckingBlacklistCb(e)
     }
 
     private sendBlacklistCheckSetupPackets(): void {
