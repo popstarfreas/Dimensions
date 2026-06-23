@@ -20,6 +20,10 @@ interface PacketQueueItem {
   rawPacket: RawPacket,
 }
 
+const MAX_PRE_READY_QUEUE_PACKETS = 128;
+const MAX_PRE_READY_QUEUE_BYTES = 32768;
+const PRE_READY_QUEUE_LIMIT_REASON = "Backend sent too many packets before client completed connection";
+
 /* Used to track information specific to the current server that a client is on
  * as well as pass received data from the TerrariaServer to the handlers */
 class TerrariaServer {
@@ -39,6 +43,7 @@ class TerrariaServer {
   public isSSC!: boolean;
   public packetQueue!: PacketQueueItem[];
   private bufferPacket!: Buffer;
+  private packetQueueBytes!: number;
   private disconnectReason: DisconnectReason | null = null;
 
   constructor(socket: Net.Socket, client: Client) {
@@ -66,6 +71,7 @@ class TerrariaServer {
     };
     this.isSSC = false;
     this.packetQueue = [];
+    this.packetQueueBytes = 0;
     this.disconnectReason = null;
   }
 
@@ -174,7 +180,39 @@ class TerrariaServer {
       }
 
       this.packetQueue = [];
+      this.packetQueueBytes = 0;
     }
+  }
+
+  public queuePacketBeforeClientReady(rawPacket: RawPacket): boolean {
+    if (this.socket.destroyed || this.client.disconnecting) {
+      return false;
+    }
+
+    const nextBytes = this.packetQueueBytes + rawPacket.data.length;
+    if (this.packetQueue.length >= MAX_PRE_READY_QUEUE_PACKETS || nextBytes > MAX_PRE_READY_QUEUE_BYTES) {
+      this.rejectPreReadyPacketQueue();
+      return false;
+    }
+
+    this.packetQueue.push({
+      rawPacket: {
+        data: rawPacket.data,
+        packetType: rawPacket.packetType
+      }
+    });
+    this.packetQueueBytes = nextBytes;
+    return true;
+  }
+
+  private rejectPreReadyPacketQueue(): void {
+    this.packetQueue = [];
+    this.packetQueueBytes = 0;
+    this.setDisconnectReason(makeDisconnectReason(
+      DisconnectReasonCodes.ServerSocketError,
+      PRE_READY_QUEUE_LIMIT_REASON
+    ));
+    this.client.disconnectFromServer();
   }
 
   /* Calls all server disconnect pre-handlers from extensions

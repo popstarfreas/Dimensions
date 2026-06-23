@@ -17,7 +17,7 @@ import * as Language from '../../dimensions/language.js';
 import PacketTypes from '../../dimensions/packettypes.js';
 import { PacketSource } from '../../dimensions/terrariaserverpackethandler.js';
 import RawPacket from '../../dimensions/packets/rawpacket.js';
-import { DisconnectPacket, Parser, PlayerBuffsSetPacket } from 'terraria-packet';
+import { DisconnectPacket, Parser, PlayerBuffsSetPacket, PlayerInventorySlotPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
 import { DisconnectReasonCodes } from '../../dimensions/disconnectreason.js';
 import { getPacketsFromBuffer } from '../../dimensions/utils.js';
@@ -53,6 +53,18 @@ describe("client", () => {
         return unwrapBuffer(PlayerBuffsSetPacket.toBuffer({
             playerId: 0,
             buffs: Array(22).fill(0)
+        }));
+    }
+
+    function playerInventorySlotPacket(): Buffer {
+        return unwrapBuffer(PlayerInventorySlotPacket.toBuffer({
+            playerId: 0,
+            slot: 0,
+            stack: 1,
+            prefix: 0,
+            itemType: 1,
+            favorited: false,
+            blocked: false
         }));
     }
 
@@ -519,5 +531,31 @@ describe("client", () => {
         expect(accepted).toBeFalse();
         expect(disconnect).toHaveBeenCalledTimes(1);
         expect(queuedPacketsWhileConnectingLength()).toBe(0);
+    });
+
+    it("should queue a small number of upstream pre-ready inventory packets", () => {
+        const data = playerInventorySlotPacket();
+
+        globalHandlers.terrariaServerPacketHandler.handlePacket(client.server, {
+            packetType: PacketTypes.PlayerInventorySlot,
+            data
+        }, PacketSource.TerrariaServer);
+
+        expect(client.server.packetQueue.length).toBe(1);
+    });
+
+    it("should disconnect from the upstream instead of retaining unbounded pre-ready inventory packets", () => {
+        const data = playerInventorySlotPacket();
+        const disconnectFromServer = spyOn(client, "disconnectFromServer").and.callThrough();
+
+        for (let i = 0; i < 1000; i++) {
+            globalHandlers.terrariaServerPacketHandler.handlePacket(client.server, {
+                packetType: PacketTypes.PlayerInventorySlot,
+                data: Buffer.from(data)
+            }, PacketSource.TerrariaServer);
+        }
+
+        expect(disconnectFromServer).toHaveBeenCalled();
+        expect(client.server.packetQueue.length).toBe(0);
     });
 });

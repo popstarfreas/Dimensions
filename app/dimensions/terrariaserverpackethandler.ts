@@ -537,12 +537,7 @@ class TerrariaServerPacketHandler {
     const { playerId } = inventorySlot;
     if (playerId === this.currentServer.client.player.id) {
       if (this.currentServer.client.state !== ClientState.FullyConnected) {
-        this.currentServer.packetQueue.push({
-          rawPacket: {
-            data: rawPacket.data,
-            packetType: rawPacket.packetType
-          }
-        });
+        this.currentServer.queuePacketBeforeClientReady(rawPacket);
         handled = true;
       }
     }
