@@ -35,6 +35,10 @@ interface PacketQueueItem {
   rawPacket: RawPacket,
 }
 
+const MAX_PRE_READY_QUEUE_PACKETS = 128;
+const MAX_PRE_READY_QUEUE_BYTES = 32768;
+const PRE_READY_QUEUE_LIMIT_REASON = "Connection setup packet queue limit exceeded";
+
 /**
  * This class handles switching servers and passing data of a single client
  */
@@ -73,6 +77,8 @@ class Client {
   private extraJoinInformation: string | undefined;
   private disconnectTimeout: NodeJS.Timeout | null;
   private dimensionsDisconnectReason: DisconnectReason | null;
+  private packetQueueBytes: number;
+  private queuedPacketsWhileConnectingBytes: number;
 
   // Queued packets while connecting to a server
   private queuedPacketsWhileConnecting: RawPacket[] = [];
@@ -171,6 +177,8 @@ class Client {
     this.version = "unknown";
     this.disconnectTimeout = null;
     this.dimensionsDisconnectReason = null;
+    this.packetQueueBytes = 0;
+    this.queuedPacketsWhileConnectingBytes = 0;
     this.tcpRtt = unavailableTcpRttSample();
     this.clientTcpRtt = this.tcpRtt;
     this.serverTcpRtt = unavailableTcpRttSample();
@@ -405,7 +413,7 @@ class Client {
           }
         } else {
           // Send packets to the server once the client is connected
-          this.queuedPacketsWhileConnecting.push(...packets);
+          this.queuePacketsWhileConnecting(packets);
         }
       } else {
         // Connect to a server for the first time in this session
@@ -427,6 +435,7 @@ class Client {
 
           packets.push(...this.queuedPacketsWhileConnecting);
           this.queuedPacketsWhileConnecting = [];
+          this.queuedPacketsWhileConnectingBytes = 0;
 
           // In order to allow inspection of first packet regardless of fake version
           let allowedData: Buffer[] = [];
@@ -464,6 +473,49 @@ class Client {
         this.logging.error(`Client Handle Send Data Error: ${ErrorHelper.toMessage(e)}`);
       }
     }
+  }
+
+  public queuePacketsWhileConnecting(packets: RawPacket[]): boolean {
+    for (const packet of packets) {
+      const nextBytes = this.queuedPacketsWhileConnectingBytes + packet.data.length;
+      if (!this.canQueuePreReadyPacket(this.queuedPacketsWhileConnecting.length, nextBytes)) {
+        this.rejectPreReadyPacketQueue();
+        return false;
+      }
+
+      this.queuedPacketsWhileConnecting.push(packet);
+      this.queuedPacketsWhileConnectingBytes = nextBytes;
+    }
+
+    return true;
+  }
+
+  public queuePacketBeforeFullyConnected(rawPacket: RawPacket): boolean {
+    const nextBytes = this.packetQueueBytes + rawPacket.data.length;
+    if (!this.canQueuePreReadyPacket(this.packetQueue.length, nextBytes)) {
+      this.rejectPreReadyPacketQueue();
+      return false;
+    }
+
+    this.packetQueue.push({ rawPacket });
+    this.packetQueueBytes = nextBytes;
+    return true;
+  }
+
+  private canQueuePreReadyPacket(currentQueueLength: number, nextBytes: number): boolean {
+    if (this.disconnecting || this.socket.destroyed) {
+      return false;
+    }
+
+    return currentQueueLength < MAX_PRE_READY_QUEUE_PACKETS && nextBytes <= MAX_PRE_READY_QUEUE_BYTES;
+  }
+
+  private rejectPreReadyPacketQueue(): void {
+    this.queuedPacketsWhileConnecting = [];
+    this.queuedPacketsWhileConnectingBytes = 0;
+    this.packetQueue = [];
+    this.packetQueueBytes = 0;
+    this.disconnect(PRE_READY_QUEUE_LIMIT_REASON);
   }
 
   // Useful method for sending a chat message packet to a client */
@@ -522,6 +574,7 @@ class Client {
       }
 
       this.packetQueue = [];
+      this.packetQueueBytes = 0;
     }
   }
 
@@ -532,6 +585,7 @@ class Client {
 
     const queuedPackets = this.queuedPacketsWhileConnecting;
     this.queuedPacketsWhileConnecting = [];
+    this.queuedPacketsWhileConnectingBytes = 0;
 
     for (const packet of queuedPackets) {
       try {

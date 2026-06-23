@@ -16,7 +16,8 @@ import { Dictionary } from '../../dimensions/dictionary.js';
 import * as Language from '../../dimensions/language.js';
 import PacketTypes from '../../dimensions/packettypes.js';
 import { PacketSource } from '../../dimensions/terrariaserverpackethandler.js';
-import { DisconnectPacket, Parser } from 'terraria-packet';
+import RawPacket from '../../dimensions/packets/rawpacket.js';
+import { DisconnectPacket, Parser, PlayerBuffsSetPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
 import { DisconnectReasonCodes } from '../../dimensions/disconnectreason.js';
 import { getPacketsFromBuffer } from '../../dimensions/utils.js';
@@ -39,6 +40,25 @@ describe("client", () => {
     let clientSocket: Net.Socket;
     let clientSocketDataHandlers: ((data: string) => void)[];
     let id = uuidv4();
+
+    function unwrapBuffer(result: { TAG: "Ok"; _0: Buffer } | { TAG: "Error"; _0: unknown }): Buffer {
+        if (result.TAG === "Error") {
+            throw new Error(`Error creating packet: ${String(result._0)}`);
+        }
+
+        return result._0;
+    }
+
+    function playerBuffsSetPacket(): Buffer {
+        return unwrapBuffer(PlayerBuffsSetPacket.toBuffer({
+            playerId: 0,
+            buffs: Array(22).fill(0)
+        }));
+    }
+
+    function queuedPacketsWhileConnectingLength(): number {
+        return (client as unknown as { queuedPacketsWhileConnecting: RawPacket[] }).queuedPacketsWhileConnecting.length;
+    }
 
     beforeEach((done: DoneFn) => {
         config = {
@@ -456,5 +476,48 @@ describe("client", () => {
             data: disconnectPacket._0
         }, PacketSource.TerrariaServer);
         client.server.handleClose();
+    });
+
+    it("should queue a small number of pre-ready packets", () => {
+        const data = playerBuffsSetPacket();
+
+        globalHandlers.clientPacketHandler.handlePacket(client, {
+            packetType: PacketTypes.UpdatePlayerBuff,
+            data
+        });
+
+        expect(client.packetQueue.length).toBe(1);
+    });
+
+    it("should disconnect instead of retaining unbounded pre-ready client packets", () => {
+        const data = playerBuffsSetPacket();
+        const disconnect = spyOn(client, "disconnect").and.callThrough();
+
+        for (let i = 0; i < 1000; i++) {
+            globalHandlers.clientPacketHandler.handlePacket(client, {
+                packetType: PacketTypes.UpdatePlayerBuff,
+                data: Buffer.from(data)
+            });
+        }
+
+        expect(disconnect).toHaveBeenCalled();
+        expect(client.packetQueue.length).toBe(0);
+    });
+
+    it("should disconnect instead of retaining unbounded packets while connecting to a server", () => {
+        const data = playerBuffsSetPacket();
+        const disconnect = spyOn(client, "disconnect").and.callThrough();
+        let accepted = true;
+
+        for (let i = 0; i < 1000 && accepted; i++) {
+            accepted = client.queuePacketsWhileConnecting([{
+                packetType: PacketTypes.UpdatePlayerBuff,
+                data: Buffer.from(data)
+            }]);
+        }
+
+        expect(accepted).toBeFalse();
+        expect(disconnect).toHaveBeenCalledTimes(1);
+        expect(queuedPacketsWhileConnectingLength()).toBe(0);
     });
 });

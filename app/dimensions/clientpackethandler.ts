@@ -253,7 +253,7 @@ class ClientPacketHandler {
 
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push({ rawPacket });
+      this.currentClient.queuePacketBeforeFullyConnected(rawPacket);
       return true;
     }
 
@@ -320,7 +320,7 @@ class ClientPacketHandler {
 
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push({ rawPacket });
+      this.currentClient.queuePacketBeforeFullyConnected(rawPacket);
       return true;
     }
 
@@ -330,7 +330,7 @@ class ClientPacketHandler {
   private handleUpdatePlayer(_playerUpdate: PlayerUpdatePacket.t, rawPacket: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push({ rawPacket });
+      this.currentClient.queuePacketBeforeFullyConnected(rawPacket);
       return true;
     }
 
@@ -344,7 +344,7 @@ class ClientPacketHandler {
   private handleUpdateItemDrop(_itemDropUpdate: ItemDropUpdatePacket.t, rawPacket: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push({ rawPacket });
+      this.currentClient.queuePacketBeforeFullyConnected(rawPacket);
       return true;
     }
 
@@ -361,7 +361,7 @@ class ClientPacketHandler {
   private handleUpdateItemOwner(_itemOwner: ItemOwnerPacket.t, rawPacket: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push({ rawPacket });
+      this.currentClient.queuePacketBeforeFullyConnected(rawPacket);
       return true;
     }
 
@@ -413,11 +413,9 @@ class ClientPacketHandler {
   private handlePotentialEarlyPacket(packet: RawPacket): boolean {
     // Prevent this being sent too early (causing kicked for invalid operation)
     if (this.currentClient.state !== ClientState.FullyConnected) {
-      this.currentClient.packetQueue.push({
-        rawPacket: {
-          data: packet.data,
-          packetType: packet.packetType
-        }
+      this.currentClient.queuePacketBeforeFullyConnected({
+        data: packet.data,
+        packetType: packet.packetType
       });
       return true;
     }
