@@ -8,7 +8,7 @@ It is intended to sit in the middle as a proxy. The typical non-proxy setup is:
 Dimensions sits in the middle like so:
  * Client -> Dimensions -> Terraria Server(s)
 
-With the use case that it can connect to different Terraria Servers without disconnecting the client. This allows multi-world servers to work with just one ip/port to join as you can swap between them mid session.
+With the use case that it can connect to different Terraria Servers without disconnecting the client. This allows multi-world servers to work with just one ip/port to join, as you can swap between them mid session.
 
 ## Version Compatibility
 Dimensions aims to only support the latest Terraria version. Currently this is Terraria v1.4.5.6 (319)
@@ -96,7 +96,51 @@ To build an extension:
  * Extensions must use ESM syntax (`import`/`export`) rather than CommonJS (`require`/`module.exports`)
 
 A list of extensions for dimensions is available at the wiki here: https://github.com/popstarfreas/Dimensions/wiki/Extensions
-   
+
+## Additional Features
+
+Dimensions has several optional features you may want to use. See `configuration/config.yaml.example` for the full option shapes and `configuration/config.yaml.quickstart` for a smaller starting point.
+
+### Server Visibility and Command-Only Dimensions
+Routing servers can be marked `hidden` so they do not show in the `/dimensions` list while still being reachable by command. A server group can also omit `listenPort`, which makes its routing servers available only through command-based switching instead of direct joins.
+
+When multiple routing servers are configured under the same `listenPort`, Dimensions routes new clients to the server with the lowest tracked player count.
+
+### Fake Version
+For patch updates to Terraria that break the Terraria Server version check but are otherwise compatible, you can configure Dimensions to overwrite the version the client sends to the server. See `fakeVersion`.
+
+### REST API
+For servers that use TShock's REST API for things like terraria-servers.com to expose player counts, Dimensions provides a `restApi` option. It serves a `/v2/status`-like response with tracked Dimensions player counts and supports configurable server metadata through `restApi.response`.
+
+### TCP RTT Tracking
+Dimensions can measure proxy-to-client TCP RTT with `tcpRtt`. When enabled, RTT samples can be exposed to servers, included in the REST API, and used by Dimensions' `/ping` command. This requires a supported native addon build for the platform running Dimensions.
+
+### Blacklist API
+The `blacklist` option lets Dimensions check connecting clients against an external HTTPS service before allowing them through. The check includes available client information such as name, IP address, and UUID, and `errorPolicy` controls whether clients are allowed or denied when the blacklist service fails.
+
+For servers that require it, you can use this to check for things such as VPN/Proxy users. The service is not provided, you must provide one yourself.
+
+### Connection Limits
+`connectionLimit` limits how many active connections a single IP address can have at once. `connectionRateLimit` limits how many new connections an IP address can create within a configured time window. Both options are useful for reducing reconnect spam and simple connection floods.
+
+### Invisibility Blocking
+`blockInvis` can remove the Terraria invisibility buff before it reaches a backend server. It can be enabled globally or scoped to specific routing server names.
+
+### Hot Reloading
+Redis-based reload commands are described in the installation section above. In addition, `hotReload` can watch the configuration file or configuration directory and automatically reload server routing changes when the config changes.
+
+### Name Change Handling
+`nameChanges` controls how Dimensions handles backend servers that try to change a client's name. The default `legacy` mode preserves old behavior, while `rewrite` keeps the Dimensions-side name stable and rewrites mismatched player info packets unless the current dimension is listed in `exclusions`.
+
+### Language and Message Overrides
+`language` selects the built-in message language for chat and disconnect messages. `languageOverrides` can replace individual messages such as blacklist failures, connection rate-limit warnings, dimension switching text, and TCP RTT responses.
+
+### Switch Debuffs
+`debuffOnSwitch` controls whether Dimensions applies debuffs after a player switches dimensions. It is enabled by default and can be disabled or customized with specific buff IDs and duration. These debuffs are used to counter client behaviour that enables exploits such as usetime cheating with a vanilla client.
+
+### Backend Kick Handling
+`disconnectOnKick` controls what happens when a backend Terraria server kicks a player. Dimensions can keep the client connected to the proxy, always disconnect the client, or disconnect only when the kick reason matches a configured prefix.
+
 # Supporters
 Thanks to all who have financially supported development:
 

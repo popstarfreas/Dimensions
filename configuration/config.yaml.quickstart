@@ -37,7 +37,7 @@ options:
       terrariaServerPort: 7777
       hasServerPassword: false
       maxPlayers: 400
-      version: "1.4.3.6"
+      version: "1.4.5.6"
 
   # Measures proxy-to-client TCP RTT when enabled.
   tcpRtt:
