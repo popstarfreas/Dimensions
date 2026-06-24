@@ -46,6 +46,16 @@ describe("utils", () => {
         expect(res.type).toEqual("InvalidPacketLength");
     });
 
+    it("should correctly handle an invalid packet (length = 2)", () => {
+        const buf = new BufferWriter(Buffer.allocUnsafe(2)).packUInt16(2).data;
+        const res = utils.getPacketsFromBuffer(buf);
+        expect(res.type).toEqual("InvalidPacketLength");
+        if (res.type !== "InvalidPacketLength") {
+            throw new Error("Expected InvalidPacketLength");
+        }
+        expect(res.length).toEqual(2);
+    });
+
     it("should correctly buffer an incomplete packet length", () => {
         const buf = new BufferWriter(Buffer.allocUnsafe(1)).packByte(4).data;
         const res = utils.getPacketsFromBuffer(buf);

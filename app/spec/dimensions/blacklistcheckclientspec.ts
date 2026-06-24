@@ -197,6 +197,12 @@ describe("BlacklistCheckClient", () => {
         return packet;
     }
 
+    function packetLengthWithoutType(): Buffer {
+        const packet = Buffer.alloc(2);
+        packet.writeUInt16LE(2, 0);
+        return packet;
+    }
+
     function parseServerPacketTag(packet: Buffer): string {
         const parsed = Parser.parse(packet, true);
         if (parsed.TAG === "Error") {
@@ -336,6 +342,16 @@ describe("BlacklistCheckClient", () => {
         const { client, socket, blacklist, callbacks } = makeClient();
 
         client.handleData(oversizedIncompletePacket());
+
+        expect(callbacks.packetErrorCheckingBlacklistCb).toHaveBeenCalledOnceWith(jasmine.any(Error));
+        expect(blacklist.checkInformation).not.toHaveBeenCalled();
+        expect(socket.write).not.toHaveBeenCalled();
+    });
+
+    it("rejects a packet length without a packet type", () => {
+        const { client, socket, blacklist, callbacks } = makeClient();
+
+        expect(() => client.handleData(packetLengthWithoutType())).not.toThrow();
 
         expect(callbacks.packetErrorCheckingBlacklistCb).toHaveBeenCalledOnceWith(jasmine.any(Error));
         expect(blacklist.checkInformation).not.toHaveBeenCalled();

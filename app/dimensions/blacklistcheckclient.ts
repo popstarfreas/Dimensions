@@ -83,8 +83,14 @@ class BlacklistCheckClient {
         let bufferPacket = this.bufferPacket;
         let entireData = Buffer.concat([bufferPacket, data]);
 
-        // Get the individual packets from the data
-        let entireDataInfo: BuffersPackets = getPacketsFromBuffer(entireData);
+        let entireDataInfo: BuffersPackets;
+        try {
+            // Get the individual packets from the data
+            entireDataInfo = getPacketsFromBuffer(entireData);
+        } catch (error) {
+            this.rejectPacket(error instanceof Error ? error : new Error(ErrorHelper.toMessage(error)))
+            return
+        }
 
         if (entireDataInfo.type === "InvalidPacketLength") {
             this.rejectPacket(new Error(`Invalid packet length ${entireDataInfo.length}`))

@@ -56,7 +56,7 @@ export function getPacketsFromBuffer(buf: Buffer): BuffersPackets {
     while (!end) {
       length = reader.readUInt16();
 
-      if (length === 0 || length === 1) {
+      if (length < 3) {
         return { type: "InvalidPacketLength", length };
       } else {
         // - 2, so that we capture the two length bytes already read
