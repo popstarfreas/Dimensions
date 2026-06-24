@@ -12,8 +12,8 @@ importers:
         specifier: ^7.2.3
         version: 7.2.3
       '@rescript/runtime':
-        specifier: ^12.2.0
-        version: 12.2.0
+        specifier: ^12.3.0
+        version: 12.3.0
       glob:
         specifier: ^13.0.6
         version: 13.0.6
@@ -30,18 +30,18 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0
       uuid:
-        specifier: ^11.1.1
-        version: 11.1.1
+        specifier: ^14.0.1
+        version: 14.0.1
       winston:
         specifier: ^3.19.0
         version: 3.19.0
       yaml:
-        specifier: ^2.8.4
-        version: 2.8.4
+        specifier: ^2.9.0
+        version: 2.9.0
     devDependencies:
       '@types/jasmine':
-        specifier: ^3.10.19
-        version: 3.10.19
+        specifier: ^6.0.0
+        version: 6.0.0
       '@types/mitm':
         specifier: ^1.3.8
         version: 1.3.8
@@ -54,12 +54,9 @@ importers:
       '@types/utf8':
         specifier: ^3.0.3
         version: 3.0.3
-      '@types/uuid':
-        specifier: ^10.0.0
-        version: 10.0.0
       jasmine:
-        specifier: ^6.2.0
-        version: 6.2.0
+        specifier: ^6.3.0
+        version: 6.3.0
       mitm:
         specifier: ^1.7.3
         version: 1.7.3
@@ -128,6 +125,9 @@ packages:
   '@rescript/runtime@12.2.0':
     resolution: {integrity: sha512-NwfljDRq1rjFPHUaca1nzFz13xsa9ZGkBkLvMhvVgavJT5+A4rMcLu8XAaVTi/oAhO/tlHf9ZDoOTF1AfyAk9Q==}
 
+  '@rescript/runtime@12.3.0':
+    resolution: {integrity: sha512-8SRM2f6+LaWach8NJjYQVCCmu6KYmJCb+437L7YpaUpJBDyUOC1x0FF75shZ/Gid9guKPF3zMHrTNHLuyQkkiQ==}
+
   '@rescript/win32-x64@12.2.0':
     resolution: {integrity: sha512-fhf8CBj3p1lkIXPeNko3mVTKQfXXm4BoxJtR1xAXxUn43wDpd8Lox4w8/EPBbbW6C/YFQW6H7rtpY+2AKuNaDA==}
     engines: {node: '>=20.11.0'}
@@ -137,8 +137,8 @@ packages:
   '@so-ric/colorspace@1.1.6':
     resolution: {integrity: sha512-/KiKkpHNOBgkFJwu9sh48LkHSMYGyuTcSFK/qMBdnOAlrRJzRSXAOFB5qwzaVQuDl8wAvHVMkaASQDReTahxuw==}
 
-  '@types/jasmine@3.10.19':
-    resolution: {integrity: sha512-Bz6P2XoeIN13AhvVe0nS7+m2RfxVllETDjFQ/s6lyEwEfIVpPCc1Q8vPdFopFAOU5mzrU1zypXJ1xGDl5EVU9Q==}
+  '@types/jasmine@6.0.0':
+    resolution: {integrity: sha512-18lgGsLmEh3VJk9eZ5wAjTISxdqzl6YOwu8UdMpolajN57QOCNbl+AbHUd+Yu9ItrsFdB+c8LSZSGNg8nHaguw==}
 
   '@types/mitm@1.3.8':
     resolution: {integrity: sha512-vIXvHF4F9vJZOi9r/nOyaWFW0Y2MLcoaokN/GrZ3LYE0c2g7Y2kKpJ36hKT3EeJwzDsYZKjYyUEiCqDzSG/h9g==}
@@ -154,9 +154,6 @@ packages:
 
   '@types/utf8@3.0.3':
     resolution: {integrity: sha512-+lqLGxWZsEe4Z6OrzBI7Ym4SMUTaMS5yOrHZ0/IL0bpIye1Qbs4PpobJL2mLDbftUXlPFZR7fu6d1yM+bHLX1w==}
-
-  '@types/uuid@10.0.0':
-    resolution: {integrity: sha512-7gqG38EyHgyP1S+7+xomFtL+ZNHcKv6DwNaCZmJmo1vgMugyF3TCnXVg4t1uk89mLNwnLtnY3TpOpCOyp1/xHQ==}
 
   abbrev@4.0.0:
     resolution: {integrity: sha512-a1wflyaL0tHtJSmLSOVybYhy22vRih4eduhhrkcjgrWGnRfrZtovJ2FRjxuTtkkj47O/baf0R86QU5OuYpz8fA==}
@@ -261,11 +258,11 @@ packages:
     resolution: {integrity: sha512-FFUtZMpoZ8RqHS3XeXEmHWLA4thH+ZxCv2lOiPIn1Xc7CxrqhWzNSDzD+/chS/zbYezmiwWLdQC09JdQKmthOw==}
     engines: {node: '>=20'}
 
-  jasmine-core@6.2.0:
-    resolution: {integrity: sha512-b16WZG/pFEFj8qRW1ss7nDuNGYz9ji8BDGj7fJNrROauk5rj/diO3KPOuyIpcgUChdC+c0PfQ8iUk4nHE+EN4w==}
+  jasmine-core@6.3.0:
+    resolution: {integrity: sha512-eMm5qBovNjNoGOcgE/W207+wrcK5zrQv0Rg/rWGboUJUmZp0dFCpHTyjpuDAfCwRCqg7f9U2q2jtv/aUuzdCQg==}
 
-  jasmine@6.2.0:
-    resolution: {integrity: sha512-dvYt7bidcu0JvvSbiUnSDW7UQQiflUwDr6C+5wzoZ0J7RY9u+UcoSIzyhMPj6fnU/tC7KinJ5QrjwD2Y9p4T4w==}
+  jasmine@6.3.0:
+    resolution: {integrity: sha512-u6L7yYtrtS1JALlp7f4k7Wz7o7ZKXauSKKkXc0L3qUkKrdaxYvNiMHhHp5gtTuVZZXVihXRxS7bWwDBX1wJ7EQ==}
     hasBin: true
 
   kuler@2.0.0:
@@ -435,8 +432,8 @@ packages:
   undici-types@7.16.0:
     resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
 
-  undici@6.26.0:
-    resolution: {integrity: sha512-4yqz8a3n5HmGTlsbADNtr/dJlhkh/55Rq798G6ibiULcXbDtaLpTl1pvdqcbFfeoj3iSi52lePFM7h9H21cw/A==}
+  undici@6.27.0:
+    resolution: {integrity: sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==}
     engines: {node: '>=18.17'}
 
   utf8@3.0.0:
@@ -445,8 +442,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@11.1.1:
-    resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
+  uuid@14.0.1:
+    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
     hasBin: true
 
   which@6.0.1:
@@ -469,8 +466,8 @@ packages:
     resolution: {integrity: sha512-YgvUTfwqyc7UXVMrB+SImsVYSmTS8X/tSrtdNZMImM+n7+QTriRXyXim0mBrTXNeqzVF0KWGgHPeiyViFFrNDw==}
     engines: {node: '>=18'}
 
-  yaml@2.8.4:
-    resolution: {integrity: sha512-ml/JPOj9fOQK8RNnWojA67GbZ0ApXAUlN2UQclwv2eVgTgn7O9gg9o7paZWKMp4g0H3nTLtS9LVzhkpOFIKzog==}
+  yaml@2.9.0:
+    resolution: {integrity: sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==}
     engines: {node: '>= 14.6'}
     hasBin: true
 
@@ -516,6 +513,8 @@ snapshots:
 
   '@rescript/runtime@12.2.0': {}
 
+  '@rescript/runtime@12.3.0': {}
+
   '@rescript/win32-x64@12.2.0':
     optional: true
 
@@ -524,7 +523,7 @@ snapshots:
       color: 5.0.3
       text-hex: 1.0.0
 
-  '@types/jasmine@3.10.19': {}
+  '@types/jasmine@6.0.0': {}
 
   '@types/mitm@1.3.8':
     dependencies:
@@ -541,8 +540,6 @@ snapshots:
   '@types/triple-beam@1.3.5': {}
 
   '@types/utf8@3.0.3': {}
-
-  '@types/uuid@10.0.0': {}
 
   abbrev@4.0.0: {}
 
@@ -624,13 +621,13 @@ snapshots:
 
   isexe@4.0.0: {}
 
-  jasmine-core@6.2.0: {}
+  jasmine-core@6.3.0: {}
 
-  jasmine@6.2.0:
+  jasmine@6.3.0:
     dependencies:
       '@jasminejs/reporters': 1.0.0
       glob: 13.0.6
-      jasmine-core: 6.2.0
+      jasmine-core: 6.3.0
 
   kuler@2.0.0: {}
 
@@ -681,7 +678,7 @@ snapshots:
       semver: 7.8.4
       tar: 7.5.16
       tinyglobby: 0.2.17
-      undici: 6.26.0
+      undici: 6.27.0
       which: 6.0.1
 
   nopt@9.0.0:
@@ -797,7 +794,7 @@ snapshots:
     dependencies:
       '@popstarfreas/packetfactory': 7.2.3
       '@rescript/core': 1.6.1(rescript@12.2.0)
-      '@rescript/runtime': 12.2.0
+      '@rescript/runtime': 12.3.0
     transitivePeerDependencies:
       - rescript
 
@@ -814,13 +811,13 @@ snapshots:
 
   undici-types@7.16.0: {}
 
-  undici@6.26.0: {}
+  undici@6.27.0: {}
 
   utf8@3.0.0: {}
 
   util-deprecate@1.0.2: {}
 
-  uuid@11.1.1: {}
+  uuid@14.0.1: {}
 
   which@6.0.1:
     dependencies:
@@ -850,4 +847,4 @@ snapshots:
 
   yallist@5.0.0: {}
 
-  yaml@2.8.4: {}
+  yaml@2.9.0: {}
