@@ -17,7 +17,7 @@ import ErrorHelper from './errorhelper.js';
 import BlacklistCheckClient from './blacklistcheckclient.js';
 import * as winston from 'winston';
 import { RawSocketWriteContext, RawSocketWriteReason } from './extension/index.js';
-import { DisconnectPacket } from 'terraria-packet';
+import { DisconnectPacket, StatusPacket } from 'terraria-packet';
 import { ConnectionRateLimitEntry } from './listenserverargs.js';
 import {
   DisconnectReason,
@@ -308,7 +308,8 @@ export class ListenServer {
           });
 
           if (socket.writable) {
-            socket.end(prepared.packetWrapper.packet);
+            const packet = this.withPreDisconnectStatusClear(prepared.packetWrapper.packet, hookReason);
+            socket.end(packet);
             this.runRawSocketWritePostHandlers(prepared.context, prepared.packetWrapper);
           } else {
             socket.destroy();
@@ -319,6 +320,30 @@ export class ListenServer {
           socket.destroy();
           break;
       }
+    }
+  }
+
+  private withPreDisconnectStatusClear(packet: Buffer, hookReason: RawSocketWriteContext['reason']): Buffer {
+    if (hookReason !== RawSocketWriteReason.BlacklistCheck) {
+      return packet;
+    }
+
+    const statusPacket = StatusPacket.toBuffer({
+      max: 0,
+      text: new NetworkText(0, ""),
+      flags: {
+        hideStatusTextPercent: true,
+        statusTextHasShadows: false,
+        runCheckBytes: false
+      }
+    });
+
+    switch (statusPacket.TAG) {
+      case "Ok":
+        return Buffer.concat([statusPacket._0, packet]);
+      case "Error":
+        this.logging.error(`Error creating status clear packet: ${statusPacket._0}`);
+        return packet;
     }
   }
 

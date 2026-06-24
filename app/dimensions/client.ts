@@ -28,7 +28,7 @@ import {
 } from './disconnectreason.js';
 import { TcpRttSample, unavailableTcpRttSample } from './tcprtt/types.js';
 
-import { DisconnectPacket, NetModuleLoadPacket, PlayerBuffAddPacket } from 'terraria-packet';
+import { DisconnectPacket, NetModuleLoadPacket, PlayerBuffAddPacket, StatusPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
 
 interface PacketQueueItem {
@@ -229,7 +229,7 @@ class Client {
       reason = new NetworkText(0, reason);
     }
 
-    let disconnect = DisconnectPacket.toBuffer({
+    const disconnect = DisconnectPacket.toBuffer({
       reason: reason
     })
 
@@ -241,8 +241,11 @@ class Client {
         this.scheduleForcedDisconnect();
 
         if (this.socket.writable) {
-          this.socket.end(disconnect._0);
-          this.notifySendPacketToClientEvent(disconnect._0);
+          const packets = this.getDisconnectPackets(disconnect._0);
+          this.socket.end(Buffer.concat(packets));
+          for (const packet of packets) {
+            this.notifySendPacketToClientEvent(packet);
+          }
         } else {
           this.socket.destroy();
         }
@@ -253,6 +256,30 @@ class Client {
         this.connected = false;
         this.socket.destroy();
         break;
+    }
+  }
+
+  private getDisconnectPackets(disconnectPacket: Buffer): Buffer[] {
+    if (this.ingame) {
+      return [disconnectPacket];
+    }
+
+    const statusPacket = StatusPacket.toBuffer({
+      max: 0,
+      text: new NetworkText(0, ""),
+      flags: {
+        hideStatusTextPercent: true,
+        statusTextHasShadows: false,
+        runCheckBytes: false
+      }
+    });
+
+    switch (statusPacket.TAG) {
+      case "Ok":
+        return [statusPacket._0, disconnectPacket];
+      case "Error":
+        this.logging.error(`Error creating status clear packet: ${statusPacket._0}`);
+        return [disconnectPacket];
     }
   }
 

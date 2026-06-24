@@ -10,6 +10,9 @@ import { ConfigOptions } from '../../dimensions/configloader.js';
 import * as Language from '../../dimensions/language.js';
 import { Parser } from 'terraria-packet';
 import { DisconnectReasonCodes, makeDisconnectReason } from '../../dimensions/disconnectreason.js';
+import { RawSocketWriteReason } from '../../dimensions/extension/index.js';
+import PacketTypes from '../../dimensions/packettypes.js';
+import { getPacketsFromBuffer } from '../../dimensions/utils.js';
 
 describe("ListenServer", () => {
     let listenServer!: ListenServer;
@@ -337,6 +340,40 @@ describe("ListenServer", () => {
             expect(destroy).toHaveBeenCalled();
         } finally {
             jasmine.clock().uninstall();
+        }
+    });
+
+    it("should clear the client status text before blacklist pre-client disconnects", () => {
+        const end = jasmine.createSpy("end");
+        const socket = {
+            remoteAddress: "127.0.0.1",
+            once: jasmine.createSpy("once"),
+            end,
+            destroy: jasmine.createSpy("destroy"),
+            destroyed: false,
+            writable: true
+        } as unknown as Net.Socket;
+
+        (listenServer as any).disconnectClient(socket, "Rejected", RawSocketWriteReason.BlacklistCheck);
+
+        expect(end).toHaveBeenCalled();
+
+        const writtenPacket = end.calls.mostRecent().args[0] as Buffer;
+        const parsedPackets = getPacketsFromBuffer(writtenPacket);
+        expect(parsedPackets.type).toBe("ValidPackets");
+        if (parsedPackets.type !== "ValidPackets") {
+            return;
+        }
+
+        expect(parsedPackets.packets.map(packet => packet.packetType)).toEqual([
+            PacketTypes.Status,
+            PacketTypes.Disconnect
+        ]);
+
+        const parsedDisconnect = Parser.parse(parsedPackets.packets[1].data, true);
+        expect(parsedDisconnect.TAG).toBe("Ok");
+        if (parsedDisconnect.TAG === "Ok") {
+            expect(parsedDisconnect._0.TAG).toBe("Disconnect");
         }
     });
 

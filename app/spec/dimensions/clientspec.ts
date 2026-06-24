@@ -19,6 +19,7 @@ import { PacketSource } from '../../dimensions/terrariaserverpackethandler.js';
 import { DisconnectPacket, Parser } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
 import { DisconnectReasonCodes } from '../../dimensions/disconnectreason.js';
+import { getPacketsFromBuffer } from '../../dimensions/utils.js';
 type DoneFn = (err?: unknown) => void;
 
 describe("client", () => {
@@ -313,6 +314,73 @@ describe("client", () => {
         }
     });
 
+    it("should clear the client status text before pre-ingame disconnects", () => {
+        const sendPacketToClientEvent = jasmine.createSpy("sendPacketToClientEvent");
+        globalHandlers.extensions = {
+            recorder: {
+                name: "recorder",
+                version: "test",
+                author: "test",
+                reloadable: false,
+                sendPacketToClientEvent
+            }
+        };
+
+        const end = spyOn(socket, "end").and.callFake(function (this: Net.Socket) {
+            return this;
+        });
+
+        client.disconnect("Rejected");
+
+        expect(end).toHaveBeenCalled();
+        const writtenPacket = end.calls.mostRecent().args[0] as Buffer;
+        const parsedPackets = getPacketsFromBuffer(writtenPacket);
+        expect(parsedPackets.type).toBe("ValidPackets");
+        if (parsedPackets.type !== "ValidPackets") {
+            return;
+        }
+
+        expect(parsedPackets.packets.map(packet => packet.packetType)).toEqual([
+            PacketTypes.Status,
+            PacketTypes.Disconnect
+        ]);
+
+        expect(sendPacketToClientEvent.calls.count()).toBe(2);
+        const eventPacketTypes = sendPacketToClientEvent.calls.allArgs().map((args) => {
+            const eventPackets = getPacketsFromBuffer(args[1] as Buffer);
+            expect(eventPackets.type).toBe("ValidPackets");
+            if (eventPackets.type !== "ValidPackets") {
+                return -1;
+            }
+            return eventPackets.packets[0].packetType;
+        });
+        expect(eventPacketTypes).toEqual([
+            PacketTypes.Status,
+            PacketTypes.Disconnect
+        ]);
+    });
+
+    it("should not clear the client status text before ingame disconnects", () => {
+        client.ingame = true;
+        const end = spyOn(socket, "end").and.callFake(function (this: Net.Socket) {
+            return this;
+        });
+
+        client.disconnect("Rejected");
+
+        expect(end).toHaveBeenCalled();
+        const writtenPacket = end.calls.mostRecent().args[0] as Buffer;
+        const parsedPackets = getPacketsFromBuffer(writtenPacket);
+        expect(parsedPackets.type).toBe("ValidPackets");
+        if (parsedPackets.type !== "ValidPackets") {
+            return;
+        }
+
+        expect(parsedPackets.packets.map(packet => packet.packetType)).toEqual([
+            PacketTypes.Disconnect
+        ]);
+    });
+
     it("should track the reason for an explicit Dimensions disconnect", () => {
         client.disconnect("Rejected");
 
@@ -358,9 +426,21 @@ describe("client", () => {
         client.server.isVanilla = serverA.isVanilla;
 
         clientSocket.once("close", () => {
-            expect(receivedPackets.length).toBe(1);
+            expect(receivedPackets.length).toBeGreaterThan(0);
 
-            const parsed = Parser.parse(receivedPackets[0], true);
+            const packets = getPacketsFromBuffer(Buffer.concat(receivedPackets));
+            expect(packets.type).toBe("ValidPackets");
+            if (packets.type !== "ValidPackets") {
+                done();
+                return;
+            }
+
+            expect(packets.packets.map(packet => packet.packetType)).toEqual([
+                PacketTypes.Status,
+                PacketTypes.Disconnect
+            ]);
+
+            const parsed = Parser.parse(packets.packets[1].data, true);
             expect(parsed.TAG).toBe("Ok");
             if (parsed.TAG === "Ok") {
                 expect(parsed._0.TAG).toBe("Disconnect");
