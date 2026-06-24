@@ -1,13 +1,19 @@
 # README #
 
-Dimensions is: A routing service that can also load balance connections. For use with Terraria Servers.
+Dimensions is a routing service that can also load balance connections. For use with Terraria Servers (Vanilla / TShock).
 
-## v1.4.5.x Compatibility
-Please see latest pre-releases in https://github.com/popstarfreas/Dimensions/releases
+It is intended to sit in the middle as a proxy. The typical non-proxy setup is:
+ * Client -> Terraria Server
 
-## Allow v1.4.5 Clients with v1.4.4.9 Servers
-Use the latest pre-release along with this extension:
-https://github.com/popstarfreas/dimensions-mcl/releases/tag/v1.4.5-release.1
+Dimensions sits in the middle like so:
+ * Client -> Dimensions -> Terraria Server(s)
+
+With the use case that it can connect to different Terraria Servers without disconnecting the client. This allows multi-world servers to work with just one ip/port to join as you can swap between them mid session.
+
+## Version Compatibility
+Dimensions aims to only support the latest Terraria version. Currently this is Terraria v1.4.5.6 (319)
+
+We usually provide support for new game versions within 7 days. For patch releases, this is usually same day.
 
 ## Installation
 ### Step 1: Install NodeJS
