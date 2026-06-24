@@ -83,11 +83,11 @@ options:
   # This was added here because TShock's version is broken
   blockInvis: false
 
-  # Whether or not to use a blacklist (http service) (for blocking vpn, etc)
+  # Whether or not to use a blacklist (HTTPS service) (for blocking vpn, etc)
   blacklist:
     enabled: false
     hostname: "127.0.0.1"
-    port: 19222
+    port: 443
     apiKey: ""
     path: "/blacklisted"
     errorPolicy: "AllowJoining"

@@ -1,4 +1,4 @@
-import * as http from 'http';
+import * as https from 'node:https';
 import * as util from 'node:util';
 import * as url from 'node:url';
 import { EnabledBlackList as BlacklistConfiguration } from './configloader.js';
@@ -23,7 +23,7 @@ const BLACKLIST_REQUEST_TIMEOUT_MS = 10000;
  * criteria. This criteria could be if an IP is a VPN, Server or Proxy.
  */
 class Blacklist {
-    constructor(private configuration: BlacklistConfiguration) {
+    constructor(private configuration: BlacklistConfiguration, private getRequest: typeof https.get = https.get) {
     }
     /**
      * Checks whether or not an IP address is a host IP (and is therefore blocked)
@@ -34,7 +34,7 @@ class Blacklist {
     public checkInformation(name: string, ip: string, uuid: string): Promise<boolean> {
         return new Promise<boolean>((resolve: (isHostIp: boolean) => void, reject) => {
             const requestUrl = url.parse(url.format({
-                protocol: 'http',
+                protocol: 'https',
                 hostname: this.configuration.hostname,
                 pathname: this.configuration.path,
                 query: {
@@ -43,8 +43,13 @@ class Blacklist {
                     uuid: uuid
                 }
             }));
+            if (requestUrl.hostname === null || requestUrl.path === null) {
+                reject(new Error("Invalid blacklist request URL"));
+                return;
+            }
 
-            const req = http.get({
+            const req = this.getRequest({
+                protocol: requestUrl.protocol,
                 hostname: requestUrl.hostname,
                 port: this.configuration.port,
                 path: requestUrl.path,
@@ -73,7 +78,7 @@ class Blacklist {
     }
 
     /**
-     * Parses a response from the http-based blacklist
+     * Parses a response from the HTTPS-based blacklist
      * 
      * @param ip The ip that was checked
      * @param data The data that was returned in the response

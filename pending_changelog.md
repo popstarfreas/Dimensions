@@ -15,6 +15,7 @@
  * Fix client showing "Lost Connection" instead of kick message
  * Fix queues to be bound to prevent potential unbound memory growth
  * Fix blacklist packet parsing not catching error
+ * Fix using insecure HTTP for blacklist API
 
 # Dependencies
  * Update `terraria-packet` for the new `SwitchServerManual` packet payload shape.

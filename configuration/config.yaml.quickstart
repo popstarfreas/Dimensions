@@ -50,11 +50,11 @@ options:
   # Whether or not to block invisibility buff
   blockInvis: false
 
-  # Whether or not to use a blacklist (http service)
+  # Whether or not to use a blacklist (HTTPS service)
   blacklist:
     enabled: false
     hostname: "127.0.0.1"
-    port: 19222
+    port: 443
     apiKey: ""
     path: "/blacklisted"
     errorPolicy: "AllowJoining"
