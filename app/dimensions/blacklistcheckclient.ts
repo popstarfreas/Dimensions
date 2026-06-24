@@ -39,6 +39,8 @@ interface BlacklistCheckCallbackArgs {
     clientBlacklistedCb: () => void
     errorCheckingBlacklistCb: (bufferPacket: Buffer, packetsReceived: RawPacket[], e: Error) => void
     packetErrorCheckingBlacklistCb: (e: Error) => void
+    socketErrorCb: (e: Error) => void
+    timeoutCb: () => void
     disconnectCb: () => void
 }
 
@@ -52,6 +54,8 @@ class BlacklistCheckClient {
     private clientBlacklistedCb!: () => void;
     private errorCheckingBlacklistCb!: (bufferPacket: Buffer, packetsReceived: RawPacket[], e: Error) => void;
     private packetErrorCheckingBlacklistCb!: (e: Error) => void;
+    private socketErrorCb!: (e: Error) => void;
+    private timeoutCb!: () => void;
     private disposed: boolean = false;
 
     constructor(private settings: BlacklistCheckClientArgs) {
@@ -62,10 +66,13 @@ class BlacklistCheckClient {
         this.clientBlacklistedCb = args.clientBlacklistedCb;
         this.errorCheckingBlacklistCb = args.errorCheckingBlacklistCb;
         this.packetErrorCheckingBlacklistCb = args.packetErrorCheckingBlacklistCb;
+        this.socketErrorCb = args.socketErrorCb;
+        this.timeoutCb = args.timeoutCb;
 
         this.settings.clientArgs.socket.on('data', this.handleData.bind(this));
         this.settings.clientArgs.socket.on('error', this.handleError.bind(this));
         this.settings.clientArgs.socket.on('timeout', this.handleTimeout.bind(this));
+        this.settings.clientArgs.socket.setTimeout(this.settings.clientArgs.options.socketTimeout);
         this.settings.clientArgs.socket.on('close', () => {
             if (this.disposed) {
                 return;
@@ -291,10 +298,20 @@ class BlacklistCheckClient {
     }
 
     handleError(err: Error) {
-        console.error("Error with client", err);
+        if (this.disposed) {
+            return;
+        }
+
+        this.dispose()
+        this.socketErrorCb(err);
     }
     handleTimeout() {
-        console.error("Client timed out");
+        if (this.disposed) {
+            return;
+        }
+
+        this.dispose()
+        this.timeoutCb();
     }
 
     dispose() {

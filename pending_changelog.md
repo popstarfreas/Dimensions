@@ -16,6 +16,7 @@
  * Fix queues to be bound to prevent potential unbound memory growth
  * Fix blacklist packet parsing not catching error
  * Fix using insecure HTTP for blacklist API
+ * Fix blacklist pre-auth sockets to enforce the configured socket timeout and clean up pending clients on timeout or socket error.
 
 # Dependencies
  * Update `terraria-packet` for the new `SwitchServerManual` packet payload shape.

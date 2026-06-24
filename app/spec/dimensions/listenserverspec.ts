@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import * as Net from 'net';
 import * as winston from 'winston';
 import ListenServer from '../../dimensions/listenserver.js';
@@ -18,6 +19,59 @@ describe("ListenServer", () => {
     let listenServer!: ListenServer;
     let connectionsTracker!: Map<string, number>;
     let connectRateTracker!: Map<string, ConnectionRateLimitEntry>;
+
+    function makeEventSocket(ip = "127.0.0.1"): Net.Socket & {
+        destroy: jasmine.Spy;
+        end: jasmine.Spy;
+        setNoDelay: jasmine.Spy;
+        setTimeout: jasmine.Spy;
+        write: jasmine.Spy;
+    } {
+        const socket = new EventEmitter() as Net.Socket & {
+            destroy: jasmine.Spy;
+            end: jasmine.Spy;
+            setNoDelay: jasmine.Spy;
+            setTimeout: jasmine.Spy;
+            write: jasmine.Spy;
+        };
+        Object.defineProperty(socket, "remoteAddress", {
+            value: ip,
+            configurable: true
+        });
+        Object.defineProperty(socket, "destroyed", {
+            value: false,
+            writable: true,
+            configurable: true
+        });
+        Object.defineProperty(socket, "writable", {
+            value: true,
+            writable: true,
+            configurable: true
+        });
+        socket.destroy = jasmine.createSpy("destroy").and.callFake(() => {
+            (socket as Net.Socket & { destroyed: boolean }).destroyed = true;
+            socket.emit("close");
+            return socket;
+        });
+        socket.end = jasmine.createSpy("end");
+        socket.setNoDelay = jasmine.createSpy("setNoDelay");
+        socket.setTimeout = jasmine.createSpy("setTimeout");
+        socket.write = jasmine.createSpy("write");
+
+        return socket;
+    }
+
+    function enableBlacklist(checkInformation = jasmine.createSpy("checkInformation").and.returnValue(new Promise<boolean>(() => { }))): void {
+        (listenServer as any).options.blacklist = {
+            enabled: true,
+            hostname: "blacklist.example.test",
+            path: "/blacklisted",
+            port: 443,
+            apiKey: "secret-token",
+            errorPolicy: "DenyJoining"
+        };
+        (listenServer as any).blacklist = { checkInformation };
+    }
 
     beforeEach(() => {
         connectionsTracker = new Map();
@@ -375,6 +429,63 @@ describe("ListenServer", () => {
         if (parsedDisconnect.TAG === "Ok") {
             expect(parsedDisconnect._0.TAG).toBe("Disconnect");
         }
+    });
+
+    it("should remove pending blacklist clients and release connection tracking on pre-auth timeout", async () => {
+        const ip = "127.0.0.1";
+        (listenServer as any).options.socketTimeout = 15000;
+        enableBlacklist();
+        const socket = makeEventSocket(ip);
+
+        await (listenServer as any).handleSocket(socket);
+
+        expect((listenServer as any).checkingClients.length).toBe(1);
+        expect(connectionsTracker.get(ip)).toBe(1);
+        expect(socket.setTimeout).toHaveBeenCalledWith(15000);
+
+        socket.emit("timeout");
+
+        expect((listenServer as any).checkingClients.length).toBe(0);
+        expect(connectionsTracker.has(ip)).toBe(false);
+        expect(socket.end).toHaveBeenCalled();
+
+        socket.emit("close");
+        expect(connectionsTracker.has(ip)).toBe(false);
+    });
+
+    it("should remove pending blacklist clients and release connection tracking on pre-auth socket error", async () => {
+        const ip = "127.0.0.1";
+        enableBlacklist();
+        const socket = makeEventSocket(ip);
+
+        await (listenServer as any).handleSocket(socket);
+
+        expect((listenServer as any).checkingClients.length).toBe(1);
+        expect(connectionsTracker.get(ip)).toBe(1);
+
+        socket.emit("error", new Error("pre-auth socket failed"));
+
+        expect((listenServer as any).checkingClients.length).toBe(0);
+        expect(connectionsTracker.has(ip)).toBe(false);
+        expect(socket.destroy).toHaveBeenCalled();
+    });
+
+    it("should keep connection tracking when blacklist pre-auth is accepted into a full client", async () => {
+        const ip = "127.0.0.1";
+        enableBlacklist();
+        const socket = makeEventSocket(ip);
+        const setupNewClient = spyOn(listenServer as any, "setupNewClient").and.returnValue({} as never);
+
+        await (listenServer as any).handleSocket(socket);
+
+        expect((listenServer as any).checkingClients.length).toBe(1);
+        expect(connectionsTracker.get(ip)).toBe(1);
+
+        (listenServer as any).checkingClients[0].clientAcceptedCb(Buffer.alloc(0), []);
+
+        expect((listenServer as any).checkingClients.length).toBe(0);
+        expect(connectionsTracker.get(ip)).toBe(1);
+        expect(setupNewClient).toHaveBeenCalled();
     });
 
     it("should log a Dimensions disconnect reason without throwing when server details are missing", () => {

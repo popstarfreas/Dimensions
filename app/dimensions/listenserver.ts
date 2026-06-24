@@ -539,33 +539,38 @@ export class ListenServer {
     // and then get checked before they are allowed to connect to a server
     if (this.options.blacklist.enabled && this.blacklist) {
       const configuration = this.options.blacklist;
-      let client = new BlacklistCheckClient({
+      const client = new BlacklistCheckClient({
         blacklist: this.blacklist,
         clientArgs,
       });
+      let preClientConnectionReleased = false;
+      const finishBlacklistCheck = (releasePreClientConnection: boolean): void => {
+        const index = this.checkingClients.indexOf(client);
+        if (index > -1) {
+          this.checkingClients.splice(index, 1);
+        }
+
+        if (releasePreClientConnection && !preClientConnectionReleased) {
+          preClientConnectionReleased = true;
+          if (typeof socketIp !== "undefined") {
+            this.decrementConnectionTracker(socketIp);
+          }
+        }
+      };
 
       client.setupCallbacks({
         clientAcceptedCb: (bufferPacket: Buffer, packetsReceived: RawPacket[]) => {
-          const index = this.checkingClients.indexOf(client);
-          if (index > -1) {
-            this.checkingClients.splice(index, 1);
-          }
+          finishBlacklistCheck(false);
           this.setupNewClient(clientArgs, bufferPacket, packetsReceived);
         },
         clientBlacklistedCb: () => {
-          const index = this.checkingClients.indexOf(client);
-          if (index > -1) {
-            this.checkingClients.splice(index, 1);
-          }
+          finishBlacklistCheck(true);
           this.kickBlacklisted(clientArgs);
         },
         errorCheckingBlacklistCb: (bufferPacket: Buffer, packetsReceived: RawPacket[], e: Error) => {
           this.logging.error(`Error checking blacklist: ${ErrorHelper.toMessage(e)}`);
           if (configuration.errorPolicy === "DenyJoining") {
-            const index = this.checkingClients.indexOf(client);
-            if (index > -1) {
-              this.checkingClients.splice(index, 1);
-            }
+            finishBlacklistCheck(true);
             this.disconnectClient(
               socket,
               this.options.language.phrases.blacklistCheckError,
@@ -573,19 +578,13 @@ export class ListenServer {
               makeDisconnectReason(DisconnectReasonCodes.BlacklistCheckError, ErrorHelper.toMessage(e))
             );
           } else {
-            const index = this.checkingClients.indexOf(client);
-            if (index > -1) {
-              this.checkingClients.splice(index, 1);
-            }
+            finishBlacklistCheck(false);
             this.setupNewClient(clientArgs, bufferPacket, packetsReceived);
           }
         },
         packetErrorCheckingBlacklistCb: (e: Error) => {
           this.logging.error(`Packet error checking blacklist: ${ErrorHelper.toMessage(e)}`);
-          const index = this.checkingClients.indexOf(client);
-          if (index > -1) {
-            this.checkingClients.splice(index, 1);
-          }
+          finishBlacklistCheck(true);
           this.disconnectClient(
             socket,
             this.options.language.phrases.blacklistCheckError,
@@ -593,14 +592,27 @@ export class ListenServer {
             makeDisconnectReason(DisconnectReasonCodes.BlacklistCheckError, ErrorHelper.toMessage(e))
           );
         },
+        socketErrorCb: (e: Error) => {
+          if (this.options.log.checkingClientError) {
+            this.logging.error(`Blacklist check socket error: ${ErrorHelper.toMessage(e)}`);
+          }
+          finishBlacklistCheck(true);
+          socket.destroy();
+        },
+        timeoutCb: () => {
+          if (this.options.log.checkingClientTimeouts) {
+            this.logging.warn(`Blacklist check socket timed out: ${getProperIP(socket.remoteAddress) ?? "unknown"}`);
+          }
+          finishBlacklistCheck(true);
+          this.disconnectClient(
+            socket,
+            this.options.language.phrases.blacklistCheckError,
+            RawSocketWriteReason.BlacklistCheck,
+            makeDisconnectReason(DisconnectReasonCodes.ClientSocketTimeout, "blacklist pre-auth socket timed out")
+          );
+        },
         disconnectCb: () => {
-          const index = this.checkingClients.indexOf(client);
-          if (index > -1) {
-            this.checkingClients.splice(index, 1);
-          }
-          if (typeof socketIp !== "undefined") {
-            this.decrementConnectionTracker(socketIp);
-          }
+          finishBlacklistCheck(true);
         }
       });
       this.checkingClients.push(client);

@@ -9,6 +9,7 @@ import { ClientUuidPacket, ConnectRequestPacket, HostTokenPacket, LoadoutSwitchP
 
 describe("BlacklistCheckClient", () => {
     const uuid = "29be7f8f-25ae-4c10-9664-6f7c783cba32";
+    const socketTimeout = 15000;
 
     function unwrapBuffer(result: { TAG: "Ok"; _0: Buffer } | { TAG: "Error"; _0: unknown }): Buffer {
         if (result.TAG === "Error") {
@@ -18,12 +19,13 @@ describe("BlacklistCheckClient", () => {
         return result._0;
     }
 
-    function makeSocket(): Net.Socket & { write: jasmine.Spy } {
-        const socket = new EventEmitter() as Net.Socket & { write: jasmine.Spy };
+    function makeSocket(): Net.Socket & { setTimeout: jasmine.Spy; write: jasmine.Spy } {
+        const socket = new EventEmitter() as Net.Socket & { setTimeout: jasmine.Spy; write: jasmine.Spy };
         Object.defineProperty(socket, "remoteAddress", {
             value: "127.0.0.1",
             configurable: true
         });
+        socket.setTimeout = jasmine.createSpy("setTimeout");
         socket.write = jasmine.createSpy("write");
 
         return socket;
@@ -36,6 +38,7 @@ describe("BlacklistCheckClient", () => {
                 extensions: {}
             },
             options: {
+                socketTimeout,
                 log: {
                     extensionError: false
                 }
@@ -75,6 +78,8 @@ describe("BlacklistCheckClient", () => {
             clientBlacklistedCb: jasmine.createSpy("clientBlacklistedCb"),
             errorCheckingBlacklistCb: jasmine.createSpy("errorCheckingBlacklistCb"),
             packetErrorCheckingBlacklistCb: jasmine.createSpy("packetErrorCheckingBlacklistCb"),
+            socketErrorCb: jasmine.createSpy("socketErrorCb"),
+            timeoutCb: jasmine.createSpy("timeoutCb"),
             disconnectCb: jasmine.createSpy("disconnectCb")
         };
 
@@ -224,6 +229,39 @@ describe("BlacklistCheckClient", () => {
     it("does not write setup packets before receiving ConnectRequest", () => {
         const { socket } = makeClient();
 
+        expect(socket.write).not.toHaveBeenCalled();
+    });
+
+    it("sets the configured socket timeout while checking blacklist pre-auth data", () => {
+        const { socket } = makeClient();
+
+        expect(socket.setTimeout).toHaveBeenCalledOnceWith(socketTimeout);
+    });
+
+    it("treats blacklist pre-auth socket timeouts as terminal", () => {
+        const { client, socket, blacklist, callbacks } = makeClient();
+
+        socket.emit("timeout");
+        client.handleData(connectRequestPacket());
+
+        expect(callbacks.timeoutCb).toHaveBeenCalledTimes(1);
+        expect(callbacks.socketErrorCb).not.toHaveBeenCalled();
+        expect(callbacks.disconnectCb).not.toHaveBeenCalled();
+        expect(blacklist.checkInformation).not.toHaveBeenCalled();
+        expect(socket.write).not.toHaveBeenCalled();
+    });
+
+    it("treats blacklist pre-auth socket errors as terminal", () => {
+        const { client, socket, blacklist, callbacks } = makeClient();
+        const error = new Error("socket failed");
+
+        socket.emit("error", error);
+        client.handleData(connectRequestPacket());
+
+        expect(callbacks.socketErrorCb).toHaveBeenCalledOnceWith(error);
+        expect(callbacks.timeoutCb).not.toHaveBeenCalled();
+        expect(callbacks.disconnectCb).not.toHaveBeenCalled();
+        expect(blacklist.checkInformation).not.toHaveBeenCalled();
         expect(socket.write).not.toHaveBeenCalled();
     });
 
