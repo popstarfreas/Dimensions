@@ -57,3 +57,163 @@ jobs:
       with:
         name: tcp-rtt-prebuild-${{ runner.os }}
         path: native-addon/prebuilds
+
+  release:
+    needs: [build, prebuild]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: read
+      contents: write
+
+    concurrency:
+      group: dimensions-release
+      cancel-in-progress: false
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - uses: pnpm/action-setup@v4
+      with:
+        version: 10.29.3
+    - name: Use Node.js 22.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22.x
+        cache: pnpm
+    - name: Read release metadata
+      id: release
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        version="$(node -p "require('./package.json').version")"
+        tag="v${version}"
+        zip="Dimensions-v${version}.zip"
+        prerelease=false
+
+        if [[ "$version" == *-* ]]; then
+          prerelease=true
+        fi
+
+        {
+          echo "version=$version"
+          echo "tag=$tag"
+          echo "zip=$zip"
+          echo "prerelease=$prerelease"
+        } >> "$GITHUB_OUTPUT"
+    - name: Check for existing release tag
+      id: tag_check
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        git fetch --tags --force
+
+        if git rev-parse -q --verify "refs/tags/${{ steps.release.outputs.tag }}" >/dev/null; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+          echo "Tag ${{ steps.release.outputs.tag }} already exists; skipping release."
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        fi
+    - name: Create release tag
+      id: create_tag
+      if: steps.tag_check.outputs.exists == 'false'
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git tag -a "${{ steps.release.outputs.tag }}" -m "Release ${{ steps.release.outputs.tag }}"
+        git push origin "refs/tags/${{ steps.release.outputs.tag }}"
+
+        echo "${{ steps.release.outputs.tag }}" > "$RUNNER_TEMP/release-tag-created"
+        echo "created=true" >> "$GITHUB_OUTPUT"
+    - name: Install release tools
+      if: steps.tag_check.outputs.exists == 'false'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq zip
+    - uses: actions/download-artifact@v4
+      if: steps.tag_check.outputs.exists == 'false'
+      with:
+        pattern: tcp-rtt-prebuild-*
+        path: native-addon/prebuilds
+        merge-multiple: true
+    - name: Build release zip
+      if: steps.tag_check.outputs.exists == 'false'
+      run: |
+        pnpm install --frozen-lockfile
+        pnpm build:ts
+        pnpm makerelease
+      env:
+        CI: true
+    - name: Publish GitHub release
+      if: steps.tag_check.outputs.exists == 'false'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ steps.release.outputs.tag }}
+        ZIP: ${{ steps.release.outputs.zip }}
+        PRERELEASE: ${{ steps.release.outputs.prerelease }}
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        release_flags=()
+        if [[ "$PRERELEASE" == "true" ]]; then
+          release_flags+=(--prerelease)
+        fi
+
+        gh release create "$TAG" "$ZIP" \
+          --title "$TAG" \
+          --notes-file pending_changelog.md \
+          --verify-tag \
+          "${release_flags[@]}"
+    - name: Log in to Docker Hub
+      if: steps.tag_check.outputs.exists == 'false'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Docker metadata
+      id: docker_meta
+      if: steps.tag_check.outputs.exists == 'false'
+      uses: docker/metadata-action@v5
+      with:
+        images: popstarfreas/dimensions
+        tags: |
+          type=raw,value=${{ steps.release.outputs.tag }}
+          type=raw,value=${{ steps.release.outputs.version }}
+          type=raw,value=latest,enable=${{ steps.release.outputs.prerelease == 'false' }}
+    - name: Build and push Docker image
+      if: steps.tag_check.outputs.exists == 'false'
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ steps.docker_meta.outputs.tags }}
+        labels: ${{ steps.docker_meta.outputs.labels }}
+    - name: Cleanup failed release
+      if: failure() && steps.create_tag.outputs.created == 'true'
+      env:
+        GH_TOKEN: ${{ github.token }}
+        TAG: ${{ steps.release.outputs.tag }}
+      shell: bash
+      run: |
+        set +e
+
+        if [[ ! -f "$RUNNER_TEMP/release-tag-created" ]]; then
+          echo "Release tag was not created by this run; skipping cleanup."
+          exit 0
+        fi
+
+        gh release view "$TAG" >/dev/null 2>&1
+        if [[ $? -eq 0 ]]; then
+          gh release delete "$TAG" --cleanup-tag -y
+        fi
+
+        git push origin ":refs/tags/$TAG" >/dev/null 2>&1 || true
