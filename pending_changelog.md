@@ -13,7 +13,8 @@
  * Fix utility packet-buffering spec names so Jasmine 6 no longer reports duplicate spec names.
  * Fix the TypeScript 6 build configuration by explicitly setting `rootDir` and global type packages.
  * Fix client showing "Lost Connection" instead of kick message
- * Fix bound queues to prevent potential unbound memory growth
+ * Fix queues to be bound to prevent potential unbound memory growth
+ * Fix blacklist packet parsing not catching error
 
 # Dependencies
  * Update `terraria-packet` for the new `SwitchServerManual` packet payload shape.
