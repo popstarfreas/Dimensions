@@ -15,13 +15,12 @@ import {
   makeDisconnectReason,
   serverSocketErrorReason,
 } from './disconnectreason.js';
+import { MAX_PRE_READY_QUEUE_BYTES, MAX_PRE_READY_QUEUE_PACKETS } from './prereadyqueuelimits.js';
 
 interface PacketQueueItem {
   rawPacket: RawPacket,
 }
 
-const MAX_PRE_READY_QUEUE_PACKETS = 128;
-const MAX_PRE_READY_QUEUE_BYTES = 32768;
 const PRE_READY_QUEUE_LIMIT_REASON = "Backend sent too many packets before client completed connection";
 
 /* Used to track information specific to the current server that a client is on

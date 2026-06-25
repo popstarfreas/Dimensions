@@ -27,6 +27,7 @@ import {
   makeDisconnectReason,
 } from './disconnectreason.js';
 import { TcpRttSample, unavailableTcpRttSample } from './tcprtt/types.js';
+import { MAX_PRE_READY_QUEUE_BYTES, MAX_PRE_READY_QUEUE_PACKETS } from './prereadyqueuelimits.js';
 
 import { DisconnectPacket, NetModuleLoadPacket, PlayerBuffAddPacket, StatusPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
@@ -35,8 +36,6 @@ interface PacketQueueItem {
   rawPacket: RawPacket,
 }
 
-const MAX_PRE_READY_QUEUE_PACKETS = 128;
-const MAX_PRE_READY_QUEUE_BYTES = 32768;
 const PRE_READY_QUEUE_LIMIT_REASON = "Connection setup packet queue limit exceeded";
 
 /**

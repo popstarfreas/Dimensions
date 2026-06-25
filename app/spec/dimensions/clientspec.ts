@@ -40,6 +40,26 @@ describe("client", () => {
     let clientSocket: Net.Socket;
     let clientSocketDataHandlers: ((data: string) => void)[];
     let id = uuidv4();
+    const OBSERVED_CLIENT_PRE_CONNECT_JOIN_PACKET_COUNT = 358;
+    const OBSERVED_BACKEND_PRE_READY_INVENTORY_PACKET_COUNT = 1750;
+    const FULL_JOIN_INVENTORY_SLOT_RANGES: Array<[number, number]> = [
+        [0, 59],
+        [59, 20],
+        [79, 10],
+        [89, 5],
+        [94, 5],
+        [99, 40],
+        [299, 40],
+        [499, 1],
+        [500, 40],
+        [700, 40],
+        [900, 20],
+        [920, 10],
+        [930, 20],
+        [950, 10],
+        [960, 20],
+        [980, 10]
+    ];
 
     function unwrapBuffer(result: { TAG: "Ok"; _0: Buffer } | { TAG: "Error"; _0: unknown }): Buffer {
         if (result.TAG === "Error") {
@@ -56,16 +76,46 @@ describe("client", () => {
         }));
     }
 
-    function playerInventorySlotPacket(): Buffer {
+    function playerInventorySlotPacket(slot = 0): Buffer {
         return unwrapBuffer(PlayerInventorySlotPacket.toBuffer({
             playerId: 0,
-            slot: 0,
+            slot,
             stack: 1,
             prefix: 0,
             itemType: 1,
             favorited: false,
             blocked: false
         }));
+    }
+
+    function rawPacketWithLength(packetType: PacketTypes, length: number): RawPacket {
+        const data = Buffer.alloc(length);
+        data.writeUInt16LE(length, 0);
+        data.writeUInt8(packetType, 2);
+        return { packetType, data };
+    }
+
+    function fullJoinInventorySlotIds(): number[] {
+        return FULL_JOIN_INVENTORY_SLOT_RANGES.flatMap(([start, count]) => {
+            return Array.from({ length: count }, (_value, index) => start + index);
+        });
+    }
+
+    function observedClientPreConnectJoinBurst(): RawPacket[] {
+        return [
+            rawPacketWithLength(PacketTypes.ConnectRequest, 15),
+            rawPacketWithLength(PacketTypes.PlayerInfo, 45),
+            rawPacketWithLength(PacketTypes.ClientUUID, 40),
+            rawPacketWithLength(PacketTypes.PlayerHP, 8),
+            rawPacketWithLength(PacketTypes.PlayerMana, 8),
+            rawPacketWithLength(PacketTypes.UpdatePlayerBuff, 6),
+            rawPacketWithLength(PacketTypes.LoadoutSwitch, 7),
+            ...fullJoinInventorySlotIds().map((slot) => ({
+                packetType: PacketTypes.PlayerInventorySlot,
+                data: playerInventorySlotPacket(slot)
+            })),
+            rawPacketWithLength(PacketTypes.ContinueConnecting2, 3)
+        ];
     }
 
     function queuedPacketsWhileConnectingLength(): number {
@@ -505,7 +555,7 @@ describe("client", () => {
         const data = playerBuffsSetPacket();
         const disconnect = spyOn(client, "disconnect").and.callThrough();
 
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 0; i < 10000; i++) {
             globalHandlers.clientPacketHandler.handlePacket(client, {
                 packetType: PacketTypes.UpdatePlayerBuff,
                 data: Buffer.from(data)
@@ -521,7 +571,7 @@ describe("client", () => {
         const disconnect = spyOn(client, "disconnect").and.callThrough();
         let accepted = true;
 
-        for (let i = 0; i < 1000 && accepted; i++) {
+        for (let i = 0; i < 10000 && accepted; i++) {
             accepted = client.queuePacketsWhileConnecting([{
                 packetType: PacketTypes.UpdatePlayerBuff,
                 data: Buffer.from(data)
@@ -531,6 +581,13 @@ describe("client", () => {
         expect(accepted).toBeFalse();
         expect(disconnect).toHaveBeenCalledTimes(1);
         expect(queuedPacketsWhileConnectingLength()).toBe(0);
+    });
+
+    it("should queue the observed client join burst while connecting to a server", () => {
+        const accepted = client.queuePacketsWhileConnecting(observedClientPreConnectJoinBurst());
+
+        expect(accepted).toBeTrue();
+        expect(queuedPacketsWhileConnectingLength()).toBe(OBSERVED_CLIENT_PRE_CONNECT_JOIN_PACKET_COUNT);
     });
 
     it("should queue a small number of upstream pre-ready inventory packets", () => {
@@ -544,11 +601,27 @@ describe("client", () => {
         expect(client.server.packetQueue.length).toBe(1);
     });
 
+    it("should queue the observed upstream pre-ready inventory burst", () => {
+        const disconnectFromServer = spyOn(client, "disconnectFromServer").and.callThrough();
+        const slots = fullJoinInventorySlotIds();
+
+        for (let i = 0; i < OBSERVED_BACKEND_PRE_READY_INVENTORY_PACKET_COUNT; i++) {
+            const data = playerInventorySlotPacket(slots[i % slots.length]);
+            globalHandlers.terrariaServerPacketHandler.handlePacket(client.server, {
+                packetType: PacketTypes.PlayerInventorySlot,
+                data
+            }, PacketSource.TerrariaServer);
+        }
+
+        expect(disconnectFromServer).not.toHaveBeenCalled();
+        expect(client.server.packetQueue.length).toBe(OBSERVED_BACKEND_PRE_READY_INVENTORY_PACKET_COUNT);
+    });
+
     it("should disconnect from the upstream instead of retaining unbounded pre-ready inventory packets", () => {
         const data = playerInventorySlotPacket();
         const disconnectFromServer = spyOn(client, "disconnectFromServer").and.callThrough();
 
-        for (let i = 0; i < 1000; i++) {
+        for (let i = 0; i < 10000; i++) {
             globalHandlers.terrariaServerPacketHandler.handlePacket(client.server, {
                 packetType: PacketTypes.PlayerInventorySlot,
                 data: Buffer.from(data)
