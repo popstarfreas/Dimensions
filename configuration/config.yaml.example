@@ -68,7 +68,7 @@ options:
       terrariaServerPort: 7777
       hasServerPassword: false
       maxPlayers: 400
-      version: "1.4.5.6"
+      version: "1.4.5.7"
 
   # Measures proxy-to-client TCP RTT using OS TCP socket info.
   # Requires a supported native addon build for the current platform.

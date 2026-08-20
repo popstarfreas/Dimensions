@@ -160,6 +160,9 @@ enum PacketTypes {
   SectionRequest = 159,
   ItemDropPosition = 160,
   HostToken = 161,
+  DamageNPCAck = 162,
+  ServerInfo = 163,
+  PlayerPlatformInfo = 164,
 };
 
 export default PacketTypes;

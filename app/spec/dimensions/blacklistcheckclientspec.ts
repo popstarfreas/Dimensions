@@ -4,6 +4,7 @@ import * as winston from 'winston';
 import Blacklist from '../../dimensions/blacklist.js';
 import BlacklistCheckClient from '../../dimensions/blacklistcheckclient.js';
 import ClientArgs from '../../dimensions/clientargs.js';
+import PacketTypes from '../../dimensions/packettypes.js';
 import RawPacket from '../../dimensions/packets/rawpacket.js';
 import { ClientUuidPacket, ConnectRequestPacket, HostTokenPacket, LoadoutSwitchPacket, Parser, PlayerBuffsSetPacket, PlayerHealthPacket, PlayerInfoPacket, PlayerInventorySlotPacket, PlayerManaPacket, WorldDataRequestPacket } from 'terraria-packet';
 
@@ -89,7 +90,7 @@ describe("BlacklistCheckClient", () => {
     }
 
     function connectRequestPacket(): Buffer {
-        return unwrapBuffer(ConnectRequestPacket.toBuffer({ version: "Terraria319" }));
+        return unwrapBuffer(ConnectRequestPacket.toBuffer({ version: "Terraria325" }));
     }
 
     function playerInfoPacket(): Buffer {
@@ -190,7 +191,7 @@ describe("BlacklistCheckClient", () => {
     function playerPlatformInfoPacket(): Buffer {
         const packet = Buffer.alloc(5);
         packet.writeUInt16LE(5, 0);
-        packet.writeUInt8(163, 2);
+        packet.writeUInt8(PacketTypes.PlayerPlatformInfo, 2);
         packet.writeUInt8(0, 3);
         packet.writeUInt8(7, 4);
         return packet;

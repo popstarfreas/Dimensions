@@ -2,7 +2,7 @@ import Client from "./client.js";
 import PacketTypes from "./packettypes.js";
 import { PacketSource } from "./terrariaserverpackethandler.js";
 
-import { PlayerActivePacket, NpcUpdatePacket, ItemDropUpdatePacket, NetModuleLoadPacket } from 'terraria-packet';
+import { PlayerActivePacket, NpcUpdatePacket, ItemDropClearPacket, NetModuleLoadPacket } from 'terraria-packet';
 
 class ClearUtils {
   public static clearPlayers(client: Client): void {
@@ -31,14 +31,15 @@ class ClearUtils {
   public static clearNPCs(client: Client): void {
     for (const npc of client.server.entityTracking.NPCs) {
       if (typeof npc !== "undefined") {
-        ClearUtils.clearNPC(client, npc.index);
+        ClearUtils.clearNPC(client, npc.index, npc.generation);
       }
     }
   }
 
-  public static clearNPC(client: Client, npcIndex: number): void {
+  public static clearNPC(client: Client, npcIndex: number, generation?: number): void {
     const npc: NpcUpdatePacket.t = {
       npcSlotId: npcIndex,
+      generation: generation ?? client.server.entityTracking.NPCs[npcIndex]?.generation ?? 0,
       npcTypeId: 0,
       x: 0,
       y: 0,
@@ -80,28 +81,18 @@ class ClearUtils {
   }
 
   public static clearItem(client: Client, itemIndex: number): void {
-    const data = ItemDropUpdatePacket.toBuffer({
-      itemDropId: itemIndex,
-      x: 0,
-      y: 0,
-      vx: 0,
-      vy: 0,
-      stack: 0,
-      prefix: 0,
-      noDelay: 0,
-      itemId: 0
-    });
+    const data = ItemDropClearPacket.toBuffer({ itemDropId: itemIndex });
     if (data.TAG === "Error") {
-      client.logging.error(`Error creating item drop update packet: ${data._0}`);
+      client.logging.error(`Error creating item drop clear packet: ${data._0}`);
       return;
     }
-    const updateItemDrop = {
+    const clearItemDrop = {
       data: data._0,
-      packetType: PacketTypes.UpdateItemDrop,
+      packetType: PacketTypes.ItemDropClear,
     };
-    const updateItemDropPacket = client.server.getPacketHandler().handlePacket(client.server, updateItemDrop, PacketSource.Dimensions);
-    if (updateItemDropPacket !== null) {
-      client.sendDirect(updateItemDropPacket);
+    const clearItemDropPacket = client.server.getPacketHandler().handlePacket(client.server, clearItemDrop, PacketSource.Dimensions);
+    if (clearItemDropPacket !== null) {
+      client.sendDirect(clearItemDropPacket);
     }
   }
 

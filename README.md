@@ -11,7 +11,7 @@ Dimensions sits in the middle like so:
 With the use case that it can connect to different Terraria Servers without disconnecting the client. This allows multi-world servers to work with just one ip/port to join, as you can swap between them mid session.
 
 ## Version Compatibility
-Dimensions aims to only support the latest Terraria version. Currently this is Terraria v1.4.5.6 (319)
+Dimensions aims to only support the latest Terraria version. Currently this is Terraria v1.4.5.7 (325)
 
 We usually provide support for new game versions within 7 days. For patch releases, this is usually same day.
 

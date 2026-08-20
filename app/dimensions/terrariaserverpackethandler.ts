@@ -10,7 +10,7 @@ import ClientState from './clientstate.js';
 import ErrorHelper from './errorhelper.js';
 import { DisconnectReasonCodes, makeDisconnectReason } from './disconnectreason.js';
 
-import { WorldInfoPacket, PlayerInfoPacket, NpcUpdatePacket, ItemDropUpdatePacket, PlayerSpawnPacket, NetModuleLoadPacket, DisconnectPacket, PlayerActivePacket, PlayerInventorySlotPacket, DimensionsUpdatePacket, PingPacket, Parser, } from "terraria-packet";
+import { WorldInfoPacket, PlayerInfoPacket, NpcUpdatePacket, ItemDropUpdatePacket, ItemDropClearPacket, PlayerSpawnPacket, NetModuleLoadPacket, DisconnectPacket, PlayerActivePacket, PlayerInventorySlotPacket, DimensionsUpdatePacket, PingPacket, Parser, } from "terraria-packet";
 import NetworkText from '@popstarfreas/packetfactory/networktext';
 import PacketWriter from '@popstarfreas/packetfactory/packetwriter';
 
@@ -170,6 +170,9 @@ class TerrariaServerPacketHandler {
             break;
           case "ItemDropUpdate":
             handled = this.handleUpdateItemDrop(parsed._0);
+            break;
+          case "ItemDropClear":
+            handled = this.handleClearItemDrop(parsed._0);
             break;
           case "PlayerActive":
             handled = this.handlePlayerActive(parsed._0);
@@ -473,7 +476,7 @@ class TerrariaServerPacketHandler {
    * @return Whether or not the packet has been handled (and is not to be sent)
    */
   private handleNPCUpdate(npcUpdate: NpcUpdatePacket.t): boolean {
-    const { npcSlotId, npcTypeId, life } = npcUpdate;
+    const { npcSlotId, generation, npcTypeId, life } = npcUpdate;
 
     let zeroLife = false;
     if (life != "Max") {
@@ -484,8 +487,9 @@ class TerrariaServerPacketHandler {
     } else {
       let npc: NPC | undefined = this.currentServer.entityTracking.NPCs[npcSlotId]
       if (npc === undefined) {
-        this.currentServer.entityTracking.NPCs[npcSlotId] = new NPC(npcSlotId, npcTypeId, life === "Max" ? 1 : life._0);
+        this.currentServer.entityTracking.NPCs[npcSlotId] = new NPC(npcSlotId, npcTypeId, life === "Max" ? 1 : life._0, generation);
       } else {
+        npc.generation = generation;
         npc.life = life === "Max" ? 1 : life._0;
         npc.type = npcTypeId;
       }
@@ -502,11 +506,12 @@ class TerrariaServerPacketHandler {
    */
   private handleUpdateItemDrop(itemDropUpdate: ItemDropUpdatePacket.t): boolean {
     const { itemDropId, stack, prefix, itemId } = itemDropUpdate;
-    if (itemDropId > 0) {
-      this.currentServer.entityTracking.items[itemDropId] = new Item(itemDropId, stack, prefix, itemId);
-    } else {
-      this.currentServer.entityTracking.items[itemDropId] = undefined;
-    }
+    this.currentServer.entityTracking.items[itemDropId] = new Item(itemDropId, stack, prefix, itemId);
+    return false;
+  }
+
+  private handleClearItemDrop(itemDropClear: ItemDropClearPacket.t): boolean {
+    this.currentServer.entityTracking.items[itemDropClear.itemDropId] = undefined;
     return false;
   }
 

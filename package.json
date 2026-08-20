@@ -62,7 +62,7 @@
     "glob": "^13.0.6",
     "node-gyp-build": "^4.8.4",
     "redis": "^3.1.2",
-    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#59941d46897ca13ebe3b0252f0a20af50e109dca",
+    "terraria-packet": "github:popstarfreas/rescript-terrariapacket#07bc77f411cefe074336ab9a17e8f6f32dfc614d",
     "utf8": "^3.0.0",
     "uuid": "^14.0.1",
     "winston": "^3.19.0",
