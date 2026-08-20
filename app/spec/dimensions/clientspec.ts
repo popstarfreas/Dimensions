@@ -17,7 +17,7 @@ import * as Language from '../../dimensions/language.js';
 import PacketTypes from '../../dimensions/packettypes.js';
 import { PacketSource } from '../../dimensions/terrariaserverpackethandler.js';
 import RawPacket from '../../dimensions/packets/rawpacket.js';
-import { DisconnectPacket, Parser, PlayerBuffsSetPacket, PlayerInventorySlotPacket } from 'terraria-packet';
+import { ConnectRequestPacket, DisconnectPacket, Parser, PlayerBuffsSetPacket, PlayerInventorySlotPacket } from 'terraria-packet';
 import NetworkText from '@popstarfreas/packetfactory/networktext';
 import { DisconnectReasonCodes } from '../../dimensions/disconnectreason.js';
 import { getPacketsFromBuffer } from '../../dimensions/utils.js';
@@ -358,6 +358,51 @@ describe("client", () => {
         client.changeServer(serverB);
 
         expect(client.server.name).toBe(serverB.name);
+    });
+
+    it("should use the configured fake version when switching servers", (done: DoneFn) => {
+        const address = tcpServer.address();
+        if (!address || typeof address === "string") {
+            done(new Error("Failed to get local test server address"));
+            return;
+        }
+
+        config.fakeVersion.enabled = true;
+        config.fakeVersion.terrariaVersion = 319;
+        client.version = "Terraria320";
+        serverB.serverIP = "127.0.0.1";
+        serverB.serverPort = address.port;
+
+        let completed = false;
+        clientSocketDataHandlers.push((data: string) => {
+            if (completed) {
+                return;
+            }
+
+            const packets = getPacketsFromBuffer(Buffer.from(data, "hex"));
+            if (packets.type !== "ValidPackets") {
+                return;
+            }
+
+            const connectRequest = packets.packets.find(packet => packet.packetType === PacketTypes.ConnectRequest);
+            if (!connectRequest) {
+                return;
+            }
+
+            completed = true;
+            const parsed = ConnectRequestPacket.parse(connectRequest.data);
+            if (parsed.TAG === "Error") {
+                done(new Error(`Failed to parse switched connection request: ${String(parsed._0)}`));
+                return;
+            }
+
+            expect(parsed._0.version).toBe("Terraria319");
+            done();
+        });
+
+        // The initial backend socket is not connected in this test fixture.
+        (client.server.socket as any).destroyed = true;
+        client.changeServer(serverB);
     });
 
     it("should force close the client socket if it does not close after a disconnect packet is written", () => {

@@ -700,7 +700,9 @@ class Client {
         this.serversDetails[this.server.name].clientCount++;
         this.serversDetails[this.server.name].failedConnAttempts = 0;
 
-        const verText = this.version;
+        const verText = this.options.fakeVersion.enabled
+          ? "Terraria" + this.options.fakeVersion.terrariaVersion
+          : this.version;
         var connectPacket = new PacketWriter()
           .setType(1)
           .packString(verText)
