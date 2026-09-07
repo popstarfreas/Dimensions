@@ -90,7 +90,7 @@ describe("BlacklistCheckClient", () => {
     }
 
     function connectRequestPacket(): Buffer {
-        return unwrapBuffer(ConnectRequestPacket.toBuffer({ version: "Terraria325" }));
+        return unwrapBuffer(ConnectRequestPacket.toBuffer({ version: "Terraria326" }));
     }
 
     function playerInfoPacket(): Buffer {

@@ -1,4 +1,5 @@
 ## Features
+- Add support for Terraria 1.4.5.8 packet definitions, including WorldInfo dungeon coordinates.
 - Add support for Terraria 1.4.5.7 packet definitions.
 
 ## Bugfixes
@@ -6,4 +7,5 @@
 - Preserve NPC generation IDs and use the item-clear packet when removing stale entities during dimension switches.
 
 ## Dependencies
+- Update `terraria-packet` for Terraria 1.4.5.8.
 - Update `terraria-packet` for Terraria 1.4.5.7.
