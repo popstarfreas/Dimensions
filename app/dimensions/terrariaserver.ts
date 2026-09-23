@@ -129,36 +129,27 @@ class TerrariaServer {
       // Update buffer packet to the new incomplete packet (if any)
       this.bufferPacket = entireDataInfo.bufferPacket;
 
-      // The hex string of the allowed packets to send to the client
-      let allowedPackets: Buffer[] = [];
-
-      // Inspect and handle each packet
-      let packets: RawPacket[] = entireDataInfo.packets;
-      packets.forEach((packet: RawPacket) => {
+      // Forward each packet before handling the next one. A later packet's
+      // handler may send a synthetic response directly to the client.
+      for (const packet of entireDataInfo.packets) {
         try {
           const buf = this.getPacketHandler().handlePacket(this, packet, PacketSource.TerrariaServer);
-          //const buf = packet.data;
           if (buf !== null) {
-            allowedPackets.push(buf);
+            if (!this.client.socket.destroyed && this.client.socket.writable) {
+              this.client.sendDirect(buf);
+            } else {
+              this.setDisconnectReason(makeDisconnectReason(
+                DisconnectReasonCodes.ClientDisconnectedFromDimensions,
+                "client socket was already closed"
+              ));
+              this.socket.destroy();
+              return;
+            }
           }
         } catch (e) {
           if (this.client.options.log.tServerError) {
             this.client.logging.error(`TS handle packet error. PacketType: ${PacketTypes[packet.packetType]} (${packet.packetType}): ${ErrorHelper.toMessage(e)}. Data: ${packet.data.toString("hex")}`);
           }
-        }
-      });
-
-      if (allowedPackets.length > 0) {
-        if (!this.client.socket.destroyed && this.client.socket.writable) {
-          for (const buf of allowedPackets) {
-            this.client.sendDirect(buf);
-          }
-        } else {
-          this.setDisconnectReason(makeDisconnectReason(
-            DisconnectReasonCodes.ClientDisconnectedFromDimensions,
-            "client socket was already closed"
-          ));
-          this.socket.destroy();
         }
       }
     } catch (e) {

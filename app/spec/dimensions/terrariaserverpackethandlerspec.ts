@@ -1,4 +1,5 @@
 import { Parser } from 'terraria-packet';
+import * as Net from 'net';
 import Client from '../../dimensions/client.js';
 import ClientState from '../../dimensions/clientstate.js';
 import PacketTypes from '../../dimensions/packettypes.js';
@@ -6,6 +7,36 @@ import TerrariaServer from '../../dimensions/terrariaserver.js';
 import TerrariaServerPacketHandler, { PacketSource } from '../../dimensions/terrariaserverpackethandler.js';
 
 describe("TerrariaServerPacketHandler", () => {
+    it("forwards tiles before a synthetic switch spawn when both backend packets share a read", () => {
+        const sentToClient: Buffer[] = [];
+        const handler = new TerrariaServerPacketHandler();
+        const client = {
+            globalHandlers: { extensions: {}, terrariaServerPacketHandler: handler },
+            logging: { error: jasmine.createSpy("error"), debug: jasmine.createSpy("debug") },
+            options: { log: { tServerError: true } },
+            socket: { destroyed: false, writable: true },
+            player: { id: 1 },
+            state: ClientState.FinalisingSwitch,
+            preventSpawnOnJoin: false,
+            sendDirect: (packet: Buffer) => sentToClient.push(packet),
+            sendWaitingPackets: jasmine.createSpy("sendWaitingPackets"),
+            sendExtraInformation: jasmine.createSpy("sendExtraInformation"),
+        } as unknown as Client;
+        const server = new TerrariaServer(new Net.Socket(), client);
+        server.spawn = { x: 4227, y: 1275 };
+        spyOn(server, "sendDirect");
+
+        // TileSectionSend is intentionally opaque to the proxy's packet parser.
+        const section = Buffer.from([3, 0, PacketTypes.SendSection]);
+        const completion = Buffer.from([3, 0, PacketTypes.CompleteConnectionAndSpawn]);
+        server.handleData(Buffer.concat([section, completion]));
+
+        const sentTypes = sentToClient.map(packet => packet[2]);
+        expect(sentTypes.indexOf(PacketTypes.SendSection)).toBeLessThan(sentTypes.indexOf(PacketTypes.SpawnPlayer));
+        expect(sentTypes.indexOf(PacketTypes.SpawnPlayer)).toBeLessThan(sentTypes.indexOf(PacketTypes.CompleteConnectionAndSpawn));
+        expect(client.logging.error).not.toHaveBeenCalled();
+    });
+
     it("preserves Terraria 1.4.5.8 dungeon coordinates while advancing a dimension switch", () => {
         // WorldInfo fixture from terraria-packet's 1.4.5.8 protocol tests:
         // two extra spawn points followed by signed Int16 dungeon X/Y.
