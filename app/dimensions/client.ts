@@ -734,7 +734,11 @@ class Client {
         DisconnectReasonCodes.DimensionSwitch,
         `switching from ${this.server.name} to ${name}`
       ));
-      this.server.socket.destroy();
+      // Ending first lets the server read what the client sent last before the reset, which is what makes it notice the leave
+      const socket = this.server.socket;
+      socket.removeListener('data', this.ServerHandleData);
+      socket.end();
+      setTimeout(() => socket.destroy(), 300);
     } else {
       this.server.afterClosed(this);
     }
