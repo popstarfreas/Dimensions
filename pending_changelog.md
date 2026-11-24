@@ -1,13 +1,11 @@
 ## Features
-- Accept Terraria 1.4.6 clients (protocol 329).
-- Add support for Terraria 1.4.5.8 packet definitions, including WorldInfo dungeon coordinates.
-- Add support for Terraria 1.4.5.7 packet definitions.
+
+- Support Terraria 1.4.6 clients (protocol 329). Use the updated MCL extension to connect these clients to Terraria 1.4.5.8 backends.
 
 ## Bugfixes
-- Preserve packet order during dimension switches.
-- Increase pre-ready packet queue limits to allow full Terraria 1.4.5.6 inventory bursts during joins and dimension switches.
-- Preserve NPC generation IDs and use the item-clear packet when removing stale entities during dimension switches.
+
+- Include the Dimensions package manifest in the release ZIP so extensions can import `dimensions/extension`.
 
 ## Dependencies
-- Update `terraria-packet` for Terraria 1.4.5.8.
-- Update `terraria-packet` for Terraria 1.4.5.7.
+
+- Update `terraria-packet` to the Terraria 1.4.6 packet definitions.
