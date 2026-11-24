@@ -1,4 +1,5 @@
 ## Features
+- Accept Terraria 1.4.6 clients (protocol 329).
 - Add support for Terraria 1.4.5.8 packet definitions, including WorldInfo dungeon coordinates.
 - Add support for Terraria 1.4.5.7 packet definitions.
 

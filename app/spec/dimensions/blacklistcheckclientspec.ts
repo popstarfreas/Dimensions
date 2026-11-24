@@ -4,9 +4,8 @@ import * as winston from 'winston';
 import Blacklist from '../../dimensions/blacklist.js';
 import BlacklistCheckClient from '../../dimensions/blacklistcheckclient.js';
 import ClientArgs from '../../dimensions/clientargs.js';
-import PacketTypes from '../../dimensions/packettypes.js';
 import RawPacket from '../../dimensions/packets/rawpacket.js';
-import { ClientUuidPacket, ConnectRequestPacket, HostTokenPacket, LoadoutSwitchPacket, Parser, PlayerBuffsSetPacket, PlayerHealthPacket, PlayerInfoPacket, PlayerInventorySlotPacket, PlayerManaPacket, WorldDataRequestPacket } from 'terraria-packet';
+import { ClientUuidPacket, ConnectRequestPacket, HostTokenPacket, LoadoutSwitchPacket, Parser, PlayerBuffsSetPacket, PlayerHealthPacket, PlayerInfoPacket, PlayerInventorySlotPacket, PlayerManaPacket, PlayerPlatformInfoPacket, WorldDataRequestPacket } from 'terraria-packet';
 
 describe("BlacklistCheckClient", () => {
     const uuid = "29be7f8f-25ae-4c10-9664-6f7c783cba32";
@@ -90,7 +89,7 @@ describe("BlacklistCheckClient", () => {
     }
 
     function connectRequestPacket(): Buffer {
-        return unwrapBuffer(ConnectRequestPacket.toBuffer({ version: "Terraria326" }));
+        return unwrapBuffer(ConnectRequestPacket.toBuffer({ version: "Terraria329" }));
     }
 
     function playerInfoPacket(): Buffer {
@@ -189,12 +188,9 @@ describe("BlacklistCheckClient", () => {
     }
 
     function playerPlatformInfoPacket(): Buffer {
-        const packet = Buffer.alloc(5);
-        packet.writeUInt16LE(5, 0);
-        packet.writeUInt8(PacketTypes.PlayerPlatformInfo, 2);
-        packet.writeUInt8(0, 3);
-        packet.writeUInt8(7, 4);
-        return packet;
+        return unwrapBuffer(PlayerPlatformInfoPacket.toBuffer({
+            playerId: 0, platformId: "Steam", userId: "player", platformName: "", isHost: false
+        }));
     }
 
     function oversizedIncompletePacket(): Buffer {

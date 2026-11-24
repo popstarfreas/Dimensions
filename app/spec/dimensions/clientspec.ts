@@ -360,6 +360,17 @@ describe("client", () => {
         expect(client.server.name).toBe(serverB.name);
     });
 
+    it("forwards handshakes and retains the first advertised client version", () => {
+        for (const version of ["Terraria326", "Terraria329"]) {
+            const data = unwrapBuffer(ConnectRequestPacket.toBuffer({ version }));
+            const forwarded = client.getPacketHandler().handlePacket(client, {
+                packetType: PacketTypes.ConnectRequest, data
+            });
+            expect(forwarded).toEqual(data);
+            expect(client.version).toBe("Terraria326");
+        }
+    });
+
     it("should use the configured fake version when switching servers", (done: DoneFn) => {
         const address = tcpServer.address();
         if (!address || typeof address === "string") {
@@ -369,7 +380,7 @@ describe("client", () => {
 
         config.fakeVersion.enabled = true;
         config.fakeVersion.terrariaVersion = 319;
-        client.version = "Terraria320";
+        client.version = "Terraria329";
         serverB.serverIP = "127.0.0.1";
         serverB.serverPort = address.port;
 

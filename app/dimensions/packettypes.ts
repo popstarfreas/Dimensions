@@ -163,6 +163,7 @@ enum PacketTypes {
   DamageNPCAck = 162,
   ServerInfo = 163,
   PlayerPlatformInfo = 164,
+  CustomServerAck = 165,
 };
 
 export default PacketTypes;

@@ -5,6 +5,7 @@ rm -rf release
 rm -rf build/spec
 mkdir release
 cp -r build release/build
+cp shim.json release/build/dimensions/package.json
 cp package.json release/package.json
 cp pnpm-lock.yaml release/pnpm-lock.yaml
 mkdir release/native-addon

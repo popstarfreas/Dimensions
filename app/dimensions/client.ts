@@ -446,6 +446,9 @@ class Client {
           });
 
           // Write the data the client sent us to the now connected server
+          if (!this.connected || allowedData.length === 0) {
+            return;
+          }
           if (this.options.fakeVersion.enabled) {
             const verText = "Terraria" + this.options.fakeVersion.terrariaVersion;
             let packet = new PacketWriter()
@@ -453,17 +456,12 @@ class Client {
               .packString(verText)
               .data;
             this.server.sendDirect(packet);
-          } else {
-            // Send allowedData to the server if the client is connected to one
-            if (allowedData.length > 0 && this.connected) {
-              if (this.server.socket) {
-                for (const buf of allowedData) {
-                  this.server.sendDirect(buf);
-                }
-              } else {
-                this.sendChatMessage(this.options.language.phrases.areYouEvenConnected, "ff0000");
-              }
+          } else if (this.server.socket) {
+            for (const buf of allowedData) {
+              this.server.sendDirect(buf);
             }
+          } else {
+            this.sendChatMessage(this.options.language.phrases.areYouEvenConnected, "ff0000");
           }
         });
       }

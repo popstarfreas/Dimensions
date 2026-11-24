@@ -11,7 +11,8 @@ COPY tsconfig.json /app
 RUN npm run build
 COPY dimensions_cli.js /app
 
-COPY configuration/config.yaml.example /app
+COPY configuration/config.yaml.example /app/configuration/config.yaml.example
+COPY shim.json /app
 COPY License.md /app
 COPY README.md /app
 COPY makerelease.sh /app
