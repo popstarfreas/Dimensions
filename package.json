@@ -59,7 +59,7 @@
   "dependencies": {
     "@popstarfreas/packetfactory": "^7.2.3",
     "@rescript/runtime": "^12.3.0",
-    "glob": "^13.0.6",
+    "glob": "^14.0.2",
     "node-gyp-build": "^4.8.4",
     "redis": "^3.1.2",
     "terraria-packet": "github:popstarfreas/rescript-terrariapacket#f4c087e195129410abe25d21c638e21c20717b6e",
