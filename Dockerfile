@@ -1,4 +1,4 @@
-FROM node:lts AS build
+FROM node:24-bookworm AS build
 WORKDIR /app
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 COPY pnpm-lock.yaml /app
@@ -12,7 +12,7 @@ RUN npm run build
 
 COPY dimensions_cli.js /app
 
-FROM node:lts-slim
+FROM node:24-bookworm-slim
 
 WORKDIR /app
 RUN mkdir /app/logs

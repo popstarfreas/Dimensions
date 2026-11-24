@@ -1,4 +1,4 @@
-FROM node:lts AS build
+FROM node:24-bookworm AS build
 RUN apt-get update && apt-get install -y zip jq python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY pnpm-lock.yaml /app
